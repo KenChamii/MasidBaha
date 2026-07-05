@@ -1,5 +1,7 @@
 ﻿using MasidBaha.Application.FloodReports.CreateReport;
 using MasidBaha.Application.FloodReports.GetNearbyReports;
+using MasidBaha.Application.FloodReports.VoteOnReport;
+using MasidBaha.Application.Common.Enums;
 using MasidBaha.WebAPI.Hubs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -12,15 +14,18 @@ public class FloodReportsController : ControllerBase
 {
     private readonly ICreateFloodReportService _createService;
     private readonly IGetNearbyReportsService _nearbyService;
+    private readonly IVoteOnReportService _voteService;
     private readonly IHubContext<FloodHub> _hubContext;
 
     public FloodReportsController(
         ICreateFloodReportService createService,
         IGetNearbyReportsService nearbyService,
+        IVoteOnReportService voteService,
         IHubContext<FloodHub> hubContext)
     {
         _createService = createService;
         _nearbyService = nearbyService;
+        _voteService = voteService;
         _hubContext = hubContext;
     }
 
@@ -37,5 +42,17 @@ public class FloodReportsController : ControllerBase
     {
         var reports = await _nearbyService.GetNearbyAsync(query);
         return Ok(reports);
+    }
+
+    [HttpPost("{id}/vote")]
+    public async Task<ActionResult<VoteResultDto>> Vote(Guid id, VoteRequest request)
+    {
+        var result = await _voteService.VoteAsync(id, request);
+        await _hubContext.Clients.All.SendAsync("ReportUpdated", result);
+
+        if (result.Status == ReportStatus.Resolved)
+            await _hubContext.Clients.All.SendAsync("RemoveReport", result.FloodReportId);
+
+        return Ok(result);
     }
 }
