@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="MasidBaha.Application/MasidBaha.Application.csproj" />
+  <Project Path="MasidBaha.WebAPI/MasidBaha.WebAPI.csproj" />
+</Solution>
