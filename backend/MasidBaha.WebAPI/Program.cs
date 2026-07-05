@@ -1,5 +1,6 @@
 using MasidBaha.Application.Common.Data;
 using MasidBaha.Application.FloodReports.CreateReport;
+using MasidBaha.Application.FloodReports.GetNearbyReports;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
 
 builder.Services.AddScoped<ICreateFloodReportService, CreateFloodReportService>();
+builder.Services.AddScoped<IGetNearbyReportsService, GetNearbyReportsService>();
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
     ?? Array.Empty<string>();
