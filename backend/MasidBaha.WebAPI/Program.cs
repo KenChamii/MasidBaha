@@ -3,6 +3,10 @@ using MasidBaha.Application.FloodReports.CreateReport;
 using MasidBaha.Application.FloodReports.GetNearbyReports;
 using MasidBaha.WebAPI.Hubs;
 using MasidBaha.Application.FloodReports.VoteOnReport;
+using MasidBaha.Application.FloodReports.ExpireReports;
+using MasidBaha.WebAPI.BackgroundServices;
+
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +20,8 @@ builder.Services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
 builder.Services.AddScoped<ICreateFloodReportService, CreateFloodReportService>();
 builder.Services.AddScoped<IGetNearbyReportsService, GetNearbyReportsService>();
 builder.Services.AddScoped<IVoteOnReportService, VoteOnReportService>();
+builder.Services.AddScoped<IExpireReportsService, ExpireReportsService>();
+builder.Services.AddHostedService<FloodExpiryService>();
 builder.Services.AddSignalR();
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
