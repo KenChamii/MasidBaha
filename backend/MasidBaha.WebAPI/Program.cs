@@ -1,6 +1,7 @@
 using MasidBaha.Application.Common.Data;
 using MasidBaha.Application.FloodReports.CreateReport;
 using MasidBaha.Application.FloodReports.GetNearbyReports;
+using MasidBaha.WebAPI.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,7 @@ builder.Services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
 
 builder.Services.AddScoped<ICreateFloodReportService, CreateFloodReportService>();
 builder.Services.AddScoped<IGetNearbyReportsService, GetNearbyReportsService>();
+builder.Services.AddSignalR();
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
     ?? Array.Empty<string>();
@@ -37,7 +39,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowAngularDev");
 app.MapControllers();
-
+app.MapHub<FloodHub>("/hubs/flood");
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
 app.Run();
