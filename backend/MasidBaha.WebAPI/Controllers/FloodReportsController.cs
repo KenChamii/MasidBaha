@@ -1,5 +1,6 @@
 ﻿using MasidBaha.Application.FloodReports.CreateReport;
 using MasidBaha.Application.FloodReports.GetNearbyReports;
+using MasidBaha.Application.FloodReports.GetTopReports;
 using MasidBaha.Application.FloodReports.VoteOnReport;
 using MasidBaha.Application.Common.Enums;
 using MasidBaha.WebAPI.Hubs;
@@ -15,17 +16,20 @@ public class FloodReportsController : ControllerBase
 {
     private readonly ICreateFloodReportService _createService;
     private readonly IGetNearbyReportsService _nearbyService;
+    private readonly IGetTopReportsService _topService;
     private readonly IVoteOnReportService _voteService;
     private readonly IHubContext<FloodHub> _hubContext;
 
     public FloodReportsController(
         ICreateFloodReportService createService,
         IGetNearbyReportsService nearbyService,
+        IGetTopReportsService topService,
         IVoteOnReportService voteService,
         IHubContext<FloodHub> hubContext)
     {
         _createService = createService;
         _nearbyService = nearbyService;
+        _topService = topService;
         _voteService = voteService;
         _hubContext = hubContext;
     }
@@ -43,6 +47,13 @@ public class FloodReportsController : ControllerBase
     public async Task<ActionResult<List<FloodReportDto>>> GetNearby([FromQuery] NearbyReportsQuery query)
     {
         var reports = await _nearbyService.GetNearbyAsync(query);
+        return Ok(reports);
+    }
+
+    [HttpGet("top")]
+    public async Task<ActionResult<List<FloodReportDto>>> GetTop([FromQuery] TopReportsQuery query)
+    {
+        var reports = await _topService.GetTopAsync(query);
         return Ok(reports);
     }
 

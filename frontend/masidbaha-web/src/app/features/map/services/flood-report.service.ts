@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { FloodReport, CreateFloodReportRequest } from '../../../shared/models/flood-report.model';
+import { FloodReport, CreateFloodReportRequest, TopReportsQuery } from '../../../shared/models/flood-report.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -14,6 +14,15 @@ export class FloodReportService {
     return this.http.get<FloodReport[]>(this.baseUrl, {
       params: { lat, lng, radiusMeters }
     });
+  }
+
+  getTop(query: TopReportsQuery): Observable<FloodReport[]> {
+    const params: Record<string, string | number> = { limit: query.limit ?? 20 };
+    if (query.region) params['region'] = query.region;
+    if (query.province) params['province'] = query.province;
+    if (query.city) params['city'] = query.city;
+
+    return this.http.get<FloodReport[]>(`${this.baseUrl}/top`, { params });
   }
 
   create(request: CreateFloodReportRequest): Observable<FloodReport> {

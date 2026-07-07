@@ -1,7 +1,9 @@
 using System.Threading.RateLimiting;
 using MasidBaha.Application.Common.Data;
+using MasidBaha.Application.Common.Geocoding;
 using MasidBaha.Application.FloodReports.CreateReport;
 using MasidBaha.Application.FloodReports.GetNearbyReports;
+using MasidBaha.Application.FloodReports.GetTopReports;
 using MasidBaha.Application.FloodReports.VoteOnReport;
 using MasidBaha.Application.FloodReports.ExpireReports;
 using MasidBaha.WebAPI.Hubs;
@@ -19,9 +21,20 @@ builder.Services.AddSignalR();
 builder.Services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
 builder.Services.AddScoped<ICreateFloodReportService, CreateFloodReportService>();
 builder.Services.AddScoped<IGetNearbyReportsService, GetNearbyReportsService>();
+builder.Services.AddScoped<IGetTopReportsService, GetTopReportsService>();
 builder.Services.AddScoped<IVoteOnReportService, VoteOnReportService>();
 builder.Services.AddScoped<IExpireReportsService, ExpireReportsService>();
 builder.Services.AddHostedService<FloodExpiryService>();
+
+// Reverse geocoding (OpenStreetMap Nominatim) — tags each report with
+// Region/Province/City so the top-reports list can be scoped nationally,
+// regionally, provincially, or per city.
+builder.Services.AddHttpClient<IGeocodingService, NominatimGeocodingService>(client =>
+{
+    client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
+    client.Timeout = TimeSpan.FromSeconds(5);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("MasidBaha/1.0 (community flood reporting)");
+});
 
 // Rate limiting: keyed per client IP, since reports/votes have no auth yet.
 // "report-writes" guards report creation (spammy pin-dropping).

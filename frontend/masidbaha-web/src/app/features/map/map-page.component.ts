@@ -9,7 +9,7 @@ import { FloodReportService } from './services/flood-report.service';
 import { SignalRService } from '../../core/services/signalr.service';
 import { GeolocationService } from '../../core/services/geolocation.service';
 import { SessionService } from '../../core/services/session.service';
-import { FloodReport, Severity } from '../../shared/models/flood-report.model';
+import { FloodReport, ReportScope, Severity } from '../../shared/models/flood-report.model';
 
 const PHILIPPINES_CENTER: L.LatLngExpression = [12.8797, 121.7740];
 const DEFAULT_ZOOM = 6;
@@ -45,6 +45,45 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   pendingPin: { lat: number; lng: number } | null = null;
   newReport: { severity: Severity; notes: string } = { severity: 1, notes: '' };
   isSubmitting = false;
+  showList = true;
+
+  // top reports (national/regional/provincial/local)
+ 
+  scope: ReportScope = 'national';
+  selectedRegion: string | null = null;
+  selectedProvince: string | null = null;
+  selectedCity: string | null = null;
+  topReports: FloodReport[] = [];
+  isLoadingTopReports = false;
+
+  private filterSample: FloodReport[] = [];
+
+  get availableRegions(): string[] {
+    return this.distinct(this.filterSample.map(r => r.region));
+  }
+
+  get availableProvinces(): string[] {
+    return this.distinct(
+      this.filterSample
+        .filter(r => !this.selectedRegion || r.region === this.selectedRegion)
+        .map(r => r.province)
+    );
+  }
+
+  get availableCities(): string[] {
+    return this.distinct(
+      this.filterSample
+        .filter(r =>
+          (!this.selectedRegion || r.region === this.selectedRegion) &&
+          (!this.selectedProvince || r.province === this.selectedProvince)
+        )
+        .map(r => r.city)
+    );
+  }
+
+  private distinct(values: (string | undefined)[]): string[] {
+    return Array.from(new Set(values.filter((v): v is string => !!v))).sort();
+  }
 
   constructor(
     private floodReportService: FloodReportService,
@@ -124,6 +163,23 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
         this.loadNearby(center.lat, center.lng);
       })
     );
+
+    // top reports panel
+    // Loads once for the current scope, plus a broad unfiltered sample used
+ 
+    // (~20 rows) so this stays cheap.
+    this.loadFilterSample();
+    this.refreshTopReports();
+
+    this.subscriptions.push(
+      this.signalRService.newReport$.subscribe(() => this.refreshTopReports())
+    );
+    this.subscriptions.push(
+      this.signalRService.reportUpdated$.subscribe(() => this.refreshTopReports())
+    );
+    this.subscriptions.push(
+      this.signalRService.removeReport$.subscribe(() => this.refreshTopReports())
+    );
   }
 
   ngOnDestroy(): void {
@@ -132,8 +188,6 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     // "Map container is already initialized".
     this.map?.remove();
   }
-
-  // ---- data loading ----
 
   private loadNearby(lat: number, lng: number): void {
     this.floodReportService.getNearby(lat, lng, DEFAULT_RADIUS_METERS)
@@ -148,8 +202,6 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
         reports.forEach(report => this.upsertMarker(report));
       });
   }
-
-  // ---- markers (step 4) ----
 
   private upsertMarker(report: FloodReport): void {
     const existing = this.markers.get(report.id);
@@ -185,10 +237,6 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
       iconAnchor: [9, 9]
     });
   }
-
-  // Leaflet popups are raw HTML, not Angular templates — buttons inside
-  // them can't use (click) bindings, so we build a string here and wire
-  // real DOM listeners in wirePopupButtons() once the popup is in the DOM.
   private buildPopupHtml(reportId: string, confidenceScore: number): string {
     return `
       <div class="flood-popup">
@@ -212,6 +260,103 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   private vote(reportId: string, voteType: 1 | -1): void {
     this.floodReportService.vote(reportId, voteType, this.sessionService.sessionId)
       .subscribe(() => this.map.closePopup());
+  }
+
+  // ---- list panel ----
+
+  toggleList(): void {
+    this.showList = !this.showList;
+  }
+
+  setScope(scope: ReportScope): void {
+    this.scope = scope;
+    if (scope === 'national') {
+      this.selectedRegion = null;
+      this.selectedProvince = null;
+      this.selectedCity = null;
+    }
+    this.refreshTopReports();
+  }
+
+  onRegionChange(region: string): void {
+    this.selectedRegion = region || null;
+    this.selectedProvince = null;
+    this.selectedCity = null;
+    this.refreshTopReports();
+  }
+
+  onProvinceChange(province: string): void {
+    this.selectedProvince = province || null;
+    this.selectedCity = null;
+    this.refreshTopReports();
+  }
+
+  onCityChange(city: string): void {
+    this.selectedCity = city || null;
+    this.refreshTopReports();
+  }
+
+  private loadFilterSample(): void {
+    this.floodReportService.getTop({ limit: 200 })
+      .subscribe(reports => this.filterSample = reports);
+  }
+
+  private refreshTopReports(): void {
+    this.isLoadingTopReports = true;
+    this.floodReportService.getTop({
+      region: this.selectedRegion ?? undefined,
+      province: this.selectedProvince ?? undefined,
+      city: this.selectedCity ?? undefined,
+      limit: 20
+    }).subscribe({
+      next: reports => {
+        this.topReports = reports;
+        this.isLoadingTopReports = false;
+      },
+      error: () => this.isLoadingTopReports = false
+    });
+  }
+
+  locationLabel(report: FloodReport): string | null {
+    return report.city ?? report.province ?? report.region ?? null;
+  }
+
+  focusReport(report: FloodReport): void {
+    const targetZoom = Math.max(this.map.getZoom(), LOCATED_ZOOM);
+    this.map.setView([report.lat, report.lng], targetZoom);
+
+    const existingMarker = this.markers.get(report.id);
+    if (existingMarker) {
+      existingMarker.openPopup();
+      return;
+    }
+
+    // The top-reports list is scope-based (national/regional/etc.), so the
+    // report may be far outside whatever the map last fetched — pull in
+    // markers around it first, then open the popup once it exists.
+    this.floodReportService.getNearby(report.lat, report.lng, DEFAULT_RADIUS_METERS)
+      .subscribe(reports => {
+        reports.forEach(r => this.upsertMarker(r));
+        this.markers.get(report.id)?.openPopup();
+      });
+  }
+
+  severityLabel(severity: Severity): string {
+    return SEVERITY_META[severity].label;
+  }
+
+  severityColor(severity: Severity): string {
+    return SEVERITY_META[severity].color;
+  }
+
+  timeAgo(isoDate: string): string {
+    const diffMs = Date.now() - new Date(isoDate).getTime();
+    const minutes = Math.floor(diffMs / 60000);
+    if (minutes < 1) return 'ngayon lang';
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(hours / 24)}d ago`;
   }
 
   // ---- pin drop / create (step 8) ----
@@ -247,10 +392,7 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
         this.pendingPin = null;
         this.pinDropMode = false;
         this.newReport = { severity: 1, notes: '' };
-        // No manual upsertMarker() call here — the backend broadcasts
-        // "NewReport" over SignalR (Commit 5), and newReport$ (above) picks
-        // it up, so the pin the user just dropped appears the same way
-        // everyone else's does.
+        // No manual upsertMarker() call here 
       },
       error: () => {
         this.isSubmitting = false;

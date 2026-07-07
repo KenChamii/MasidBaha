@@ -3,6 +3,122 @@
 
   <button
     type="button"
+    class="map-page__list-toggle"
+    (click)="toggleList()"
+  >
+    {{ showList ? 'Itago ang listahan' : 'Ipakita ang listahan (' + topReports.length + ')' }}
+  </button>
+
+  <aside class="map-page__list" *ngIf="showList">
+    <div class="map-page__list-header">
+      <h3 class="map-page__list-title">Pinaka-kumpirmadong ulat</h3>
+      <span class="map-page__list-count">{{ topReports.length }}</span>
+    </div>
+
+    <div class="map-page__scope-tabs">
+      <button
+        type="button"
+        class="map-page__scope-tab"
+        [class.map-page__scope-tab--active]="scope === 'national'"
+        (click)="setScope('national')"
+      >
+        Bansa
+      </button>
+      <button
+        type="button"
+        class="map-page__scope-tab"
+        [class.map-page__scope-tab--active]="scope === 'region'"
+        (click)="setScope('region')"
+      >
+        Rehiyon
+      </button>
+      <button
+        type="button"
+        class="map-page__scope-tab"
+        [class.map-page__scope-tab--active]="scope === 'province'"
+        (click)="setScope('province')"
+      >
+        Probinsya
+      </button>
+      <button
+        type="button"
+        class="map-page__scope-tab"
+        [class.map-page__scope-tab--active]="scope === 'city'"
+        (click)="setScope('city')"
+      >
+        Lungsod
+      </button>
+    </div>
+
+    <div class="map-page__scope-filters" *ngIf="scope !== 'national'">
+      <select
+        *ngIf="scope === 'region' || scope === 'province' || scope === 'city'"
+        class="map-page__scope-select"
+        [ngModel]="selectedRegion"
+        (ngModelChange)="onRegionChange($event)"
+        [ngModelOptions]="{ standalone: true }"
+      >
+        <option [ngValue]="null">Piliin ang rehiyon…</option>
+        <option *ngFor="let region of availableRegions" [ngValue]="region">{{ region }}</option>
+      </select>
+
+      <select
+        *ngIf="(scope === 'province' || scope === 'city') && selectedRegion"
+        class="map-page__scope-select"
+        [ngModel]="selectedProvince"
+        (ngModelChange)="onProvinceChange($event)"
+        [ngModelOptions]="{ standalone: true }"
+      >
+        <option [ngValue]="null">Piliin ang probinsya…</option>
+        <option *ngFor="let province of availableProvinces" [ngValue]="province">{{ province }}</option>
+      </select>
+
+      <select
+        *ngIf="scope === 'city' && selectedProvince"
+        class="map-page__scope-select"
+        [ngModel]="selectedCity"
+        (ngModelChange)="onCityChange($event)"
+        [ngModelOptions]="{ standalone: true }"
+      >
+        <option [ngValue]="null">Piliin ang lungsod…</option>
+        <option *ngFor="let city of availableCities" [ngValue]="city">{{ city }}</option>
+      </select>
+    </div>
+
+    <div class="map-page__list-loading" *ngIf="isLoadingTopReports">Naglo-load…</div>
+
+    <div class="map-page__list-empty" *ngIf="!isLoadingTopReports && topReports.length === 0">
+      Walang ulat sa napiling lugar.
+    </div>
+
+    <ul class="map-page__list-items" *ngIf="!isLoadingTopReports">
+      <li
+        *ngFor="let report of topReports; let i = index"
+        class="map-page__list-item"
+        (click)="focusReport(report)"
+      >
+        <span
+          class="map-page__list-rank"
+          [class.map-page__list-rank--gold]="i === 0"
+          [class.map-page__list-rank--silver]="i === 1"
+          [class.map-page__list-rank--bronze]="i === 2"
+        >{{ i + 1 }}</span>
+        <span class="map-page__list-dot" [style.background]="severityColor(report.severity)"></span>
+        <div class="map-page__list-info">
+          <div class="map-page__list-row">
+            <span class="map-page__list-severity">{{ severityLabel(report.severity) }}</span>
+            <span class="map-page__list-confidence">👍 {{ report.confidenceScore }}</span>
+          </div>
+          <span class="map-page__list-location" *ngIf="locationLabel(report)">{{ locationLabel(report) }}</span>
+          <p class="map-page__list-notes" *ngIf="report.notes">{{ report.notes }}</p>
+          <span class="map-page__list-time">{{ timeAgo(report.reportedAt) }}</span>
+        </div>
+      </li>
+    </ul>
+  </aside>
+
+  <button
+    type="button"
     class="map-page__report-btn"
     [class.map-page__report-btn--active]="pinDropMode"
     (click)="togglePinDropMode()"

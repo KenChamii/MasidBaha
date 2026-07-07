@@ -4,34 +4,35 @@ using MasidBaha.Application.Common.Enums;
 using MasidBaha.Application.FloodReports.CreateReport;
 using Microsoft.Data.SqlClient;
 
-namespace MasidBaha.Application.FloodReports.GetNearbyReports;
+namespace MasidBaha.Application.FloodReports.GetTopReports;
 
-public interface IGetNearbyReportsService
+public interface IGetTopReportsService
 {
-    Task<List<FloodReportDto>> GetNearbyAsync(NearbyReportsQuery query);
+    Task<List<FloodReportDto>> GetTopAsync(TopReportsQuery query);
 }
 
-public class GetNearbyReportsService : IGetNearbyReportsService
+public class GetTopReportsService : IGetTopReportsService
 {
     private readonly ISqlConnectionFactory _connectionFactory;
 
-    public GetNearbyReportsService(ISqlConnectionFactory connectionFactory)
+    public GetTopReportsService(ISqlConnectionFactory connectionFactory)
     {
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<List<FloodReportDto>> GetNearbyAsync(NearbyReportsQuery query)
+    public async Task<List<FloodReportDto>> GetTopAsync(TopReportsQuery query)
     {
         var results = new List<FloodReportDto>();
 
         using var connection = _connectionFactory.CreateConnection();
-        using var command = new SqlCommand("sp_GetNearbyReports", connection)
+        using var command = new SqlCommand("sp_GetTopReports", connection)
         {
             CommandType = CommandType.StoredProcedure
         };
-        command.Parameters.AddWithValue("@Lat", query.Lat);
-        command.Parameters.AddWithValue("@Lng", query.Lng);
-        command.Parameters.AddWithValue("@RadiusMeters", query.RadiusMeters);
+        command.Parameters.AddWithValue("@Region", (object?)query.Region ?? DBNull.Value);
+        command.Parameters.AddWithValue("@Province", (object?)query.Province ?? DBNull.Value);
+        command.Parameters.AddWithValue("@City", (object?)query.City ?? DBNull.Value);
+        command.Parameters.AddWithValue("@Limit", query.Limit);
 
         await connection.OpenAsync();
         using var reader = await command.ExecuteReaderAsync();
