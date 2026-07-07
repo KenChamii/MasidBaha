@@ -4,6 +4,7 @@ using MasidBaha.Application.FloodReports.VoteOnReport;
 using MasidBaha.Application.Common.Enums;
 using MasidBaha.WebAPI.Hubs;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
 
 namespace MasidBaha.WebAPI.Controllers;
@@ -30,6 +31,7 @@ public class FloodReportsController : ControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting("report-writes")]
     public async Task<ActionResult<FloodReportDto>> Create(CreateFloodReportRequest request)
     {
         var report = await _createService.CreateAsync(request);
@@ -45,6 +47,7 @@ public class FloodReportsController : ControllerBase
     }
 
     [HttpPost("{id}/vote")]
+    [EnableRateLimiting("vote-writes")]
     public async Task<ActionResult<VoteResultDto>> Vote(Guid id, VoteRequest request)
     {
         var result = await _voteService.VoteAsync(id, request);
