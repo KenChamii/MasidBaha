@@ -1,0 +1,41 @@
+<div class="map-page">
+  <div #mapContainer class="map-page__map"></div>
+
+  <button
+    type="button"
+    class="map-page__report-btn"
+    [class.map-page__report-btn--active]="pinDropMode"
+    (click)="togglePinDropMode()"
+  >
+    {{ pinDropMode ? 'Kanselahin' : 'Mag-ulat dito' }}
+  </button>
+
+  <div class="map-page__hint" *ngIf="pinDropMode && !pendingPin">
+    I-click ang mapa sa lugar na may baha.
+  </div>
+
+  <form class="report-form" *ngIf="pendingPin" (ngSubmit)="submitNewReport()">
+    <h3>Bagong ulat</h3>
+
+    <label>
+      Lalim ng baha
+      <select name="severity" [(ngModel)]="newReport.severity">
+        <option *ngFor="let option of severityOptions" [ngValue]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+    </label>
+
+    <label>
+      Note (opsyonal)
+      <textarea name="notes" rows="2" [(ngModel)]="newReport.notes" placeholder="Hal. mabagal umagos ang tubig dito"></textarea>
+    </label>
+
+    <div class="report-form__actions">
+      <button type="button" (click)="cancelPendingPin()">Kanselahin</button>
+      <button type="submit" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Isinusumite...' : 'I-post ang ulat' }}
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,148 @@
+:host {
+  display: block;
+  height: 100vh;
+  position: relative;
+}
+
+.map-page {
+  height: 100%;
+  position: relative;
+}
+
+.map-page__map {
+  height: 100%;
+  width: 100%;
+}
+
+.map-page__report-btn {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  background: var(--mb-water, #34C6E8);
+  color: var(--mb-void, #0A1220);
+  border: none;
+  border-radius: 999px;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-family: var(--mb-font-body, sans-serif);
+  cursor: pointer;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.4);
+
+  &--active {
+    background: var(--mb-alert, #FF7A47);
+  }
+}
+
+.map-page__hint {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  background: rgba(10, 18, 32, 0.85);
+  color: #EEF3FB;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.report-form {
+  position: absolute;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  background: #101B33;
+  border: 1px solid rgba(238, 243, 251, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  width: min(320px, calc(100vw - 32px));
+  color: #EEF3FB;
+
+  h3 {
+    margin: 0 0 12px;
+    font-family: var(--mb-font-display, sans-serif);
+    font-size: 1rem;
+  }
+
+  label {
+    display: block;
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+    color: #8493B3;
+  }
+
+  select, textarea {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    background: #0A1220;
+    border: 1px solid rgba(238, 243, 251, 0.12);
+    border-radius: 8px;
+    color: #EEF3FB;
+    padding: 8px;
+    font-family: inherit;
+  }
+}
+
+.report-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+
+  button {
+    border: none;
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &[type='submit'] {
+      background: #34C6E8;
+      color: #0A1220;
+    }
+    &[type='button'] {
+      background: transparent;
+      color: #8493B3;
+    }
+  }
+}
+
+// Leaflet renders markers/popups outside Angular's view encapsulation,
+
+::ng-deep .flood-marker__dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+}
+
+::ng-deep .flood-popup {
+  font-family: var(--mb-font-body, sans-serif);
+  min-width: 160px;
+}
+
+::ng-deep .flood-popup__confidence {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+::ng-deep .flood-popup__actions {
+  display: flex;
+  gap: 6px;
+
+  button {
+    flex: 1;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    background: #EEF3FB;
+  }
+}
