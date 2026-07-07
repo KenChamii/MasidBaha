@@ -279,6 +279,38 @@
   color: #7C8CAD;
 }
 
+.map-page__list-photo-btn {
+  flex-shrink: 0;
+  align-self: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    border-color: rgba(52, 198, 232, 0.5);
+    transform: scale(1.04);
+  }
+
+  &::after {
+    content: '\1F4F7';
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    font-size: 0.7rem;
+    background: rgba(8, 13, 24, 0.9);
+    border-radius: 999px;
+    padding: 1px 3px;
+    line-height: 1;
+  }
+}
+
 .map-page__report-btn {
   position: absolute;
   bottom: 24px;
@@ -350,6 +382,59 @@
     padding: 8px;
     font-family: inherit;
   }
+
+  input[type='file'] {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    font-size: 0.75rem;
+    color: #8493B3;
+
+    &::file-selector-button {
+      background: rgba(52, 198, 232, 0.15);
+      border: 1px solid rgba(52, 198, 232, 0.3);
+      color: #34C6E8;
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-right: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  }
+}
+
+.report-form__error {
+  margin: -4px 0 10px;
+  font-size: 0.75rem;
+  color: var(--mb-alert, #FF7A47);
+}
+
+.report-form__photo-preview {
+  position: relative;
+  margin-bottom: 12px;
+  display: inline-block;
+
+  img {
+    display: block;
+    max-width: 100%;
+    max-height: 140px;
+    border-radius: 8px;
+    border: 1px solid rgba(238, 243, 251, 0.12);
+  }
+
+  button {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(8, 13, 24, 0.82);
+    color: #EEF3FB;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
 }
 
 .report-form__actions {
@@ -377,13 +462,63 @@
 
 // Leaflet renders markers/popups outside Angular's view encapsulation,
 
-::ng-deep .flood-marker__dot {
-  display: block;
-  width: 14px;
-  height: 14px;
+::ng-deep .flood-marker__badge {
+  position: relative;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #fff;
+  box-shadow: 0 3px 10px -2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+::ng-deep .flood-marker__icon {
+  width: 16px;
+  height: 16px;
+}
+
+::ng-deep .flood-marker__photo-badge {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #101B33;
   border: 2px solid #fff;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+// Every marker pulses (duration/scale set per-instance via --pulse-duration
+// and --pulse-scale custom properties, see buildIcon() / PULSE_BY_SEVERITY).
+::ng-deep .flood-marker__badge::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: inherit;
+  z-index: -1;
+  animation: flood-marker-pulse var(--pulse-duration, 2s) ease-out infinite;
+}
+
+@keyframes flood-marker-pulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(var(--pulse-scale, 1.6));
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 ::ng-deep .flood-popup {
@@ -409,5 +544,70 @@
     font-size: 0.75rem;
     cursor: pointer;
     background: #EEF3FB;
+  }
+}
+
+::ng-deep .flood-popup__photo-btn {
+  display: block;
+  width: 100%;
+  border: 1px solid rgba(52, 198, 232, 0.35);
+  border-radius: 6px;
+  background: rgba(52, 198, 232, 0.12);
+  color: #1E7A94;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(52, 198, 232, 0.22);
+  }
+}
+
+// Full-screen photo viewer — deliberately simple: dim backdrop, image
+// centered and capped so it never overflows the viewport, one close button.
+.photo-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 8, 16, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: photo-modal-fade-in 0.15s ease;
+}
+
+@keyframes photo-modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.photo-modal__image {
+  max-width: min(90vw, 900px);
+  max-height: 86vh;
+  border-radius: 12px;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
+  object-fit: contain;
+}
+
+.photo-modal__close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(8, 13, 24, 0.7);
+  color: #EEF3FB;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(8, 13, 24, 0.92);
   }
 }

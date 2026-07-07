@@ -1,14 +1,15 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as L from 'leaflet';
-import { Subscription, fromEvent } from 'rxjs';
+import { Observable, Subscription, fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
 import { FloodReportService } from './services/flood-report.service';
 import { SignalRService } from '../../core/services/signalr.service';
 import { GeolocationService } from '../../core/services/geolocation.service';
 import { SessionService } from '../../core/services/session.service';
+import { PhotoService } from '../../core/services/photo.service';
 import { FloodReport, ReportScope, Severity } from '../../shared/models/flood-report.model';
 
 const PHILIPPINES_CENTER: L.LatLngExpression = [12.8797, 121.7740];
@@ -21,6 +22,15 @@ const SEVERITY_META: Record<Severity, { label: string; color: string }> = {
   2: { label: 'Tuhod ang lalim', color: '#FFD166' },
   3: { label: 'Baywang ang lalim', color: '#FF7A47' },
   4: { label: 'Hindi madadaanan', color: '#E63946' }
+};
+
+// Every marker pulses; higher severity pulses faster and wider so the
+// visual hierarchy between severities still reads instantly on the map.
+const PULSE_BY_SEVERITY: Record<Severity, { duration: number; scale: number }> = {
+  1: { duration: 3.2, scale: 1.35 },
+  2: { duration: 2.6, scale: 1.45 },
+  3: { duration: 2.0, scale: 1.6 },
+  4: { duration: 1.4, scale: 1.8 }
 };
 
 @Component({
@@ -36,6 +46,10 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   private map!: L.Map;
   private markers = new Map<string, L.Marker>();
   private subscriptions: Subscription[] = [];
+  // Popup content gets rebuilt from partial data on live updates (see
+  // reportUpdated$ below), which doesn't carry photoUrl — so we remember it
+  // here per report id instead of losing it on every rebuild.
+  private reportPhotoUrls = new Map<string, string | undefined>();
 
   readonly severityOptions: { value: Severity; label: string }[] =
     (Object.keys(SEVERITY_META).map(Number) as Severity[])
@@ -46,6 +60,18 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   newReport: { severity: Severity; notes: string } = { severity: 1, notes: '' };
   isSubmitting = false;
   showList = true;
+
+  // photo attachment (step 10) — client-side guard mirrors the backend's own
+  // checks, so people get instant feedback instead of waiting on a round trip.
+  private static readonly MAX_PHOTO_BYTES = 8 * 1024 * 1024;
+  private static readonly ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  selectedPhotoFile: File | null = null;
+  photoPreviewUrl: string | null = null;
+  photoError: string | null = null;
+  isUploadingPhoto = false;
+
+  // full-screen photo viewer (for photos already attached to a report)
+  viewingPhotoUrl: string | null = null;
 
   // top reports (national/regional/provincial/local)
  
@@ -89,7 +115,8 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     private floodReportService: FloodReportService,
     private signalRService: SignalRService,
     private geolocationService: GeolocationService,
-    private sessionService: SessionService
+    private sessionService: SessionService,
+    private photoService: PhotoService
   ) {}
 
   // ---- lifecycle ----
@@ -147,7 +174,7 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
         // radius), there's nothing on the map to refresh, so skip it.
         const marker = this.markers.get(update.floodReportId);
         if (marker) {
-          marker.setPopupContent(this.buildPopupHtml(update.floodReportId, update.confidenceScore));
+          this.refreshPopupContent(marker, update.floodReportId, update.confidenceScore);
         }
       })
     );
@@ -204,20 +231,36 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   private upsertMarker(report: FloodReport): void {
+    this.reportPhotoUrls.set(report.id, report.photoUrl);
+
     const existing = this.markers.get(report.id);
     if (existing) {
       existing.setLatLng([report.lat, report.lng]);
-      existing.setPopupContent(this.buildPopupHtml(report.id, report.confidenceScore));
+      this.refreshPopupContent(existing, report.id, report.confidenceScore);
       return;
     }
 
-    const marker = L.marker([report.lat, report.lng], { icon: this.buildIcon(report.severity) })
+    const marker = L.marker([report.lat, report.lng], { icon: this.buildIcon(report.severity, !!report.photoUrl) })
       .addTo(this.map)
       .bindPopup(this.buildPopupHtml(report.id, report.confidenceScore));
 
-    marker.on('popupopen', () => this.wirePopupButtons(report.id));
+    marker.on('popupopen', (e: L.PopupEvent) => {
+      const popupEl = e.popup.getElement();
+      if (popupEl) this.wirePopupButtons(report.id, popupEl);
+    });
 
     this.markers.set(report.id, marker);
+  }
+
+  // setPopupContent() replaces the popup's inner DOM, which wipes out any
+  // click listeners wirePopupButtons() had attached.
+  private refreshPopupContent(marker: L.Marker, reportId: string, confidenceScore: number): void {
+    marker.setPopupContent(this.buildPopupHtml(reportId, confidenceScore));
+
+    if (marker.isPopupOpen()) {
+      const popupEl = marker.getPopup()?.getElement();
+      if (popupEl) this.wirePopupButtons(reportId, popupEl);
+    }
   }
 
   private removeMarker(id: string): void {
@@ -228,33 +271,64 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     }
   }
 
-  private buildIcon(severity: Severity): L.DivIcon {
-    const color = SEVERITY_META[severity].color;
+  private buildIcon(severity: Severity, hasPhoto: boolean): L.DivIcon {
+    const meta = SEVERITY_META[severity];
+    // Every marker pulses now, graduated by severity — higher severity pulses
+    // faster and wider, so the hierarchy still reads at a glance even though
+    // all four now animate (previously only severity 4 did).
+    const pulse = PULSE_BY_SEVERITY[severity];
+    const photoBadge = hasPhoto
+      ? '<span class="flood-marker__photo-badge">📷</span>'
+      : '';
+
     return L.divIcon({
       className: 'flood-marker',
-      html: `<span class="flood-marker__dot" style="background:${color}"></span>`,
-      iconSize: [18, 18],
-      iconAnchor: [9, 9]
+      html: `
+        <div class="flood-marker__badge" style="background:${meta.color}; --pulse-duration:${pulse.duration}s; --pulse-scale:${pulse.scale};">
+          <svg class="flood-marker__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9.5c1.6 1.4 3.2 1.4 4.8 0s3.2-1.4 4.8 0 3.2 1.4 4.8 0 3.2-1.4 4.8 0" stroke="#0A1220" stroke-width="2" stroke-linecap="round"/>
+            <path d="M3 15c1.6 1.4 3.2 1.4 4.8 0s3.2-1.4 4.8 0 3.2 1.4 4.8 0 3.2-1.4 4.8 0" stroke="#0A1220" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+          </svg>
+          ${photoBadge}
+        </div>
+      `,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
+      popupAnchor: [0, -17]
     });
   }
   private buildPopupHtml(reportId: string, confidenceScore: number): string {
+    const photoUrl = this.reportPhotoUrls.get(reportId);
+    const photoButton = photoUrl
+      ? `<button type="button" class="flood-popup__photo-btn" data-action="view-photo">📷 Tingnan ang larawan</button>`
+      : '';
+
     return `
       <div class="flood-popup">
         <p class="flood-popup__confidence">Confidence: ${confidenceScore}</p>
+        ${photoButton}
         <div class="flood-popup__actions">
-          <button type="button" data-action="confirm" data-id="${reportId}">Kumpirmahin</button>
-          <button type="button" data-action="deny" data-id="${reportId}">Wala na</button>
+          <button type="button" data-action="confirm">Kumpirmahin</button>
+          <button type="button" data-action="deny">Wala na</button>
         </div>
       </div>
     `;
   }
 
-  private wirePopupButtons(reportId: string): void {
-    const confirmBtn = document.querySelector<HTMLButtonElement>(`[data-action="confirm"][data-id="${reportId}"]`);
-    const denyBtn = document.querySelector<HTMLButtonElement>(`[data-action="deny"][data-id="${reportId}"]`);
+  // Scoped to this popup's own DOM element (not document-wide) so we can
+  // never accidentally wire — or fail to find — buttons belonging to a
+  // different marker's popup.
+  private wirePopupButtons(reportId: string, popupEl: HTMLElement): void {
+    const confirmBtn = popupEl.querySelector<HTMLButtonElement>('[data-action="confirm"]');
+    const denyBtn = popupEl.querySelector<HTMLButtonElement>('[data-action="deny"]');
+    const photoBtn = popupEl.querySelector<HTMLButtonElement>('[data-action="view-photo"]');
 
     confirmBtn?.addEventListener('click', () => this.vote(reportId, 1), { once: true });
     denyBtn?.addEventListener('click', () => this.vote(reportId, -1), { once: true });
+    photoBtn?.addEventListener('click', () => {
+      const url = this.reportPhotoUrls.get(reportId);
+      if (url) this.openPhotoModal(url);
+    }, { once: true });
   }
 
   private vote(reportId: string, voteType: 1 | -1): void {
@@ -374,29 +448,120 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   cancelPendingPin(): void {
     this.pendingPin = null;
     this.pinDropMode = false;
+    this.clearPhoto();
+  }
+
+  // ---- photo attachment ----
+
+  onPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.photoError = null;
+
+    if (!file) {
+      this.clearPhoto();
+      return;
+    }
+
+    if (!MapPageComponent.ALLOWED_PHOTO_TYPES.includes(file.type)) {
+      this.photoError = 'Tanging JPEG, PNG, o WebP na larawan lang ang tinatanggap.';
+      input.value = '';
+      return;
+    }
+
+    if (file.size > MapPageComponent.MAX_PHOTO_BYTES) {
+      this.photoError = 'Ang photo ay dapat hindi lalagpas sa 8MB.';
+      input.value = '';
+      return;
+    }
+
+    if (this.photoPreviewUrl) {
+      URL.revokeObjectURL(this.photoPreviewUrl);
+    }
+
+    this.selectedPhotoFile = file;
+    this.photoPreviewUrl = URL.createObjectURL(file);
+  }
+
+  clearPhoto(): void {
+    if (this.photoPreviewUrl) {
+      URL.revokeObjectURL(this.photoPreviewUrl);
+    }
+    this.selectedPhotoFile = null;
+    this.photoPreviewUrl = null;
+    this.photoError = null;
+  }
+
+  // ---- photo viewer modal ----
+
+  openPhotoModal(url: string, event?: Event): void {
+    // Stops list-item clicks from also triggering focusReport() underneath.
+    event?.stopPropagation();
+    this.viewingPhotoUrl = url;
+  }
+
+  closePhotoModal(): void {
+    this.viewingPhotoUrl = null;
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.viewingPhotoUrl) {
+      this.closePhotoModal();
+    }
   }
 
   submitNewReport(): void {
     if (!this.pendingPin || this.isSubmitting) return;
 
     this.isSubmitting = true;
-    this.floodReportService.create({
-      lat: this.pendingPin.lat,
-      lng: this.pendingPin.lng,
-      severity: this.newReport.severity,
-      notes: this.newReport.notes || undefined,
-      reporterSessionId: this.sessionService.sessionId
-    }).subscribe({
-      next: () => {
-        this.isSubmitting = false;
-        this.pendingPin = null;
-        this.pinDropMode = false;
-        this.newReport = { severity: 1, notes: '' };
-        // No manual upsertMarker() call here 
-      },
-      error: () => {
-        this.isSubmitting = false;
-      }
-    });
+
+    // Photo is optional — upload it first (if present) to get a URL, then
+    // create the report exactly as before. CreateFloodReportRequest's shape
+    // never changes; it just receives a real PhotoUrl now instead of none.
+    let uploadStep$: Observable<{ url: string }> | null = null;
+    if (this.selectedPhotoFile) {
+      this.isUploadingPhoto = true;
+      uploadStep$ = this.photoService.upload(this.selectedPhotoFile);
+    }
+
+    const createReport = (photoUrl: string | undefined) => {
+      this.floodReportService.create({
+        lat: this.pendingPin!.lat,
+        lng: this.pendingPin!.lng,
+        severity: this.newReport.severity,
+        notes: this.newReport.notes || undefined,
+        photoUrl,
+        reporterSessionId: this.sessionService.sessionId
+      }).subscribe({
+        next: () => {
+          this.isSubmitting = false;
+          this.pendingPin = null;
+          this.pinDropMode = false;
+          this.newReport = { severity: 1, notes: '' };
+          this.clearPhoto();
+          // No manual upsertMarker() call here 
+        },
+        error: () => {
+          this.isSubmitting = false;
+        }
+      });
+    };
+
+    if (uploadStep$) {
+      uploadStep$.subscribe({
+        next: result => {
+          this.isUploadingPhoto = false;
+          createReport(result.url);
+        },
+        error: () => {
+          this.isUploadingPhoto = false;
+          this.isSubmitting = false;
+          this.photoError = 'Nabigo ang pag-upload ng photo. Subukan ulit.';
+        }
+      });
+    } else {
+      createReport(undefined);
+    }
   }
 }
