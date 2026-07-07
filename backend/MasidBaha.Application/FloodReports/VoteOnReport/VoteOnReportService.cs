@@ -29,7 +29,7 @@ public class VoteOnReportService : IVoteOnReportService
 
         command.Parameters.AddWithValue("@FloodReportId", floodReportId);
         command.Parameters.AddWithValue("@VoterSessionId", request.VoterSessionId);
-        command.Parameters.AddWithValue("@VoteType", (sbyte)request.VoteType);
+        command.Parameters.AddWithValue("@VoteType", (byte)request.VoteType);
 
         await connection.OpenAsync();
         using var reader = await command.ExecuteReaderAsync();
