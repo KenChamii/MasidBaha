@@ -1,0 +1,16 @@
+/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --mb-void: #0A1220;
+  --mb-surface: #101B33;
+  --mb-water: #34C6E8;
+  --mb-alert: #FF7A47;
+  --mb-text-primary: #EEF3FB;
+  --mb-text-muted: #8493B3;
+  --mb-font-display: 'Space Grotesk', sans-serif;
+  --mb-font-body: 'Inter', sans-serif;
+  --mb-font-mono: 'IBM Plex Mono', monospace;
+}
+
+body { margin: 0; background: var(--mb-void); }

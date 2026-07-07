@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Net;
 using MasidBaha.Application.Common.Data;
 using Microsoft.Data.SqlClient;
 
@@ -26,10 +27,16 @@ public class CreateFloodReportService : ICreateFloodReportService
             CommandType = CommandType.StoredProcedure
         };
 
+        // Encode before storing — Notes may eventually be rendered as raw HTML
+        // in a popup (see frontend MapPageComponent), so we don't want stored XSS.
+        var encodedNotes = string.IsNullOrWhiteSpace(request.Notes)
+            ? null
+            : WebUtility.HtmlEncode(request.Notes.Trim());
+
         command.Parameters.AddWithValue("@Lat", request.Lat);
         command.Parameters.AddWithValue("@Lng", request.Lng);
         command.Parameters.AddWithValue("@Severity", (byte)request.Severity);
-        command.Parameters.AddWithValue("@Notes", (object?)request.Notes ?? DBNull.Value);
+        command.Parameters.AddWithValue("@Notes", (object?)encodedNotes ?? DBNull.Value);
         command.Parameters.AddWithValue("@PhotoUrl", (object?)request.PhotoUrl ?? DBNull.Value);
         command.Parameters.AddWithValue("@ReporterSessionId", request.ReporterSessionId);
 
@@ -44,7 +51,7 @@ public class CreateFloodReportService : ICreateFloodReportService
             Lat = request.Lat,
             Lng = request.Lng,
             Severity = request.Severity,
-            Notes = request.Notes,
+            Notes = encodedNotes,
             PhotoUrl = request.PhotoUrl,
             ReportedAt = DateTime.UtcNow,
             ConfidenceScore = 1,

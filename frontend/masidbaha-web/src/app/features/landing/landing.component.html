@@ -1,0 +1,169 @@
+<div class="landing">
+
+  <!-- ============ NAVBAR ============ -->
+  <header class="nav">
+    <div class="nav__inner">
+      <a class="nav__brand" routerLink="/">
+        <span class="nav__logo">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+            <path d="M4 15c2-4 4-6 8-6s6 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M4 19c2-3 4-4.5 8-4.5s6 1.5 8 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+          </svg>
+        </span>
+        <span class="nav__name">MasidBaha</span>
+      </a>
+
+      <nav class="nav__links" aria-label="Pangunahing nabigasyon">
+        <a href="#paano">Paano gumagana</a>
+        <a href="#mga-ulat">Mga ulat</a>
+        <a href="#tungkol">Tungkol</a>
+      </nav>
+
+      <button class="btn btn--primary btn--sm" (click)="goToMap()">
+        Buksan ang Mapa
+      </button>
+    </div>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero__text">
+      <span class="eyebrow">
+        <app-pulse-pin tone="water" size="sm"></app-pulse-pin>
+        Live ngayon sa buong Pilipinas
+      </span>
+
+      <h1 class="hero__heading">
+        Malaman bago<br />
+        pa man umalis.
+      </h1>
+
+      <p class="hero__sub">
+        Real-time na mapa ng baha, mula sa totoong mga tao sa totoong oras.
+        Walang account ,mag-ulat o mag-check sa isang tingin lang.
+      </p>
+
+      <div class="hero__actions">
+        <button class="btn btn--primary" (click)="goToMap()">
+          Buksan ang Mapa
+        </button>
+        <a class="btn btn--ghost" href="#paano">
+          Paano ito gumagana
+        </a>
+      </div>
+
+      <dl class="hero__stats">
+        <div class="stat">
+          <dt>6 oras</dt>
+          <dd>bago mag-expire ang isang ulat</dd>
+        </div>
+        <div class="stat">
+          <dt>0</dt>
+          <dd>account na kailangan gawin</dd>
+        </div>
+        <div class="stat">
+          <dt>Live</dt>
+          <dd>walang kailangang i-refresh</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="hero__visual">
+      <app-device-mockup></app-device-mockup>
+    </div>
+  </section>
+
+  <!-- ============ FEATURE GRID ============ -->
+  <section class="features" id="paano">
+    <div class="features__header">
+      <span class="eyebrow eyebrow--muted">Bakit MasidBaha</span>
+      <h2>Apat na bagay lang ang kailangan mong malaman</h2>
+    </div>
+
+    <div class="features__grid">
+      <article class="feature-card" *ngFor="let feature of features">
+        <span class="feature-card__icon" [class]="'feature-card__icon--' + feature.tone">
+          <svg *ngIf="feature.icon === 'pin'" viewBox="0 0 24 24" width="20" height="20" fill="none">
+            <path d="M12 21s7-6.2 7-11.5S16.4 3 12 3 5 4.7 5 9.5 12 21 12 21Z" stroke="currentColor" stroke-width="1.8"/>
+            <circle cx="12" cy="9.5" r="2.3" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+          <svg *ngIf="feature.icon === 'check'" viewBox="0 0 24 24" width="20" height="20" fill="none">
+            <path d="M5 12.5 10 17l9-10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <svg *ngIf="feature.icon === 'clock'" viewBox="0 0 24 24" width="20" height="20" fill="none">
+            <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <svg *ngIf="feature.icon === 'shield'" viewBox="0 0 24 24" width="20" height="20" fill="none">
+            <path d="M12 3l7 3v5.5c0 4.6-3 7.9-7 9.5-4-1.6-7-4.9-7-9.5V6l7-3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <h3>{{ feature.title }}</h3>
+        <p>{{ feature.description }}</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ SPLIT / AUDIENCE SECTION ============ -->
+  <section class="split" id="mga-ulat">
+    <div class="split__cards">
+      <article class="audience-card audience-card--light">
+        <span class="audience-card__eyebrow">Para sa residente</span>
+        <h3>Alamin kung ligtas dumaan.</h3>
+        <p>Buksan lang ang mapa bago ka umalas ng bahay — makikita mo agad kung saan may baha sa ruta mo.</p>
+        <button class="btn btn--dark btn--sm" (click)="goToMap()">Tingnan ang mapa</button>
+      </article>
+
+      <article class="audience-card audience-card--dark">
+        <span class="audience-card__eyebrow">Para sa barangay at LGU</span>
+        <h3>Datos mula sa totoong komunidad.</h3>
+        <p>Gamitin ang crowd-sourced na data bilang karagdagang mata sa mga lugar na madalas bahain.</p>
+        <button class="btn btn--primary btn--sm" (click)="goToMap()">Tingnan ang mapa</button>
+      </article>
+    </div>
+
+    <div class="split__thumbs">
+      <div class="thumb thumb--map" aria-hidden="true">
+        <span class="thumb__label">Live na mapa</span>
+      </div>
+      <div class="thumb thumb--form" aria-hidden="true">
+        <span class="thumb__label">Mabilis na pag-ulat</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GALLERY ============ -->
+  <section class="gallery" id="tungkol">
+    <div class="gallery__header">
+      <span class="eyebrow eyebrow--muted">Kamakailang mga ulat</span>
+      <h2>Nangyayari na ngayon sa buong bansa</h2>
+    </div>
+
+    <div class="gallery__grid">
+      <article
+        class="gallery-card"
+        *ngFor="let card of galleryCards"
+        [class.gallery-card--light]="card.variant === 'light'"
+      >
+        <div class="gallery-card__media" aria-hidden="true"></div>
+        <span class="gallery-card__eyebrow">{{ card.eyebrow }}</span>
+        <h3>{{ card.title }}</h3>
+        <p>{{ card.description }}</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER CTA ============ -->
+  <section class="cta">
+    <h2>Handa ka na bang malaman bago pa man umalis?</h2>
+    <p>Libre, walang account, at live 24/7.</p>
+    <button class="btn btn--primary btn--lg" (click)="goToMap()">
+      Buksan ang Mapa
+    </button>
+  </section>
+
+  <footer class="footer">
+    <span>© {{ currentYear }} MasidBaha — Built to help Filipinos know before they go.</span>
+  </footer>
+
+</div>
