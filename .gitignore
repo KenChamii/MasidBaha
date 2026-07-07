@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# User-uploaded report photos (local disk storage provider)
+backend/MasidBaha.WebAPI/wwwroot/uploads/

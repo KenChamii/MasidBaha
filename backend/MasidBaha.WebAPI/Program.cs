@@ -1,6 +1,8 @@
 using System.Threading.RateLimiting;
 using MasidBaha.Application.Common.Data;
 using MasidBaha.Application.Common.Geocoding;
+using MasidBaha.Application.Common.Storage;
+using MasidBaha.Application.Photos.UploadPhoto;
 using MasidBaha.Application.FloodReports.CreateReport;
 using MasidBaha.Application.FloodReports.GetNearbyReports;
 using MasidBaha.Application.FloodReports.GetTopReports;
@@ -25,6 +27,15 @@ builder.Services.AddScoped<IGetTopReportsService, GetTopReportsService>();
 builder.Services.AddScoped<IVoteOnReportService, VoteOnReportService>();
 builder.Services.AddScoped<IExpireReportsService, ExpireReportsService>();
 builder.Services.AddHostedService<FloodExpiryService>();
+
+// Photo storage — swap LocalDiskPhotoStorageService for an
+// AzureBlobPhotoStorageService (same IPhotoStorageService interface) once
+// ready to move off local disk. No other code needs to change when that happens.
+// Path is resolved here (not inside the service) because only the host layer
+// reliably knows the content root in both Development and published builds.
+var uploadsRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads");
+builder.Services.AddSingleton<IPhotoStorageService>(_ => new LocalDiskPhotoStorageService(uploadsRootPath));
+builder.Services.AddScoped<IUploadPhotoService, UploadPhotoService>();
 
 // Reverse geocoding (OpenStreetMap Nominatim) — tags each report with
 // Region/Province/City so the top-reports list can be scoped nationally,
@@ -89,6 +100,11 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("AllowAngularDev");
 app.UseRateLimiter();
+
+// Serves wwwroot/uploads/** at /uploads/** — this is what LocalDiskPhotoStorageService
+// writes into. Not needed once move to Azure Blob (files are served from Azure then).
+app.UseStaticFiles();
+
 app.MapControllers();
 app.MapHub<FloodHub>("/hubs/flood");
 

@@ -113,6 +113,14 @@
           <p class="map-page__list-notes" *ngIf="report.notes">{{ report.notes }}</p>
           <span class="map-page__list-time">{{ timeAgo(report.reportedAt) }}</span>
         </div>
+        <button
+          *ngIf="report.photoUrl"
+          type="button"
+          class="map-page__list-photo-btn"
+          [style.backgroundImage]="'url(' + report.photoUrl + ')'"
+          (click)="openPhotoModal(report.photoUrl!, $event)"
+          aria-label="Tingnan ang larawan ng ulat"
+        ></button>
       </li>
     </ul>
   </aside>
@@ -147,11 +155,38 @@
       <textarea name="notes" rows="2" [(ngModel)]="newReport.notes" placeholder="Hal. mabagal umagos ang tubig dito"></textarea>
     </label>
 
+    <label>
+      Photo (opsyonal, bilang patunay)
+      <input
+        type="file"
+        name="photo"
+        accept="image/jpeg,image/png,image/webp"
+        (change)="onPhotoSelected($event)"
+      />
+    </label>
+
+    <p class="report-form__error" *ngIf="photoError">{{ photoError }}</p>
+
+    <div class="report-form__photo-preview" *ngIf="photoPreviewUrl">
+      <img [src]="photoPreviewUrl" alt="Preview ng na-attach na photo" />
+      <button type="button" (click)="clearPhoto()">Alisin</button>
+    </div>
+
     <div class="report-form__actions">
       <button type="button" (click)="cancelPendingPin()">Kanselahin</button>
       <button type="submit" [disabled]="isSubmitting">
-        {{ isSubmitting ? 'Isinusumite...' : 'I-post ang ulat' }}
+        {{ isUploadingPhoto ? 'Ina-upload ang photo...' : (isSubmitting ? 'Isinusumite...' : 'I-post ang ulat') }}
       </button>
     </div>
   </form>
+
+  <div class="photo-modal" *ngIf="viewingPhotoUrl" (click)="closePhotoModal()">
+    <button type="button" class="photo-modal__close" (click)="closePhotoModal()" aria-label="Isara">✕</button>
+    <img
+      class="photo-modal__image"
+      [src]="viewingPhotoUrl"
+      alt="Larawan ng ulat bilang patunay"
+      (click)="$event.stopPropagation()"
+    />
+  </div>
 </div>
