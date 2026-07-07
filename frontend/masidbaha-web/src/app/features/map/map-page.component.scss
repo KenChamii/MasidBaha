@@ -14,6 +14,271 @@
   width: 100%;
 }
 
+.map-page__list-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 500;
+  background: rgba(8, 13, 24, 0.82);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  color: #EEF3FB;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 28px -10px rgba(0, 0, 0, 0.6);
+  transition: background 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background: rgba(8, 13, 24, 0.92);
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+}
+
+.map-page__list {
+  position: absolute;
+  top: 64px;
+  right: 16px;
+  z-index: 500;
+  width: min(320px, calc(100vw - 32px));
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  background: linear-gradient(165deg, rgba(13, 21, 38, 0.88), rgba(6, 10, 20, 0.86));
+  backdrop-filter: blur(20px) saturate(130%);
+  -webkit-backdrop-filter: blur(20px) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 16px;
+  color: #EEF3FB;
+  box-shadow:
+    0 24px 60px -20px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  // subtle scrollbar so it doesn't look like a plain browser default over the glass
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+  }
+}
+
+.map-page__list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.map-page__list-count {
+  background: rgba(52, 198, 232, 0.18);
+  border: 1px solid rgba(52, 198, 232, 0.3);
+  color: #34C6E8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.map-page__scope-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(4, 8, 16, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 10px;
+}
+
+.map-page__scope-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: #8493B3;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 6px 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover:not(&--active) {
+    background: rgba(255, 255, 255, 0.05);
+    color: #C9D2E0;
+  }
+
+  &--active {
+    background: #34C6E8;
+    color: #0A1220;
+    box-shadow: 0 4px 14px -4px rgba(52, 198, 232, 0.5);
+  }
+}
+
+.map-page__scope-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.map-page__scope-select {
+  width: 100%;
+  background: rgba(10, 18, 32, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #EEF3FB;
+  padding: 7px 8px;
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+
+  &:hover,
+  &:focus {
+    border-color: rgba(52, 198, 232, 0.5);
+    outline: none;
+  }
+
+  option {
+    background: #101B33;
+    color: #EEF3FB;
+  }
+}
+
+.map-page__list-loading,
+.map-page__list-empty {
+  font-size: 0.8rem;
+  color: #8493B3;
+  text-align: center;
+  padding: 16px 0;
+}
+
+.map-page__list-title {
+  margin: 0;
+  font-family: var(--mb-font-display, sans-serif);
+  font-size: 0.9rem;
+  color: #A8B4CC;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.map-page__list-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.map-page__list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.map-page__list-rank {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(238, 243, 251, 0.08);
+  color: #8493B3;
+  font-size: 0.68rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+
+  &--gold {
+    background: #FFD166;
+    color: #0A1220;
+  }
+  &--silver {
+    background: #C9D2E0;
+    color: #0A1220;
+  }
+  &--bronze {
+    background: #E0A672;
+    color: #0A1220;
+  }
+}
+
+.map-page__list-dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 4px;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+}
+
+.map-page__list-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.map-page__list-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.map-page__list-severity {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.map-page__list-confidence {
+  font-size: 0.8rem;
+  color: #8493B3;
+  flex-shrink: 0;
+}
+
+.map-page__list-location {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.72rem;
+  color: #34C6E8;
+  font-weight: 600;
+}
+
+.map-page__list-notes {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: #A8B4CC;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.map-page__list-time {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.7rem;
+  color: #7C8CAD;
+}
+
 .map-page__report-btn {
   position: absolute;
   bottom: 24px;

@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Net;
 using MasidBaha.Application.Common.Data;
+using MasidBaha.Application.Common.Geocoding;
 using Microsoft.Data.SqlClient;
 
 namespace MasidBaha.Application.FloodReports.CreateReport;
@@ -13,14 +14,18 @@ public interface ICreateFloodReportService
 public class CreateFloodReportService : ICreateFloodReportService
 {
     private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly IGeocodingService _geocodingService;
 
-    public CreateFloodReportService(ISqlConnectionFactory connectionFactory)
+    public CreateFloodReportService(ISqlConnectionFactory connectionFactory, IGeocodingService geocodingService)
     {
         _connectionFactory = connectionFactory;
+        _geocodingService = geocodingService;
     }
 
     public async Task<FloodReportDto> CreateAsync(CreateFloodReportRequest request)
     {
+        var address = await _geocodingService.ReverseGeocodeAsync(request.Lat, request.Lng);
+
         using var connection = _connectionFactory.CreateConnection();
         using var command = new SqlCommand("sp_InsertFloodReport", connection)
         {
@@ -39,6 +44,9 @@ public class CreateFloodReportService : ICreateFloodReportService
         command.Parameters.AddWithValue("@Notes", (object?)encodedNotes ?? DBNull.Value);
         command.Parameters.AddWithValue("@PhotoUrl", (object?)request.PhotoUrl ?? DBNull.Value);
         command.Parameters.AddWithValue("@ReporterSessionId", request.ReporterSessionId);
+        command.Parameters.AddWithValue("@Region", (object?)address.Region ?? DBNull.Value);
+        command.Parameters.AddWithValue("@Province", (object?)address.Province ?? DBNull.Value);
+        command.Parameters.AddWithValue("@City", (object?)address.City ?? DBNull.Value);
 
         await connection.OpenAsync();
         using var reader = await command.ExecuteReaderAsync();
@@ -55,7 +63,10 @@ public class CreateFloodReportService : ICreateFloodReportService
             PhotoUrl = request.PhotoUrl,
             ReportedAt = DateTime.UtcNow,
             ConfidenceScore = 1,
-            Status = Common.Enums.ReportStatus.Active
+            Status = Common.Enums.ReportStatus.Active,
+            Region = address.Region,
+            Province = address.Province,
+            City = address.City
         };
     }
 }

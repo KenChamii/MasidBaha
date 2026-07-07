@@ -14,6 +14,9 @@ public class FloodReportDto
     public DateTime ReportedAt { get; set; }
     public int ConfidenceScore { get; set; }
     public ReportStatus Status { get; set; }
+    public string? Region { get; set; }
+    public string? Province { get; set; }
+    public string? City { get; set; }
 }
 
 public class CreateFloodReportRequest
