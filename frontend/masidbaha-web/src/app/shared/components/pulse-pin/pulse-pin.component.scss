@@ -1,0 +1,58 @@
+.pulse-pin {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &--sm { width: 20px; height: 20px; }
+  &--md { width: 32px; height: 32px; }
+  &--lg { width: 48px; height: 48px; }
+}
+
+.pulse-pin__dot {
+  position: relative;
+  z-index: 2;
+  width: 34%;
+  height: 34%;
+  border-radius: 50%;
+  box-shadow: 0 0 8px 1px rgba(52, 198, 232, 0.6);
+}
+
+.pulse-pin__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  opacity: 0;
+  animation: pulse-ring 2.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+}
+
+.pulse-pin__ring--2 {
+  animation-delay: 1.2s;
+}
+
+.pulse-pin--water {
+  color: var(--mb-water);
+  .pulse-pin__dot { background: var(--mb-water); }
+}
+
+.pulse-pin--alert {
+  color: var(--mb-alert);
+  .pulse-pin__dot {
+    background: var(--mb-alert);
+    box-shadow: 0 0 8px 1px rgba(255, 122, 71, 0.6);
+  }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.4); opacity: 0.7; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+// accessibility: respect reduced-motion, fall back to a static dot
+@media (prefers-reduced-motion: reduce) {
+  .pulse-pin__ring {
+    animation: none;
+    opacity: 0;
+  }
+}
