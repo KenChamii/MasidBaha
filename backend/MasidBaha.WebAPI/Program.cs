@@ -8,6 +8,8 @@ using MasidBaha.Application.FloodReports.GetNearbyReports;
 using MasidBaha.Application.FloodReports.GetTopReports;
 using MasidBaha.Application.FloodReports.VoteOnReport;
 using MasidBaha.Application.FloodReports.ExpireReports;
+using MasidBaha.Application.FloodReports.GetHeatmapData;
+using MasidBaha.Application.Admin;
 using MasidBaha.WebAPI.Hubs;
 using MasidBaha.WebAPI.BackgroundServices;
 using MasidBaha.WebAPI.Middleware;
@@ -26,6 +28,8 @@ builder.Services.AddScoped<IGetNearbyReportsService, GetNearbyReportsService>();
 builder.Services.AddScoped<IGetTopReportsService, GetTopReportsService>();
 builder.Services.AddScoped<IVoteOnReportService, VoteOnReportService>();
 builder.Services.AddScoped<IExpireReportsService, ExpireReportsService>();
+builder.Services.AddScoped<IGetHeatmapDataService, GetHeatmapDataService>();
+builder.Services.AddScoped<IAdminReportsService, AdminReportsService>();
 builder.Services.AddHostedService<FloodExpiryService>();
 
 // Photo storage — swap LocalDiskPhotoStorageService for an
@@ -100,6 +104,11 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("AllowAngularDev");
 app.UseRateLimiter();
+
+// Gates /api/admin/** behind the X-Admin-Key header. Must run after CORS
+// (so preflight/browser calls from the Angular admin page still work) but
+// before MapControllers (so unauthorized requests never reach the action).
+app.UseMiddleware<AdminAuthMiddleware>();
 
 // Serves wwwroot/uploads/** at /uploads/** — this is what LocalDiskPhotoStorageService
 // writes into. Not needed once move to Azure Blob (files are served from Azure then).

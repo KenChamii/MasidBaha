@@ -1,6 +1,7 @@
 ﻿using MasidBaha.Application.FloodReports.CreateReport;
 using MasidBaha.Application.FloodReports.GetNearbyReports;
 using MasidBaha.Application.FloodReports.GetTopReports;
+using MasidBaha.Application.FloodReports.GetHeatmapData;
 using MasidBaha.Application.FloodReports.VoteOnReport;
 using MasidBaha.Application.Common.Enums;
 using MasidBaha.WebAPI.Hubs;
@@ -17,6 +18,7 @@ public class FloodReportsController : ControllerBase
     private readonly ICreateFloodReportService _createService;
     private readonly IGetNearbyReportsService _nearbyService;
     private readonly IGetTopReportsService _topService;
+    private readonly IGetHeatmapDataService _heatmapService;
     private readonly IVoteOnReportService _voteService;
     private readonly IHubContext<FloodHub> _hubContext;
 
@@ -24,12 +26,14 @@ public class FloodReportsController : ControllerBase
         ICreateFloodReportService createService,
         IGetNearbyReportsService nearbyService,
         IGetTopReportsService topService,
+        IGetHeatmapDataService heatmapService,
         IVoteOnReportService voteService,
         IHubContext<FloodHub> hubContext)
     {
         _createService = createService;
         _nearbyService = nearbyService;
         _topService = topService;
+        _heatmapService = heatmapService;
         _voteService = voteService;
         _hubContext = hubContext;
     }
@@ -55,6 +59,16 @@ public class FloodReportsController : ControllerBase
     {
         var reports = await _topService.GetTopAsync(query);
         return Ok(reports);
+    }
+
+    // Historical view for the analytics/heatmap page — deliberately separate
+    // from GetNearby/GetTop since those are status-filtered (Active only)
+    // and radius/scope-bound, while this spans all statuses and a date range.
+    [HttpGet("heatmap")]
+    public async Task<ActionResult<List<HeatmapPointDto>>> GetHeatmap([FromQuery] HeatmapQuery query)
+    {
+        var points = await _heatmapService.GetHeatmapAsync(query);
+        return Ok(points);
     }
 
     [HttpPost("{id}/vote")]

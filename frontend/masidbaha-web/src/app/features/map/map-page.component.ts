@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import * as L from 'leaflet';
 import { Observable, Subscription, fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -10,6 +11,7 @@ import { SignalRService } from '../../core/services/signalr.service';
 import { GeolocationService } from '../../core/services/geolocation.service';
 import { SessionService } from '../../core/services/session.service';
 import { PhotoService } from '../../core/services/photo.service';
+import { OfflineCacheService } from '../../core/services/offline-cache.service';
 import { FloodReport, ReportScope, Severity } from '../../shared/models/flood-report.model';
 
 const PHILIPPINES_CENTER: L.LatLngExpression = [12.8797, 121.7740];
@@ -36,7 +38,7 @@ const PULSE_BY_SEVERITY: Record<Severity, { duration: number; scale: number }> =
 @Component({
   selector: 'app-map-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './map-page.component.html',
   styleUrls: ['./map-page.component.scss']
 })
@@ -84,6 +86,11 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
 
   private filterSample: FloodReport[] = [];
 
+  // offline / PWA fallback (see OfflineCacheService for the why)
+  isOffline = !navigator.onLine;
+  isShowingCachedData = false;
+  cachedDataSavedAt: string | null = null;
+
   get availableRegions(): string[] {
     return this.distinct(this.filterSample.map(r => r.region));
   }
@@ -116,7 +123,8 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     private signalRService: SignalRService,
     private geolocationService: GeolocationService,
     private sessionService: SessionService,
-    private photoService: PhotoService
+    private photoService: PhotoService,
+    private offlineCacheService: OfflineCacheService
   ) {}
 
   // ---- lifecycle ----
@@ -207,6 +215,22 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     this.subscriptions.push(
       this.signalRService.removeReport$.subscribe(() => this.refreshTopReports())
     );
+
+    // Step 10 (PWA): track connectivity so the offline banner reflects
+    // reality even if the person's connection drops mid-session, not just
+    // at initial load.
+    this.subscriptions.push(
+      fromEvent(window, 'offline').subscribe(() => this.isOffline = true)
+    );
+    this.subscriptions.push(
+      fromEvent(window, 'online').subscribe(() => {
+        this.isOffline = false;
+        // Connection is back — refetch live data immediately rather than
+        // waiting for the next pan/zoom to clear the "cached" banner.
+        const center = this.map.getCenter();
+        this.loadNearby(center.lat, center.lng);
+      })
+    );
   }
 
   ngOnDestroy(): void {
@@ -218,16 +242,37 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
 
   private loadNearby(lat: number, lng: number): void {
     this.floodReportService.getNearby(lat, lng, DEFAULT_RADIUS_METERS)
-      .subscribe(reports => {
-        const currentIds = new Set(reports.map(r => r.id));
+      .subscribe({
+        next: reports => {
+          this.isShowingCachedData = false;
+          const currentIds = new Set(reports.map(r => r.id));
 
-        // drop markers that fell outside the new radius
-        for (const id of this.markers.keys()) {
-          if (!currentIds.has(id)) this.removeMarker(id);
-        }
+          // drop markers that fell outside the new radius
+          for (const id of this.markers.keys()) {
+            if (!currentIds.has(id)) this.removeMarker(id);
+          }
 
-        reports.forEach(report => this.upsertMarker(report));
+          reports.forEach(report => this.upsertMarker(report));
+
+          // Snapshot for offline fallback — fire-and-forget, never blocks
+          // the UI on IndexedDB writes.
+          this.offlineCacheService.saveLastKnownReports(reports);
+        },
+        error: () => this.loadFromOfflineCache()
       });
+  }
+
+  // Called when a live fetch fails (most likely no network). Shows whatever
+  // was last successfully fetched, clearly labeled as cached/stale so users
+  // don't mistake it for a live view.
+  private loadFromOfflineCache(): void {
+    this.offlineCacheService.getLastKnownReports().then(cached => {
+      if (!cached) return;
+
+      this.isShowingCachedData = true;
+      this.cachedDataSavedAt = cached.savedAt;
+      cached.reports.forEach(report => this.upsertMarker(report));
+    });
   }
 
   private upsertMarker(report: FloodReport): void {

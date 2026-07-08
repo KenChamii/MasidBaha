@@ -14,6 +14,27 @@
   width: 100%;
 }
 
+.map-page__offline-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: #FFD166;
+  color: #0A1220;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.4rem 1rem;
+  pointer-events: none;
+}
+
+.map-page__analytics-link {
+  margin-left: auto;
+  text-decoration: none;
+  font-size: 1.1rem;
+}
+
 .map-page__list-toggle {
   position: absolute;
   top: 16px;

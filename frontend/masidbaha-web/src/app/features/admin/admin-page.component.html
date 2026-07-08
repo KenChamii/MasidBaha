@@ -1,0 +1,75 @@
+<div class="admin-page" *ngIf="!isUnlocked">
+  <div class="admin-page__unlock">
+    <h2>Admin Panel</h2>
+    <p>Ilagay ang admin API key para makapag-moderate ng mga report.</p>
+    <input
+      type="password"
+      [(ngModel)]="apiKeyInput"
+      (keydown.enter)="unlock()"
+      placeholder="X-Admin-Key"
+      autocomplete="off"
+    />
+    <button type="button" (click)="unlock()">Pumasok</button>
+    <p class="admin-page__error" *ngIf="authError">{{ authError }}</p>
+  </div>
+</div>
+
+<div class="admin-page" *ngIf="isUnlocked">
+  <div class="admin-page__toolbar">
+    <div class="admin-page__filters">
+      <button type="button" [class.active]="filter === 'all'" (click)="setFilter('all')">Lahat</button>
+      <button type="button" [class.active]="filter === 1" (click)="setFilter(1)">Active</button>
+      <button type="button" [class.active]="filter === 2" (click)="setFilter(2)">Resolved</button>
+      <button type="button" [class.active]="filter === 3" (click)="setFilter(3)">Expired</button>
+    </div>
+    <button type="button" class="admin-page__lock" (click)="lock()">Lumabas</button>
+  </div>
+
+  <p class="admin-page__error" *ngIf="authError">{{ authError }}</p>
+  <p *ngIf="isLoading">Naglo-load...</p>
+
+  <table class="admin-page__table" *ngIf="!isLoading">
+    <thead>
+      <tr>
+        <th>Lokasyon</th>
+        <th>Severity</th>
+        <th>Notes</th>
+        <th>Confidence</th>
+        <th>Status</th>
+        <th>Reporter Session</th>
+        <th>Reported</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of reports">
+        <td>{{ r.city || r.province || r.region || (r.lat.toFixed(4) + ', ' + r.lng.toFixed(4)) }}</td>
+        <td>{{ r.severity }}</td>
+        <td class="admin-page__notes">{{ r.notes || '—' }}</td>
+        <td>{{ r.confidenceScore }}</td>
+        <td>{{ statusLabel[r.status] }}</td>
+        <td class="admin-page__session">{{ r.reporterSessionId }}</td>
+        <td>{{ timeAgo(r.reportedAt) }}</td>
+        <td class="admin-page__actions">
+          <button type="button" *ngIf="r.status !== 2" (click)="verify(r)" title="Mark as Resolved (verified legit and handled)">✅ Verify</button>
+          <button type="button" *ngIf="r.status !== 3" (click)="markExpired(r)" title="Mark as Expired (clear from active map)">🕑 Expire</button>
+          <button type="button" *ngIf="r.status !== 1" (click)="reactivate(r)" title="Reactivate">↩️ Reactivate</button>
+          <button type="button" class="admin-page__delete" (click)="deleteReport(r)" title="Delete permanently (spam/fake)">🗑️ Delete</button>
+        </td>
+      </tr>
+      <tr *ngIf="reports.length === 0">
+        <td colspan="8" class="admin-page__empty">Walang report dito.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="admin-page__row-error" *ngFor="let r of reports">
+    <span *ngIf="actionErrorByReportId[r.id]">{{ actionErrorByReportId[r.id] }}</span>
+  </p>
+
+  <div class="admin-page__pagination" *ngIf="!isLoading && totalCount > 0">
+    <button type="button" [disabled]="page <= 1" (click)="goToPage(page - 1)">← Prev</button>
+    <span>Page {{ page }} of {{ totalPages }} ({{ totalCount }} total)</span>
+    <button type="button" [disabled]="page >= totalPages" (click)="goToPage(page + 1)">Next →</button>
+  </div>
+</div>

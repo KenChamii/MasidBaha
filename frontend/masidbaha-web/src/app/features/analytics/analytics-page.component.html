@@ -1,0 +1,46 @@
+<div class="analytics-page">
+  <div class="analytics-page__panel">
+    <h2>Flood-prone areas</h2>
+    <p class="analytics-page__subtitle">Historical reports, including expired/resolved ones — heavier color means more/worse flooding reported over time.</p>
+
+    <div class="analytics-page__field">
+      <label>Saklaw ng panahon</label>
+      <div class="analytics-page__range-buttons">
+        <button type="button" [class.active]="range === '1m'" (click)="setRange('1m')">1 buwan</button>
+        <button type="button" [class.active]="range === '3m'" (click)="setRange('3m')">3 buwan</button>
+        <button type="button" [class.active]="range === '6m'" (click)="setRange('6m')">6 buwan</button>
+        <button type="button" [class.active]="range === '1y'" (click)="setRange('1y')">1 taon</button>
+        <button type="button" [class.active]="range === 'all'" (click)="setRange('all')">Lahat</button>
+      </div>
+    </div>
+
+    <div class="analytics-page__field">
+      <label>Rehiyon</label>
+      <select (change)="onRegionChange($any($event.target).value)">
+        <option value="">Lahat ng rehiyon</option>
+        <option *ngFor="let r of availableRegions" [value]="r" [selected]="r === selectedRegion">{{ r }}</option>
+      </select>
+    </div>
+
+    <div class="analytics-page__field" *ngIf="selectedRegion">
+      <label>Probinsya</label>
+      <select (change)="onProvinceChange($any($event.target).value)">
+        <option value="">Lahat ng probinsya</option>
+        <option *ngFor="let p of availableProvinces" [value]="p" [selected]="p === selectedProvince">{{ p }}</option>
+      </select>
+    </div>
+
+    <div class="analytics-page__field" *ngIf="selectedProvince">
+      <label>Lungsod/Bayan</label>
+      <select (change)="onCityChange($any($event.target).value)">
+        <option value="">Lahat ng lungsod/bayan</option>
+        <option *ngFor="let c of availableCities" [value]="c" [selected]="c === selectedCity">{{ c }}</option>
+      </select>
+    </div>
+
+    <p class="analytics-page__count" *ngIf="!isLoading">{{ points.length }} historical reports</p>
+    <p class="analytics-page__count" *ngIf="isLoading">Naglo-load...</p>
+  </div>
+
+  <div class="analytics-page__map" #mapContainer></div>
+</div>
