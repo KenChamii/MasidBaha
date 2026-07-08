@@ -1,0 +1,167 @@
+.admin-page {
+  padding: 1.5rem;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  color: var(--mb-text-primary);
+  font-family: var(--mb-font-body);
+  background: var(--mb-void);
+
+  &__unlock {
+    max-width: 360px;
+    margin: 4rem auto;
+    text-align: center;
+
+    input {
+      display: block;
+      width: 100%;
+      padding: 0.5rem;
+      margin: 1rem 0;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 0.5rem 1.25rem;
+      cursor: pointer;
+    }
+  }
+
+  &__error {
+    color: #E63946;
+    font-size: 0.85rem;
+  }
+
+  &__toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  &__filters {
+    display: flex;
+    gap: 0.5rem;
+
+    button {
+      padding: 0.35rem 0.8rem;
+      border: 1px solid var(--mb-text-muted);
+      background: transparent;
+      color: var(--mb-text-primary);
+      border-radius: 6px;
+      cursor: pointer;
+
+      &.active {
+        background: var(--mb-water);
+        color: var(--mb-void);
+        border-color: var(--mb-water);
+        font-weight: 600;
+      }
+    }
+  }
+
+  &__lock {
+    padding: 0.35rem 0.8rem;
+    cursor: pointer;
+    color: var(--mb-text-primary);
+    background: transparent;
+    border: 1px solid var(--mb-text-muted);
+    border-radius: 6px;
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    color: var(--mb-text-primary);
+
+    th, td {
+      text-align: left;
+      padding: 0.5rem;
+      border-bottom: 1px solid rgba(238, 243, 251, 0.12);
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--mb-text-muted);
+      font-weight: 600;
+    }
+  }
+
+  &__notes {
+    max-width: 220px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  &__session {
+    font-family: monospace;
+    font-size: 0.75rem;
+    opacity: 0.7;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+
+    button {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      border: 1px solid var(--mb-text-muted);
+      background: transparent;
+      color: var(--mb-text-primary);
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+  }
+
+  &__delete {
+    color: #E63946;
+    border-color: #E63946 !important;
+  }
+
+  &__empty {
+    text-align: center;
+    opacity: 0.6;
+    padding: 2rem !important;
+  }
+
+  &__row-error {
+    color: #E63946;
+    font-size: 0.75rem;
+    margin: 0;
+
+    span {
+      display: block;
+      margin-top: 0.25rem;
+    }
+  }
+
+  &__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--mb-text-primary);
+
+    button {
+      padding: 0.3rem 0.8rem;
+      cursor: pointer;
+      color: var(--mb-text-primary);
+      background: transparent;
+      border: 1px solid var(--mb-text-muted);
+      border-radius: 6px;
+
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+    }
+  }
+}

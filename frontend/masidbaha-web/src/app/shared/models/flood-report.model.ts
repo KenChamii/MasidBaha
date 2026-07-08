@@ -33,3 +33,25 @@ export interface TopReportsQuery {
   city?: string;
   limit?: number;
 }
+
+// Historical point for the analytics heatmap — intentionally not filtered
+// by status, since Expired/Resolved reports are exactly what reveal
+// flood-prone patterns over time.
+export interface HeatmapPoint {
+  lat: number;
+  lng: number;
+  severity: Severity;
+  status: ReportStatus;
+  reportedAt: string;
+  region?: string;
+  province?: string;
+  city?: string;
+}
+
+export interface HeatmapQuery {
+  fromDate?: string;
+  toDate?: string;
+  region?: string;
+  province?: string;
+  city?: string;
+}

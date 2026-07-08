@@ -1,4 +1,8 @@
 <div class="map-page">
+  <div class="map-page__offline-banner" *ngIf="isOffline || isShowingCachedData">
+    <span *ngIf="isOffline">📶 Walang internet connection.</span>
+    <span *ngIf="isShowingCachedData"> Ipinapakita ang huling na-fetch na data{{ cachedDataSavedAt ? ' (' + timeAgo(cachedDataSavedAt) + ')' : '' }}.</span>
+  </div>
   <div #mapContainer class="map-page__map"></div>
 
   <button
@@ -13,6 +17,7 @@
     <div class="map-page__list-header">
       <h3 class="map-page__list-title">Pinaka-kumpirmadong ulat</h3>
       <span class="map-page__list-count">{{ topReports.length }}</span>
+      <a routerLink="/analytics" class="map-page__analytics-link" title="Historical heatmap">📊</a>
     </div>
 
     <div class="map-page__scope-tabs">
