@@ -48,7 +48,32 @@
         <td class="admin-page__notes">{{ r.notes || '—' }}</td>
         <td>{{ r.confidenceScore }}</td>
         <td>{{ statusLabel[r.status] }}</td>
-        <td class="admin-page__session">{{ r.reporterSessionId }}</td>
+        <td class="admin-page__session">
+          <span class="admin-page__session-id" [title]="r.reporterSessionId">{{ r.reporterSessionId }}</span>
+          <button
+            type="button"
+            class="admin-page__trust-btn"
+            (click)="toggleTrust(r.reporterSessionId)"
+            title="Tingnan ang trust score ng session na ito"
+          >
+            🛡️
+          </button>
+
+          <ng-container>
+            <p class="admin-page__trust-info" *ngIf="trustFor(r.reporterSessionId) === 'loading'">
+              Naglo-load...
+            </p>
+            <p class="admin-page__trust-info admin-page__trust-info--error" *ngIf="trustFor(r.reporterSessionId) === 'error'">
+              Hindi na-load ang trust score.
+            </p>
+            <div class="admin-page__trust-info" *ngIf="trustFor(r.reporterSessionId) as trust">
+              <ng-container *ngIf="trust !== 'loading' && trust !== 'error'">
+                <strong>{{ trust.trustScore === null ? 'Walang rating pa' : trust.trustScore + '% trust' }}</strong>
+                <span>{{ trust.resolvedReports }}/{{ trust.totalReports }} na-confirm</span>
+              </ng-container>
+            </div>
+          </ng-container>
+        </td>
         <td>{{ timeAgo(r.reportedAt) }}</td>
         <td class="admin-page__actions">
           <button type="button" *ngIf="r.status !== 2" (click)="verify(r)" title="Mark as Resolved (verified legit and handled)">✅ Verify</button>

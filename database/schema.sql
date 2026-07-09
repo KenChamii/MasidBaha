@@ -61,3 +61,20 @@ BEGIN
     );
 END
 GO
+
+-- One row per browser subscription. We key on Endpoint instead of SessionId
+-- because a device can re-subscribe after clearing storage, and Endpoint is
+-- what actually identifies the push channel to the browser.
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'PushSubscriptions')
+BEGIN
+    CREATE TABLE PushSubscriptions (
+        Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+        SessionId NVARCHAR(100) NOT NULL,
+        Endpoint NVARCHAR(500) NOT NULL,
+        P256dh NVARCHAR(500) NOT NULL,
+        Auth NVARCHAR(500) NOT NULL,
+        CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+        CONSTRAINT UQ_PushSubscriptions_Endpoint UNIQUE (Endpoint)
+    );
+END
+GO

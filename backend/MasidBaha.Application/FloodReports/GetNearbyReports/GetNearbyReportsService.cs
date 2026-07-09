@@ -45,7 +45,7 @@ public class GetNearbyReportsService : IGetNearbyReportsService
                 Severity = (Severity)reader.GetByte(reader.GetOrdinal("Severity")),
                 Notes = reader.IsDBNull(reader.GetOrdinal("Notes")) ? null : reader.GetString(reader.GetOrdinal("Notes")),
                 PhotoUrl = reader.IsDBNull(reader.GetOrdinal("PhotoUrl")) ? null : reader.GetString(reader.GetOrdinal("PhotoUrl")),
-                ReportedAt = reader.GetDateTime(reader.GetOrdinal("ReportedAt")),
+                ReportedAt = reader.GetUtcDateTime(reader.GetOrdinal("ReportedAt")),
                 ConfidenceScore = reader.GetInt32(reader.GetOrdinal("ConfidenceScore")),
                 Status = (ReportStatus)reader.GetByte(reader.GetOrdinal("Status")),
                 Region = reader.IsDBNull(reader.GetOrdinal("Region")) ? null : reader.GetString(reader.GetOrdinal("Region")),

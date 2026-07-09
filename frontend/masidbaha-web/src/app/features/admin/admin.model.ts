@@ -23,3 +23,17 @@ export interface AdminGetReportsResult {
   page: number;
   pageSize: number;
 }
+
+// Matches SessionTrustDto on the backend (Trust/SessionTrustService.cs).
+// trustScore is null for a session with no reports yet, which is different
+// from 0 (meaning it has reports but none got confirmed).
+export interface SessionTrustDto {
+  sessionId: string;
+  totalReports: number;
+  resolvedReports: number;
+  activeReports: number;
+  avgConfidenceScore: number;
+  firstReportAt: string | null;
+  lastReportAt: string | null;
+  trustScore: number | null;
+}

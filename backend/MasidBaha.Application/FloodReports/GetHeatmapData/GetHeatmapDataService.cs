@@ -45,7 +45,7 @@ public class GetHeatmapDataService : IGetHeatmapDataService
                 Lng = reader.GetDouble(reader.GetOrdinal("Lng")),
                 Severity = (Severity)reader.GetByte(reader.GetOrdinal("Severity")),
                 Status = (ReportStatus)reader.GetByte(reader.GetOrdinal("Status")),
-                ReportedAt = reader.GetDateTime(reader.GetOrdinal("ReportedAt")),
+                ReportedAt = reader.GetUtcDateTime(reader.GetOrdinal("ReportedAt")),
                 Region = reader.IsDBNull(reader.GetOrdinal("Region")) ? null : reader.GetString(reader.GetOrdinal("Region")),
                 Province = reader.IsDBNull(reader.GetOrdinal("Province")) ? null : reader.GetString(reader.GetOrdinal("Province")),
                 City = reader.IsDBNull(reader.GetOrdinal("City")) ? null : reader.GetString(reader.GetOrdinal("City"))

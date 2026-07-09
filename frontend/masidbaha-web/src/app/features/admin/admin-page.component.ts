@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 
 import { AdminAuthService } from '../../core/services/admin-auth.service';
 import { AdminService } from './services/admin.service';
-import { AdminFloodReport, AdminReportStatus } from './admin.model';
+import { AdminFloodReport, AdminReportStatus, SessionTrustDto } from './admin.model';
 
 type StatusFilter = 'all' | AdminReportStatus;
 
@@ -35,6 +35,10 @@ export class AdminPageComponent implements OnInit {
   filter: StatusFilter = 'all';
   isLoading = false;
   actionErrorByReportId: Record<string, string | undefined> = {};
+
+  // Trust info loads per session, on click, instead of for every row on
+  // page load. Most reports on a page share only a few sessions anyway.
+  trustBySessionId: Record<string, SessionTrustDto | 'loading' | 'error' | undefined> = {};
 
   constructor(private adminAuth: AdminAuthService, private adminService: AdminService) {}
 
@@ -129,6 +133,27 @@ export class AdminPageComponent implements OnInit {
     this.adminService.delete(report.id).subscribe({
       next: () => this.loadReports(),
       error: () => this.actionErrorByReportId[report.id] = 'Nabigo ang pagtanggal. Subukan ulit.'
+    });
+  }
+
+  // ---- session trust ----
+
+  trustFor(sessionId: string): SessionTrustDto | 'loading' | 'error' | undefined {
+    return this.trustBySessionId[sessionId];
+  }
+
+  toggleTrust(sessionId: string): void {
+    // Clicking again on an already loaded session collapses it, so this
+    // button doubles as a show/hide toggle.
+    if (this.trustBySessionId[sessionId] && this.trustBySessionId[sessionId] !== 'loading') {
+      delete this.trustBySessionId[sessionId];
+      return;
+    }
+
+    this.trustBySessionId[sessionId] = 'loading';
+    this.adminService.getSessionTrust(sessionId).subscribe({
+      next: trust => this.trustBySessionId[sessionId] = trust,
+      error: () => this.trustBySessionId[sessionId] = 'error'
     });
   }
 

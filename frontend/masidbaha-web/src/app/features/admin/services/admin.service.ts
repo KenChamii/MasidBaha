@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { AdminAuthService } from '../../../core/services/admin-auth.service';
-import { AdminGetReportsResult, AdminReportStatus } from '../admin.model';
+import { AdminGetReportsResult, AdminReportStatus, SessionTrustDto } from '../admin.model';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -33,6 +33,12 @@ export class AdminService {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/reports/${id}`, {
+      headers: this.headers
+    });
+  }
+
+  getSessionTrust(sessionId: string): Observable<SessionTrustDto> {
+    return this.http.get<SessionTrustDto>(`${this.baseUrl}/sessions/${sessionId}/trust`, {
       headers: this.headers
     });
   }

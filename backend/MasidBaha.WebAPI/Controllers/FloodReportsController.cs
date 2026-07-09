@@ -4,6 +4,7 @@ using MasidBaha.Application.FloodReports.GetTopReports;
 using MasidBaha.Application.FloodReports.GetHeatmapData;
 using MasidBaha.Application.FloodReports.VoteOnReport;
 using MasidBaha.Application.Common.Enums;
+using MasidBaha.Application.PushNotifications;
 using MasidBaha.WebAPI.Hubs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -20,6 +21,7 @@ public class FloodReportsController : ControllerBase
     private readonly IGetTopReportsService _topService;
     private readonly IGetHeatmapDataService _heatmapService;
     private readonly IVoteOnReportService _voteService;
+    private readonly IPushNotificationService _pushService;
     private readonly IHubContext<FloodHub> _hubContext;
 
     public FloodReportsController(
@@ -28,6 +30,7 @@ public class FloodReportsController : ControllerBase
         IGetTopReportsService topService,
         IGetHeatmapDataService heatmapService,
         IVoteOnReportService voteService,
+        IPushNotificationService pushService,
         IHubContext<FloodHub> hubContext)
     {
         _createService = createService;
@@ -35,6 +38,7 @@ public class FloodReportsController : ControllerBase
         _topService = topService;
         _heatmapService = heatmapService;
         _voteService = voteService;
+        _pushService = pushService;
         _hubContext = hubContext;
     }
 
@@ -44,6 +48,21 @@ public class FloodReportsController : ControllerBase
     {
         var report = await _createService.CreateAsync(request);
         await _hubContext.Clients.All.SendAsync("NewReport", report);
+
+        // Push only fires for Tuhod (KneeLevel) severity and up. A Passable
+        // report still shows on the map for anyone looking, it just won't
+        // send a notification to everyone's phone.
+        if (report.Severity >= Severity.KneeLevel)
+        {
+            var locationLabel = report.City ?? report.Province ?? "malapit sa iyo";
+            await _pushService.BroadcastAsync(new PushPayload
+            {
+                Title = "Bagong ulat ng baha",
+                Body = $"{report.Severity} sa {locationLabel}",
+                Url = "/map"
+            });
+        }
+
         return Ok(report);
     }
 
