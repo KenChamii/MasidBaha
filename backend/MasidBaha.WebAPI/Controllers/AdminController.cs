@@ -1,5 +1,6 @@
 using MasidBaha.Application.Admin;
 using MasidBaha.Application.Common.Enums;
+using MasidBaha.Application.Trust;
 using MasidBaha.WebAPI.Hubs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -13,12 +14,26 @@ namespace MasidBaha.WebAPI.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IAdminReportsService _adminReportsService;
+    private readonly ISessionTrustService _sessionTrustService;
     private readonly IHubContext<FloodHub> _hubContext;
 
-    public AdminController(IAdminReportsService adminReportsService, IHubContext<FloodHub> hubContext)
+    public AdminController(
+        IAdminReportsService adminReportsService,
+        ISessionTrustService sessionTrustService,
+        IHubContext<FloodHub> hubContext)
     {
         _adminReportsService = adminReportsService;
+        _sessionTrustService = sessionTrustService;
         _hubContext = hubContext;
+    }
+
+    // Lets an admin check how reliable a reporting session has been before
+    // deciding whether to trust a specific report from it.
+    [HttpGet("sessions/{sessionId}/trust")]
+    public async Task<ActionResult<SessionTrustDto>> GetSessionTrust(string sessionId)
+    {
+        var trust = await _sessionTrustService.GetTrustScoreAsync(sessionId);
+        return Ok(trust);
     }
 
     [HttpGet("reports")]

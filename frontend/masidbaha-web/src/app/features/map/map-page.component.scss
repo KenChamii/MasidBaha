@@ -59,6 +59,71 @@
   }
 }
 
+.map-page__push-toggle {
+  position: absolute;
+  top: 16px;
+  // Sits just left of the list toggle. This is an estimate that leaves a
+  // gap since the list toggle's width changes with its label.
+  right: 190px;
+  z-index: 500;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 13, 24, 0.82);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 8px 28px -10px rgba(0, 0, 0, 0.6);
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+
+  &:hover {
+    background: rgba(8, 13, 24, 0.92);
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+
+  &--active {
+    background: rgba(255, 209, 102, 0.18);
+    border-color: rgba(255, 209, 102, 0.4);
+  }
+}
+
+.map-page__push-error {
+  position: absolute;
+  top: 64px;
+  right: 16px;
+  z-index: 500;
+  max-width: min(320px, calc(100vw - 32px));
+  background: rgba(230, 57, 70, 0.92);
+  color: #FFF6F6;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  box-shadow: 0 8px 28px -10px rgba(0, 0, 0, 0.6);
+
+  button {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 0.85rem;
+    line-height: 1;
+    padding: 0;
+  }
+}
+
 .map-page__list {
   position: absolute;
   top: 64px;

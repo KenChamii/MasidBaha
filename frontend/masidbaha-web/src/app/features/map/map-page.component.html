@@ -13,6 +13,23 @@
     {{ showList ? 'Itago ang listahan' : 'Ipakita ang listahan (' + topReports.length + ')' }}
   </button>
 
+  <button
+    *ngIf="pushSupported"
+    type="button"
+    class="map-page__push-toggle"
+    [class.map-page__push-toggle--active]="pushEnabled"
+    [disabled]="isTogglingPush"
+    (click)="togglePush()"
+    [title]="pushEnabled ? 'I-off ang mga abiso ng baha' : 'Abisuhan ako ng mga bagong ulat ng baha'"
+  >
+    {{ pushEnabled ? '🔔' : '🔕' }}
+  </button>
+
+  <div class="map-page__push-error" *ngIf="pushError">
+    {{ pushError }}
+    <button type="button" (click)="pushError = null">✕</button>
+  </div>
+
   <aside class="map-page__list" *ngIf="showList">
     <div class="map-page__list-header">
       <h3 class="map-page__list-title">Pinaka-kumpirmadong ulat</h3>

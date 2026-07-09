@@ -12,6 +12,7 @@ import { GeolocationService } from '../../core/services/geolocation.service';
 import { SessionService } from '../../core/services/session.service';
 import { PhotoService } from '../../core/services/photo.service';
 import { OfflineCacheService } from '../../core/services/offline-cache.service';
+import { PushNotificationService } from '../../core/services/push-notification.service';
 import { FloodReport, ReportScope, Severity } from '../../shared/models/flood-report.model';
 
 const PHILIPPINES_CENTER: L.LatLngExpression = [12.8797, 121.7740];
@@ -91,6 +92,14 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   isShowingCachedData = false;
   cachedDataSavedAt: string | null = null;
 
+  // push notification bell state. pushSupported means the browser and
+  // build support it (needs a production build, HTTPS or localhost).
+  // pushEnabled tracks whether this device is currently subscribed.
+  pushSupported = false;
+  pushEnabled = false;
+  isTogglingPush = false;
+  pushError: string | null = null;
+
   get availableRegions(): string[] {
     return this.distinct(this.filterSample.map(r => r.region));
   }
@@ -124,7 +133,8 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     private geolocationService: GeolocationService,
     private sessionService: SessionService,
     private photoService: PhotoService,
-    private offlineCacheService: OfflineCacheService
+    private offlineCacheService: OfflineCacheService,
+    private pushNotificationService: PushNotificationService
   ) {}
 
   // ---- lifecycle ----
@@ -231,6 +241,15 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
         this.loadNearby(center.lat, center.lng);
       })
     );
+
+    // push notifications: reflect whatever subscription state the browser
+    // already has, in case it was enabled on a previous visit.
+    this.pushSupported = this.pushNotificationService.isSupported;
+    if (this.pushSupported) {
+      this.subscriptions.push(
+        this.pushNotificationService.subscription$.subscribe((sub: PushSubscription | null) => this.pushEnabled = !!sub)
+      );
+    }
   }
 
   ngOnDestroy(): void {
@@ -385,6 +404,32 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
 
   toggleList(): void {
     this.showList = !this.showList;
+  }
+
+  // ---- push notifications ----
+
+  async togglePush(): Promise<void> {
+    if (!this.pushSupported || this.isTogglingPush) return;
+
+    this.isTogglingPush = true;
+    this.pushError = null;
+
+    try {
+      if (this.pushEnabled) {
+        await this.pushNotificationService.unsubscribe();
+      } else {
+        await this.pushNotificationService.subscribe();
+      }
+      // pushEnabled updates on its own through the subscription$ listener
+      // set up in ngOnInit.
+    } catch (err) {
+      // Usually means the person blocked the browser's permission prompt.
+      this.pushError = err instanceof Error
+        ? err.message
+        : 'Hindi ma-enable ang push notifications. Subukan ulit.';
+    } finally {
+      this.isTogglingPush = false;
+    }
   }
 
   setScope(scope: ReportScope): void {

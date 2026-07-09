@@ -3,6 +3,7 @@ using MasidBaha.Application.Common.Data;
 using MasidBaha.Application.Common.Geocoding;
 using MasidBaha.Application.Common.Storage;
 using MasidBaha.Application.Photos.UploadPhoto;
+using MasidBaha.Application.PushNotifications;
 using MasidBaha.Application.FloodReports.CreateReport;
 using MasidBaha.Application.FloodReports.GetNearbyReports;
 using MasidBaha.Application.FloodReports.GetTopReports;
@@ -10,6 +11,7 @@ using MasidBaha.Application.FloodReports.VoteOnReport;
 using MasidBaha.Application.FloodReports.ExpireReports;
 using MasidBaha.Application.FloodReports.GetHeatmapData;
 using MasidBaha.Application.Admin;
+using MasidBaha.Application.Trust;
 using MasidBaha.WebAPI.Hubs;
 using MasidBaha.WebAPI.BackgroundServices;
 using MasidBaha.WebAPI.Middleware;
@@ -30,6 +32,9 @@ builder.Services.AddScoped<IVoteOnReportService, VoteOnReportService>();
 builder.Services.AddScoped<IExpireReportsService, ExpireReportsService>();
 builder.Services.AddScoped<IGetHeatmapDataService, GetHeatmapDataService>();
 builder.Services.AddScoped<IAdminReportsService, AdminReportsService>();
+builder.Services.AddScoped<ISessionTrustService, SessionTrustService>();
+builder.Services.AddScoped<IPushSubscriptionService, PushSubscriptionService>();
+builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
 builder.Services.AddHostedService<FloodExpiryService>();
 
 // Photo storage — swap LocalDiskPhotoStorageService for an
@@ -74,6 +79,16 @@ builder.Services.AddRateLimiter(options =>
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy("push-writes", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));

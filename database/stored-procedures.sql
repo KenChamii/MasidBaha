@@ -162,3 +162,60 @@ BEGIN
     SELECT @@ROWCOUNT AS DeletedCount;
 END
 GO
+
+-- ===================== Session trust =====================
+
+-- Gets a session's report history so we can tell how reliable it has been.
+-- Only looks at reports made by this session, not votes it cast on others.
+CREATE OR ALTER PROCEDURE sp_GetSessionTrustScore
+    @SessionId NVARCHAR(100)
+AS
+BEGIN
+    SELECT
+        COUNT(*) AS TotalReports,
+        ISNULL(SUM(CASE WHEN Status = 2 THEN 1 ELSE 0 END), 0) AS ResolvedReports,
+        ISNULL(SUM(CASE WHEN Status = 1 THEN 1 ELSE 0 END), 0) AS ActiveReports,
+        ISNULL(AVG(CAST(ConfidenceScore AS FLOAT)), 0) AS AvgConfidenceScore,
+        MIN(ReportedAt) AS FirstReportAt,
+        MAX(ReportedAt) AS LastReportAt
+    FROM FloodReports
+    WHERE ReporterSessionId = @SessionId;
+END
+GO
+
+-- ===================== Push subscriptions =====================
+
+-- Upserts by Endpoint so re-subscribing just updates the existing row
+-- instead of creating a duplicate.
+CREATE OR ALTER PROCEDURE sp_UpsertPushSubscription
+    @SessionId NVARCHAR(100),
+    @Endpoint NVARCHAR(500),
+    @P256dh NVARCHAR(500),
+    @Auth NVARCHAR(500)
+AS
+BEGIN
+    MERGE PushSubscriptions AS target
+    USING (SELECT @Endpoint AS Endpoint) AS source
+    ON target.Endpoint = source.Endpoint
+    WHEN MATCHED THEN
+        UPDATE SET SessionId = @SessionId, P256dh = @P256dh, Auth = @Auth
+    WHEN NOT MATCHED THEN
+        INSERT (SessionId, Endpoint, P256dh, Auth)
+        VALUES (@SessionId, @Endpoint, @P256dh, @Auth);
+END
+GO
+
+CREATE OR ALTER PROCEDURE sp_DeletePushSubscription
+    @Endpoint NVARCHAR(500)
+AS
+BEGIN
+    DELETE FROM PushSubscriptions WHERE Endpoint = @Endpoint;
+END
+GO
+
+CREATE OR ALTER PROCEDURE sp_GetAllPushSubscriptions
+AS
+BEGIN
+    SELECT Id, SessionId, Endpoint, P256dh, Auth FROM PushSubscriptions;
+END
+GO
