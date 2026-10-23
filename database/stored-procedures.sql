@@ -11,7 +11,8 @@ BEGIN
     INSERT INTO FloodReports (Id, Location, Severity, Notes, PhotoUrl, ExpiresAt, ReporterSessionId, Region, Province, City)
     VALUES (@Id, @Point, @Severity, @Notes, @PhotoUrl, DATEADD(HOUR, 6, SYSUTCDATETIME()), @ReporterSessionId, @Region, @Province, @City);
 
-    SELECT @Id AS Id, @Lat AS Lat, @Lng AS Lng;
+    -- Return what was actually stored, so callers never have to guess timestamps
+    SELECT Id, ReportedAt, ConfidenceScore, Status FROM FloodReports WHERE Id = @Id;
 END
 GO
 
@@ -52,9 +53,28 @@ END
 GO
 
 CREATE OR ALTER PROCEDURE sp_VoteOnReport
-    @FloodReportId UNIQUEIDENTIFIER, @VoterSessionId NVARCHAR(100), @VoteType TINYINT
+    @FloodReportId UNIQUEIDENTIFIER, @VoterSessionId NVARCHAR(100), @VoteType SMALLINT -- signed: Deny is -1
 AS
 BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON; -- any THROW below rolls the whole vote back
+
+    IF @VoteType NOT IN (-1, 1)
+        THROW 50400, 'Invalid vote type.', 1;
+
+    BEGIN TRANSACTION;
+
+    -- Lock the report row so concurrent votes on it are serialized
+    DECLARE @Status TINYINT;
+    SELECT @Status = Status FROM FloodReports WITH (UPDLOCK, HOLDLOCK) WHERE Id = @FloodReportId;
+
+    IF @Status IS NULL
+        THROW 50404, 'Report not found.', 1;
+    IF @Status <> 1
+        THROW 50410, 'Report is no longer active.', 1;
+    IF EXISTS (SELECT 1 FROM ReportVotes WHERE FloodReportId = @FloodReportId AND VoterSessionId = @VoterSessionId)
+        THROW 50409, 'Session has already voted on this report.', 1;
+
     INSERT INTO ReportVotes (FloodReportId, VoterSessionId, VoteType)
     VALUES (@FloodReportId, @VoterSessionId, @VoteType);
 
@@ -62,6 +82,8 @@ BEGIN
     SET ConfidenceScore = ConfidenceScore + @VoteType,
         Status = CASE WHEN ConfidenceScore + @VoteType <= 0 THEN 2 ELSE Status END
     WHERE Id = @FloodReportId;
+
+    COMMIT TRANSACTION;
 
     SELECT ConfidenceScore, Status FROM FloodReports WHERE Id = @FloodReportId;
 END

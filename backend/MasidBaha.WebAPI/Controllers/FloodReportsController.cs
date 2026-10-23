@@ -46,6 +46,9 @@ public class FloodReportsController : ControllerBase
     [EnableRateLimiting("report-writes")]
     public async Task<ActionResult<FloodReportDto>> Create(CreateFloodReportRequest request)
     {
+        if (!PhotoUrlValidator.IsOwnUpload(request.PhotoUrl, Request.Host.Host))
+            return BadRequest(new { error = "PhotoUrl must point to a photo uploaded through this API." });
+
         var report = await _createService.CreateAsync(request);
         await _hubContext.Clients.All.SendAsync("NewReport", report);
 
