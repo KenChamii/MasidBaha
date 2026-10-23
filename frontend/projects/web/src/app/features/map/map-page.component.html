@@ -1,4 +1,4 @@
-<div class="map-page" role="main">
+<div class="map-page" [class.map-page--banner]="isOffline() || isShowingCachedData()" role="main">
   <app-offline-banner
     [isOffline]="isOffline()"
     [isShowingCachedData]="isShowingCachedData()"
@@ -13,7 +13,13 @@
     <app-watch-areas [center]="mapCenter()" />
     <app-weather-layers (zoomToStorm)="zoomToStorm($event)" />
     <button type="button" class="map-page__list-toggle" (click)="toggleList()">
-      {{ showList() ? 'Itago ang listahan' : 'Ipakita ang listahan (' + store.topReports().length + ')' }}
+      @if (showList()) {
+        <span class="map-page__long">Itago ang listahan</span>
+        <span class="map-page__short">Itago</span>
+      } @else {
+        <span class="map-page__long">Ipakita ang listahan ({{ store.topReports().length }})</span>
+        <span class="map-page__short">Listahan ({{ store.topReports().length }})</span>
+      }
     </button>
   </div>
 

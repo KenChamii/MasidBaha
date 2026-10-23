@@ -2,7 +2,7 @@
 
 :host {
   display: block;
-  height: 100vh;
+  height: var(--mb-full-height);
   position: relative;
 }
 
@@ -32,6 +32,37 @@
     z-index: 1;
   }
 
+  // stacked: the filters become a compact strip above the map
+  @media (max-width: 800px) {
+    flex-direction: column;
+
+    &__panel {
+      width: 100%;
+      flex: 0 0 auto;
+      max-height: 46%;
+      padding: 0.75rem var(--mb-gutter);
+      border-right: none;
+      border-bottom: var(--mb-border);
+    }
+
+    h2 {
+      font-size: 1.15rem;
+      margin-bottom: 0.4rem;
+    }
+
+    &__subtitle {
+      display: none;
+    }
+
+    &__field {
+      margin-bottom: 0.6rem;
+    }
+
+    &__map {
+      min-height: 180px;
+    }
+  }
+
   &__subtitle {
     font-size: 0.85rem;
     color: var(--mb-muted);
@@ -51,6 +82,7 @@
     select {
       @include m.form-field;
       width: 100%;
+      min-height: 40px;
     }
   }
 
@@ -64,6 +96,7 @@
       flex: 1 1 auto;
       padding: 0.35rem 0.5rem;
       font-size: 0.7rem;
+      @include m.touch-target(40px);
 
       &.active {
         background: var(--mb-ink);

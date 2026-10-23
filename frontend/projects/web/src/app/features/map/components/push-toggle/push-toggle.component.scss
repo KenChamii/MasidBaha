@@ -13,6 +13,7 @@
   height: 36px;
   padding: 0;
   font-size: 1.1rem;
+  @include m.touch-target(40px);
 
   &--active {
     background: var(--mb-warn);

@@ -2,29 +2,50 @@
 
 :host {
   display: block;
-  height: 100vh;
+  height: var(--mb-full-height);
   position: relative;
 }
 
 .map-page {
+  // room for the offline banner across the top, so it never covers the buttons
+  --top-offset: 0px;
   height: 100%;
   position: relative;
+
+  &--banner {
+    --top-offset: 36px;
+
+    @media (max-width: 640px) {
+      --top-offset: 56px;
+    }
+  }
 }
 
+// Leaflet stacks its panes and controls up to z-index 1000; keep that inside the map so panels can sit above it
 .map-page__map {
   height: 100%;
   width: 100%;
+  isolation: isolate;
 }
 
-// floating controls (theme, push, list) share one top-right toolbar
+// floating controls (theme, push, watch, weather, list) share one top-right toolbar
 .map-page__toolbar {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: calc(max(var(--mb-gutter), env(safe-area-inset-top)) + var(--top-offset));
+  right: max(var(--mb-gutter), env(safe-area-inset-right));
   z-index: 500;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
+  max-width: calc(100% - 24px);
+
+  // on a phone the toolbar spans the screen (the zoom buttons move to the bottom)
+  @media (max-width: 640px) {
+    left: max(12px, env(safe-area-inset-left));
+    max-width: none;
+  }
 }
 
 .map-page__list-toggle {
@@ -32,16 +53,40 @@
   height: 36px;
   padding: 0 16px;
   font-size: 0.75rem;
+  white-space: nowrap;
+
+  @media (pointer: coarse) {
+    height: 40px;
+  }
+
+  @media (max-width: 400px) {
+    padding: 0 10px;
+  }
+}
+
+.map-page__short {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .map-page__long {
+    display: none;
+  }
+  .map-page__short {
+    display: inline;
+  }
 }
 
 .map-page__report-btn {
   @include m.press-button(var(--mb-water), var(--mb-white));
   position: absolute;
-  bottom: 24px;
+  bottom: max(24px, calc(env(safe-area-inset-bottom) + 12px));
   left: 50%;
   transform: translateX(-50%);
-  z-index: 500;
+  z-index: 450;
   padding: 14px 28px;
+  min-height: 48px;
+  white-space: nowrap;
   box-shadow: var(--mb-shadow);
 
   // keep the centering translate while the shared hover lifts the button
@@ -56,22 +101,31 @@
     background: var(--mb-alert);
     color: var(--mb-ink);
   }
+
+  // a phone on its side has little height to spare
+  @media (max-height: 480px) {
+    bottom: 12px;
+    padding: 10px 22px;
+    min-height: 40px;
+  }
 }
 
 .map-page__hint {
   @include m.panel(var(--mb-shadow-sm));
   @include m.mono-label;
   position: absolute;
-  top: 16px;
+  top: calc(max(var(--mb-gutter), env(safe-area-inset-top)) + var(--top-offset));
   left: 50%;
   transform: translateX(-50%);
   z-index: 500;
   padding: 8px 16px;
   white-space: nowrap;
 
+  // below the toolbar, which is full width here
   @media (max-width: 640px) {
+    top: calc(max(12px, env(safe-area-inset-top)) + 52px + var(--top-offset));
     white-space: normal;
-    width: calc(100vw - 32px);
+    width: calc(100% - 24px);
     text-align: center;
   }
 }
@@ -80,7 +134,14 @@
   display: block;
   max-width: min(90vw, 900px);
   max-height: 86vh;
+  max-height: 86dvh;
   border: 4px solid var(--mb-white);
   box-shadow: 8px 8px 0 var(--mb-water);
   object-fit: contain;
+
+  @media (max-width: 480px) {
+    max-width: calc(100vw - 24px);
+    border-width: 3px;
+    box-shadow: 4px 4px 0 var(--mb-water);
+  }
 }

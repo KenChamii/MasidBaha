@@ -95,6 +95,19 @@
   &__spacer {
     flex: 1;
   }
+
+  // a phone: fields share the row and grow to fill it, instead of sitting in a corner
+  @media (max-width: 640px) {
+    .field {
+      flex: 1 1 140px;
+      min-width: 0;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+    }
+  }
 }
 
 // Labelled form control
@@ -143,9 +156,18 @@
   font-size: 0.9rem;
 }
 
+// Wide tables scroll sideways; the shadows at the edges show there is more to see
 .table-wrap {
   overflow-x: auto;
   @include m.panel;
+  background:
+    linear-gradient(to right, var(--mb-surface) 30%, transparent) left center / 24px 100% no-repeat local,
+    linear-gradient(to left, var(--mb-surface) 30%, transparent) right center / 24px 100% no-repeat local,
+    linear-gradient(to right, color-mix(in srgb, var(--mb-ink) 22%, transparent), transparent) left center / 10px 100%
+      no-repeat scroll,
+    linear-gradient(to left, color-mix(in srgb, var(--mb-ink) 22%, transparent), transparent) right center / 10px 100%
+      no-repeat scroll,
+    var(--mb-surface);
 }
 
 .table {
@@ -197,6 +219,68 @@
   .num {
     text-align: right;
     font-variant-numeric: tabular-nums;
+  }
+}
+
+// On a phone a table is a list of cards: the column name sits above each value
+@media (max-width: 640px) {
+  .table-wrap {
+    overflow: visible;
+    background: none;
+    border: none;
+    box-shadow: none;
+  }
+
+  .table {
+    display: block;
+
+    thead {
+      // out of sight, but still read out by screen readers
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+    }
+
+    tbody,
+    tr,
+    td {
+      display: block;
+    }
+
+    tbody tr {
+      @include m.panel(var(--mb-shadow-sm));
+      margin-bottom: 12px;
+      padding: 4px 0;
+    }
+
+    td {
+      padding: 8px 12px;
+      border-bottom: var(--mb-hair);
+      text-align: left;
+      overflow-wrap: anywhere;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &[data-label]:not([data-label=''])::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 2px;
+        @include m.mono-label;
+        color: var(--mb-muted);
+      }
+    }
+
+    .num {
+      text-align: left;
+    }
+
+    &__empty {
+      padding: 1.25rem 12px;
+    }
   }
 }
 

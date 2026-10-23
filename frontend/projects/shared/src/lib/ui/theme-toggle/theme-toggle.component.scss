@@ -8,4 +8,5 @@
   width: 36px;
   height: 36px;
   padding: 0;
+  @include m.touch-target(40px);
 }

@@ -125,6 +125,50 @@
   }
 }
 
+// On a phone the top of the screen belongs to the toolbar, so the zoom buttons move to the thumb side
+@media (max-width: 640px) {
+  .leaflet-top.leaflet-left {
+    top: auto;
+    left: auto;
+    right: 0;
+    bottom: 92px;
+  }
+
+  .leaflet-top.leaflet-left .leaflet-control {
+    float: right;
+    margin-left: 0;
+    margin-right: 10px;
+    margin-top: 0;
+  }
+}
+
+// A popup never wider than the screen
+.leaflet-popup-content {
+  max-width: calc(100vw - 72px);
+}
+
+// Fingers: bigger buttons in a popup and bigger Leaflet controls
+@media (pointer: coarse) {
+  .flood-popup__actions button,
+  .flood-popup__share-btn,
+  .flood-popup__photo-btn {
+    padding: 10px 8px;
+    min-height: 40px;
+  }
+
+  .leaflet-bar a {
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+  }
+
+  .leaflet-touch .leaflet-bar a {
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+  }
+}
+
 // Leaflet popup chrome matches the square panels
 .leaflet-popup-content-wrapper {
   border: var(--mb-border);

@@ -6,6 +6,31 @@
   box-shadow: $shadow;
 }
 
+// A dialog panel: a card in the middle on larger screens, a full-width sheet from the bottom on phones
+@mixin sheet($max-width: 420px) {
+  @include panel;
+  width: min($max-width, calc(100vw - 32px));
+  max-height: calc(var(--mb-full-height) - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  @media (max-width: 640px) {
+    width: 100%;
+    max-height: calc(var(--mb-full-height) - 72px);
+    border-width: 2px 0 0;
+    box-shadow: none;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+}
+
+// Fingers need about 44px; on a mouse the compact size is kept
+@mixin touch-target($size: 44px) {
+  @media (pointer: coarse) {
+    min-width: $size;
+    min-height: $size;
+  }
+}
+
 // Offset-shadow button that "presses" into its shadow on hover
 @mixin press-button($bg: var(--mb-surface), $fg: var(--mb-ink)) {
   background: $bg;
@@ -39,6 +64,10 @@
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  @media (pointer: coarse) {
+    min-height: 40px;
   }
 }
 
