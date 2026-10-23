@@ -4,6 +4,7 @@ using MasidBaha.Application.Admin;
 using MasidBaha.Application.Common.Geocoding;
 using MasidBaha.Application.Common.Storage;
 using MasidBaha.Application.PushNotifications;
+using MasidBaha.Application.Weather;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -31,6 +32,12 @@ public class RecordingPushQueue : IPushQueue
         await Task.Delay(Timeout.Infinite, cancellationToken);
         yield break;
     }
+}
+
+// Stands in for GDACS: no storms, and no network
+public class EmptyTyphoonSource : ITyphoonSource
+{
+    public Task<string> FetchAsync(CancellationToken cancellationToken = default) => Task.FromResult("{\"features\":[]}");
 }
 
 public class FakeGeocoder : IGeocodingService
@@ -85,6 +92,9 @@ public class ApiFactory : WebApplicationFactory<Program>
 
         builder.ConfigureTestServices(services =>
         {
+            services.RemoveAll<ITyphoonSource>();
+            services.AddSingleton<ITyphoonSource, EmptyTyphoonSource>();
+
             services.RemoveAll<IGeocodingService>();
             services.AddSingleton<IGeocodingService, FakeGeocoder>();
 
