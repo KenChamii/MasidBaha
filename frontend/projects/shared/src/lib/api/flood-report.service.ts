@@ -22,6 +22,11 @@ export class FloodReportService {
     });
   }
 
+  // One report by id (what a shared link opens). 404 when it is unknown or has been hidden.
+  getById(id: string): Observable<FloodReport> {
+    return this.http.get<FloodReport>(`${this.baseUrl}/${id}`);
+  }
+
   getTop(query: TopReportsQuery): Observable<FloodReport[]> {
     const params: Record<string, string | number> = { limit: query.limit ?? 20 };
     if (query.region) params['region'] = query.region;

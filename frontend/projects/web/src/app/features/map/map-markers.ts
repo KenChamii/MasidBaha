@@ -36,6 +36,7 @@ export function buildPopupHtml(confidenceScore: number, hasPhoto: boolean): stri
         <button type="button" data-action="confirm">Kumpirmahin</button>
         <button type="button" data-action="deny">Wala na</button>
       </div>
+      <button type="button" class="flood-popup__share-btn" data-action="share">🔗 Ibahagi</button>
     </div>
   `;
 }

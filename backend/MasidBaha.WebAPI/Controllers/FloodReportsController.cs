@@ -140,7 +140,8 @@ public class FloodReportsController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<FloodReportDto>> GetById(Guid id)
     {
-        return Ok(await _getByIdService.GetAsync(id));
+        // Reading never issues a session cookie; a visitor without one is simply anyone
+        return Ok(await _getByIdService.GetAsync(id, _session.TryGet(HttpContext)));
     }
 
     /// <summary>Active reports within a radius (metres) of a point.</summary>

@@ -10,6 +10,7 @@
     "test": "ng test web --watch=false && ng test admin --watch=false && ng test shared --watch=false",
     "watch": "ng build web --watch --configuration development",
     "lint": "ng lint",
+    "test:functions": "node --test \"functions-lib/*.test.mjs\"",
     "format": "prettier --write \"projects/**/*.{ts,html,scss,json}\"",
     "format:check": "prettier --check \"projects/**/*.{ts,html,scss,json}\"",
     "prepare": "cd .. && husky frontend/.husky"

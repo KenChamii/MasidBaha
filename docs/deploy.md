@@ -108,13 +108,20 @@ Then in the GitHub repository, *Settings > Secrets and variables > Actions*:
 | `CLOUDFLARE_API_TOKEN` | Secret | an API token with *Cloudflare Pages: Edit* |
 | `CLOUDFLARE_ACCOUNT_ID` | Secret | your account id (right sidebar of the dashboard) |
 | `CF_PAGES_WEB`, `CF_PAGES_ADMIN` | Variable | only if your project names differ from the two above |
-| `PUBLIC_SITE_URL` | Variable | the public site's address, so the admin's "Live map" link goes there |
+| `PUBLIC_SITE_URL` | Variable | the public site's address (`https://your-site.pages.dev`, no trailing slash). The admin's "Live map" link goes there, and link previews on Facebook need it to find the preview image |
 
 Run **Actions > Deploy sites to Cloudflare Pages > Run workflow** once. After that it runs by itself
 whenever `frontend/` changes on `master`.
 
 Attach your own domain to each Pages project under *Custom domains* (HTTPS is automatic). HTTPS is
 required for push notifications and for the phone's location prompt.
+
+### Checking a shared link's preview
+
+Open a report's share link (`https://<your-site>/r/<report id>`), then paste it into Facebook's
+[Sharing Debugger](https://developers.facebook.com/tools/debug/) to see the card and force a refresh.
+Facebook caches previews, so use "Scrape Again" after changing anything. A link to a report that is
+hidden or gone falls back to the standard MasidBaha card.
 
 ## 5. Keeping the free API awake
 

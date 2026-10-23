@@ -25,7 +25,9 @@ import { SignalRService } from '../../core/services/signalr.service';
 import { GeolocationService } from '../../core/services/geolocation.service';
 import { OfflineCacheService } from '../../core/services/offline-cache.service';
 import { WatchAreaService } from '../../core/services/watch-area.service';
-import { FloodReport, FloodReportService, ModalComponent, ThemeToggleComponent } from '@masidbaha/shared';
+import { ActivatedRoute } from '@angular/router';
+import { FloodReport, FloodReportService, ModalComponent, ThemeToggleComponent, ToastService } from '@masidbaha/shared';
+import { shareReport } from './share-report';
 
 const PHILIPPINES_CENTER: L.LatLngExpression = [12.8797, 121.774];
 const DEFAULT_ZOOM = 6;
@@ -55,6 +57,8 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   private readonly geolocationService = inject(GeolocationService);
   private readonly offlineCacheService = inject(OfflineCacheService);
   private readonly watchAreaService = inject(WatchAreaService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly toast = inject(ToastService);
   readonly store = inject(FloodReportsStore);
 
   private map!: L.Map;
@@ -66,6 +70,8 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   // reportUpdated$ below), which doesn't carry photoUrl — so we remember it
   // here per report id instead of losing it on every rebuild.
   private reportPhotoUrls = new Map<string, string | undefined>();
+  // The place name per report, for the words in a shared message
+  private reportPlaces = new Map<string, string | null>();
 
   // Where the map is centred: a new watch area is added here
   protected readonly mapCenter = signal<{ lat: number; lng: number }>({
@@ -101,18 +107,8 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
       maxZoom: 19
     }).addTo(this.map);
 
-    // Try to center on the user, then load whatever is nearby.
-    this.geolocationService
-      .getCurrentPosition()
-      .then(({ lat, lng }) => {
-        this.map.setView([lat, lng], LOCATED_ZOOM);
-        this.loadNearby(lat, lng);
-      })
-      .catch(() => {
-        // Permission denied or unsupported: fall back to the country-wide view
-        const center = this.map.getCenter();
-        this.loadNearby(center.lat, center.lng);
-      });
+    if (this.route.snapshot.queryParamMap.has('report')) this.openSharedReport();
+    else this.startAtVisitor();
 
     // Refetch on pan/zoom, debounced so we don't spam the API.
     this.subscriptions.push(
@@ -210,6 +206,21 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     }
   }
 
+  // Try to centre on the visitor, then load whatever is nearby
+  private startAtVisitor(): void {
+    this.geolocationService
+      .getCurrentPosition()
+      .then(({ lat, lng }) => {
+        this.map.setView([lat, lng], LOCATED_ZOOM);
+        this.loadNearby(lat, lng);
+      })
+      .catch(() => {
+        // Permission denied or unsupported: fall back to the country-wide view
+        const center = this.map.getCenter();
+        this.loadNearby(center.lat, center.lng);
+      });
+  }
+
   // ---- data loading ----
 
   private reloadAtCenter(): void {
@@ -253,6 +264,7 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
 
   private upsertMarker(report: FloodReport): void {
     this.reportPhotoUrls.set(report.id, report.photoUrl);
+    this.reportPlaces.set(report.id, report.city ?? report.province ?? null);
 
     const existing = this.markers.get(report.id);
     if (existing) {
@@ -299,7 +311,10 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     const confirmBtn = popupEl.querySelector<HTMLButtonElement>('[data-action="confirm"]');
     const denyBtn = popupEl.querySelector<HTMLButtonElement>('[data-action="deny"]');
     const photoBtn = popupEl.querySelector<HTMLButtonElement>('[data-action="view-photo"]');
+    const shareBtn = popupEl.querySelector<HTMLButtonElement>('[data-action="share"]');
 
+    // Not once: sharing can be done again, and it leaves the popup open
+    shareBtn?.addEventListener('click', () => void this.share(reportId));
     confirmBtn?.addEventListener('click', () => this.vote(reportId, 1), { once: true });
     denyBtn?.addEventListener('click', () => this.vote(reportId, -1), { once: true });
     photoBtn?.addEventListener(
@@ -310,6 +325,32 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
       },
       { once: true }
     );
+  }
+
+  private async share(reportId: string): Promise<void> {
+    const result = await shareReport({ id: reportId, place: this.reportPlaces.get(reportId) }, window.location.origin);
+
+    if (result === 'copied') this.toast.success('Link copied. Paste it anywhere to share this report.');
+    else if (result === 'failed') this.toast.error('Could not share. Copy the address from the browser instead.');
+  }
+
+  // A shared link lands here as /map?report=<id>: show that report, even if it is far from where the map starts
+  private openSharedReport(): void {
+    const id = this.route.snapshot.queryParamMap.get('report');
+    if (!id) return;
+
+    this.floodReportService.getById(id).subscribe({
+      next: report => {
+        if (report.status === 1) {
+          this.focusReport(report);
+          return;
+        }
+        // Closed reports are not on the live map, so say what happened and show where it was
+        this.map.setView([report.lat, report.lng], LOCATED_ZOOM);
+        this.toast.show(`This report has been ${report.status === 2 ? 'resolved' : 'closed'}.`, 'info');
+      },
+      error: () => this.toast.show('That report is no longer available.', 'info')
+    });
   }
 
   private vote(reportId: string, voteType: 1 | -1): void {

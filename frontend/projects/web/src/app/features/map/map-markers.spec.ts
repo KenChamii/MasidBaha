@@ -32,6 +32,10 @@ describe('map markers', () => {
       expect(html).toContain('data-action="deny"');
     });
 
+    it('lets people share the report', () => {
+      expect(buildPopupHtml(1, false)).toContain('data-action="share"');
+    });
+
     it('offers the photo only when the report has one', () => {
       expect(buildPopupHtml(1, true)).toContain('data-action="view-photo"');
       expect(buildPopupHtml(1, false)).not.toContain('data-action="view-photo"');

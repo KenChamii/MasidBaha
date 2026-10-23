@@ -174,6 +174,34 @@ public class AdminPortalTests : IAsyncLifetime
         Assert.True(detail.GetProperty("report").GetProperty("isHidden").GetBoolean());
     }
 
+    // A report that is not public must not be reachable by its id either (share links, guessing)
+    [Fact]
+    public async Task HiddenReport_Is404ForEveryoneButItsReporter()
+    {
+        var moderator = await _factory.CreateSignedInClientAsync(AdminRoles.Moderator);
+        var reporter = _factory.CreateClient();
+        var id = await PostReportAsync(reporter);
+
+        Assert.Equal(HttpStatusCode.OK, (await _factory.CreateClient().GetAsync($"{Api}/flood-reports/{id}")).StatusCode);
+
+        await moderator.PostAsJsonAsync($"{Admin}/moderation/bulk", new { ids = new[] { id }, action = 5 });
+
+        // A stranger, and someone with no cookie at all, get nothing
+        Assert.Equal(HttpStatusCode.NotFound, (await _factory.CreateClient().GetAsync($"{Api}/flood-reports/{id}")).StatusCode);
+        // The reporter still sees their own report, so a shadow ban gives nothing away
+        Assert.Equal(HttpStatusCode.OK, (await reporter.GetAsync($"{Api}/flood-reports/{id}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task ReadingAReport_DoesNotIssueASessionCookie()
+    {
+        var id = await PostReportAsync(_factory.CreateClient());
+
+        var response = await _factory.CreateClient().GetAsync($"{Api}/flood-reports/{id}");
+
+        Assert.False(response.Headers.Contains("Set-Cookie"));
+    }
+
     // ---------- moderation ----------
 
     [Fact]
