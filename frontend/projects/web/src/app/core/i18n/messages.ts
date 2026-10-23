@@ -35,7 +35,7 @@ export const WEB_MESSAGES: Dictionaries = {
     'home.how.eyebrow': 'How it works',
     'home.how.title': 'A pin, a depth and maybe a photo.',
     'home.how.body':
-      'Reporting takes a few taps and no account. You drop a pin where the water is, say how deep it is and add a photo if you can. Neighbours who pass the same spot confirm it or say it has gone down.',
+      'Reporting takes a few taps and no account. You drop a pin where the water is, say how deep it is and add a photo if you can. Neighbours who pass the same spot confirm it or say it has cleared.',
     'home.mock.eyebrow': 'New report',
     'home.mock.depth': 'Flood depth',
     'home.mock.note': 'Note',
@@ -74,8 +74,8 @@ export const WEB_MESSAGES: Dictionaries = {
     'home.trust.e1': 'Reported by someone on the street',
     'home.trust.e2': 'A neighbour confirms',
     'home.trust.e3': 'Another neighbour confirms',
-    'home.trust.e4': 'Someone says it has gone down',
-    'home.trust.e5': 'Two more say it has cleared',
+    'home.trust.e4': 'Someone says it has cleared',
+    'home.trust.e5': 'Two more agree it has cleared',
     'home.trust.resolved': 'Resolved',
     'home.trust.rule1': 'Each person can vote once per report.',
     'home.trust.rule2': 'A score of zero or less resolves the report.',
@@ -181,6 +181,53 @@ export const WEB_MESSAGES: Dictionaries = {
     'home.cta.sub': 'Pin something, confirm a pin or just look around. No sign-up.',
     'home.cta.source': 'Source code',
 
+    'home.admin.eyebrow': 'For moderators',
+    'home.admin.title': 'The staff side.',
+    'home.admin.body':
+      'Anyone can report, so someone has to be able to clean up. The admin panel is a separate app for the people who run it: a queue of flagged reports, bans, announcements and a log of everything they do.',
+    'home.admin.queue.caption': 'Moderation queue (example)',
+    'home.admin.col.place': 'Place',
+    'home.admin.col.severity': 'Depth',
+    'home.admin.col.flag': 'Why flagged',
+    'home.admin.col.votes': 'Votes',
+    'home.admin.col.actions': 'Actions',
+    'home.admin.flag.denies': 'Many "cleared" votes',
+    'home.admin.flag.flooding': 'Reporter flooding',
+    'home.admin.flag.trust': 'Low-trust reporter',
+    'home.admin.votes': '{up} up, {down} cleared',
+    'home.admin.act.resolve': 'Resolve',
+    'home.admin.act.hide': 'Hide',
+    'home.admin.act.expire': 'Expire',
+    'home.admin.audit.caption': 'Audit log (example)',
+    'home.admin.col.when': 'When',
+    'home.admin.col.who': 'Who',
+    'home.admin.col.action': 'Action',
+    'home.admin.col.target': 'Target',
+    'home.admin.who.mod': 'Moderator',
+    'home.admin.who.admin': 'Super admin',
+    'home.admin.target.report': 'report',
+    'home.admin.target.source': 'source',
+    'home.admin.target.announcement': 'announcement',
+    'home.admin.target.setting': 'setting',
+    'home.admin.item.queue.title': 'A queue that fills itself',
+    'home.admin.item.queue.text':
+      'Reports are flagged automatically: a low trust reporter, many cleared votes, someone flooding the map. Resolve, expire, hide or delete in bulk.',
+    'home.admin.item.bans.title': 'Bans and shadow bans',
+    'home.admin.item.bans.text':
+      'Block a browser or an IP hash for a while. A shadow ban saves the report but never shows it, so the sender thinks it worked.',
+    'home.admin.item.broadcast.title': 'Announcements',
+    'home.admin.item.broadcast.text':
+      'Send a push to everyone, or only to people watching a place inside a circle, like a typhoon warning for Metro Manila.',
+    'home.admin.item.settings.title': 'Settings without a deploy',
+    'home.admin.item.settings.text':
+      'Change how long reports last, how many votes flag a report and other limits while the app is running.',
+    'home.admin.item.reports.title': 'Every report, searchable',
+    'home.admin.item.reports.text':
+      'Filter by place, depth, status and date, including hidden and expired reports, and export the result to CSV.',
+    'home.admin.item.roles.title': 'Roles and sign-in',
+    'home.admin.item.roles.text':
+      'Super admin, Moderator and Viewer. Staff accounts are made by staff, never by sign-up, and two-factor is optional.',
+
     // ---- map page ----
     'map.report': 'Report here',
     'map.cancel': 'Cancel',
@@ -202,7 +249,7 @@ export const WEB_MESSAGES: Dictionaries = {
     'popup.confidence': 'Confidence: {n}',
     'popup.viewPhoto': '📷 View the photo',
     'popup.confirm': 'Confirm',
-    'popup.deny': 'Gone now',
+    'popup.deny': 'Cleared',
     'popup.share': '🔗 Share',
 
     // ---- severity ----
@@ -418,7 +465,7 @@ export const WEB_MESSAGES: Dictionaries = {
     'home.trust.e2': 'Kinumpirma ng isang kapitbahay',
     'home.trust.e3': 'Kinumpirma ng isa pang kapitbahay',
     'home.trust.e4': 'May nagsabing humupa na',
-    'home.trust.e5': 'Dalawa pa ang nagsabing humupa na',
+    'home.trust.e5': 'Dalawa pa ang sumang-ayon na humupa na',
     'home.trust.resolved': 'Naresolba',
     'home.trust.rule1': 'Isang boto lang bawat tao sa bawat ulat.',
     'home.trust.rule2': 'Kapag zero o mas mababa ang score, naresolba na ang ulat.',
@@ -527,6 +574,53 @@ export const WEB_MESSAGES: Dictionaries = {
     'home.cta.sub': 'Mag-pin, kumpirmahin ang pin o tumingin-tingin lang. Walang sign-up.',
     'home.cta.source': 'Source code',
 
+    'home.admin.eyebrow': 'Para sa mga moderator',
+    'home.admin.title': 'Ang panig ng staff.',
+    'home.admin.body':
+      'Kahit sino ay puwedeng mag-ulat, kaya kailangang may makakapaglinis. Hiwalay na app ang admin panel para sa mga nagpapatakbo nito: queue ng mga na-flag na ulat, ban, anunsyo at log ng lahat ng ginagawa nila.',
+    'home.admin.queue.caption': 'Moderation queue (halimbawa)',
+    'home.admin.col.place': 'Lugar',
+    'home.admin.col.severity': 'Lalim',
+    'home.admin.col.flag': 'Bakit na-flag',
+    'home.admin.col.votes': 'Boto',
+    'home.admin.col.actions': 'Mga aksyon',
+    'home.admin.flag.denies': 'Maraming boto ng "humupa na"',
+    'home.admin.flag.flooding': 'Sunod-sunod na ulat ng iisang tao',
+    'home.admin.flag.trust': 'Mababa ang tiwala sa nag-ulat',
+    'home.admin.votes': '{up} kumpirmado, {down} humupa na',
+    'home.admin.act.resolve': 'I-resolve',
+    'home.admin.act.hide': 'Itago',
+    'home.admin.act.expire': 'I-expire',
+    'home.admin.audit.caption': 'Audit log (halimbawa)',
+    'home.admin.col.when': 'Kailan',
+    'home.admin.col.who': 'Sino',
+    'home.admin.col.action': 'Aksyon',
+    'home.admin.col.target': 'Target',
+    'home.admin.who.mod': 'Moderator',
+    'home.admin.who.admin': 'Super admin',
+    'home.admin.target.report': 'ulat',
+    'home.admin.target.source': 'source',
+    'home.admin.target.announcement': 'anunsyo',
+    'home.admin.target.setting': 'setting',
+    'home.admin.item.queue.title': 'Queue na kusang napupuno',
+    'home.admin.item.queue.text':
+      'Kusang na-fa-flag ang mga ulat: mababa ang tiwala sa nag-ulat, maraming boto ng humupa na, o may nagpupuno ng mapa. I-resolve, i-expire, itago o burahin nang sabay-sabay.',
+    'home.admin.item.bans.title': 'Ban at shadow ban',
+    'home.admin.item.bans.text':
+      'I-block ang isang browser o IP hash sa loob ng ilang panahon. Sine-save ng shadow ban ang ulat pero hindi ito ipinapakita, kaya akala ng nagpadala ay tumagumpay.',
+    'home.admin.item.broadcast.title': 'Mga anunsyo',
+    'home.admin.item.broadcast.text':
+      'Magpadala ng push sa lahat, o sa mga nagbabantay lang ng lugar sa loob ng isang bilog, gaya ng babala sa bagyo para sa Metro Manila.',
+    'home.admin.item.settings.title': 'Settings na walang deploy',
+    'home.admin.item.settings.text':
+      'Puwedeng baguhin habang tumatakbo ang app kung gaano katagal ang ulat, ilang boto ang magfa-flag dito at iba pang limitasyon.',
+    'home.admin.item.reports.title': 'Lahat ng ulat, mahahanap',
+    'home.admin.item.reports.text':
+      'I-filter ayon sa lugar, lalim, status at petsa, kasama ang mga nakatago at na-expire, at i-export ang resulta bilang CSV.',
+    'home.admin.item.roles.title': 'Mga role at sign-in',
+    'home.admin.item.roles.text':
+      'Super admin, Moderator at Viewer. Staff ang gumagawa ng mga staff account, hindi sign-up, at opsyonal ang two-factor.',
+
     // ---- map page ----
     'map.report': 'Mag-ulat dito',
     'map.cancel': 'Kanselahin',
@@ -548,7 +642,7 @@ export const WEB_MESSAGES: Dictionaries = {
     'popup.confidence': 'Tiwala: {n}',
     'popup.viewPhoto': '📷 Tingnan ang larawan',
     'popup.confirm': 'Kumpirmahin',
-    'popup.deny': 'Wala na',
+    'popup.deny': 'Humupa na',
     'popup.share': '🔗 Ibahagi',
 
     // ---- severity ----

@@ -35,6 +35,21 @@ interface SpecRow {
   value: string;
 }
 
+interface QueueRow {
+  place: string;
+  depth: 1 | 2 | 3 | 4;
+  flag: string;
+  up: number;
+  down: number;
+}
+
+interface AuditRow {
+  time: string;
+  who: string;
+  action: string;
+  target: string;
+}
+
 export const SOURCE_URL = 'https://github.com/KenChamii/MasidBaha';
 
 @Component({
@@ -84,6 +99,36 @@ export class LandingComponent {
   ];
 
   protected readonly route = ['home.stack.route1', 'home.stack.route2', 'home.stack.route3', 'home.stack.route4'];
+
+  // Example data for the moderators section (marked as an example on the page)
+  protected readonly queue: QueueRow[] = [
+    { place: 'Quezon City', depth: 3, flag: 'home.admin.flag.denies', up: 1, down: 4 },
+    { place: 'Davao City', depth: 4, flag: 'home.admin.flag.flooding', up: 0, down: 0 },
+    { place: 'Iloilo City', depth: 2, flag: 'home.admin.flag.trust', up: 2, down: 3 }
+  ];
+
+  protected readonly queueActions = ['home.admin.act.resolve', 'home.admin.act.hide', 'home.admin.act.expire'];
+
+  protected readonly audit: AuditRow[] = [
+    { time: '9:42 AM', who: 'home.admin.who.mod', action: 'report.status_changed', target: 'home.admin.target.report' },
+    { time: '9:40 AM', who: 'home.admin.who.mod', action: 'ban.created', target: 'home.admin.target.source' },
+    {
+      time: '9:15 AM',
+      who: 'home.admin.who.admin',
+      action: 'broadcast.sent',
+      target: 'home.admin.target.announcement'
+    },
+    { time: '8:58 AM', who: 'home.admin.who.admin', action: 'settings.changed', target: 'home.admin.target.setting' }
+  ];
+
+  protected readonly adminItems: Step[] = [
+    { index: '', title: 'home.admin.item.queue.title', text: 'home.admin.item.queue.text' },
+    { index: '', title: 'home.admin.item.bans.title', text: 'home.admin.item.bans.text' },
+    { index: '', title: 'home.admin.item.broadcast.title', text: 'home.admin.item.broadcast.text' },
+    { index: '', title: 'home.admin.item.settings.title', text: 'home.admin.item.settings.text' },
+    { index: '', title: 'home.admin.item.reports.title', text: 'home.admin.item.reports.text' },
+    { index: '', title: 'home.admin.item.roles.title', text: 'home.admin.item.roles.text' }
+  ];
 
   protected readonly layers: Layer[] = [
     { name: 'home.layer.web.name', text: 'home.layer.web.text' },

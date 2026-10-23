@@ -14,6 +14,10 @@ The demo runs on free hosting that sleeps when idle, so the first request after 
 |---|---|
 | ![Landing page](docs/screenshots/landing-light-desktop.png) | ![The map on a phone](docs/screenshots/map-light-mobile.png) |
 
+| Moderation queue | Audit log |
+|---|---|
+| ![Moderation queue in the admin panel](docs/screenshots/admin-moderation-light-desktop.png) | ![Audit log in the admin panel](docs/screenshots/admin-audit-light-desktop.png) |
+
 ## What it does
 
 | Area | What you get |
@@ -77,7 +81,7 @@ frontend/functions              Cloudflare Pages Functions: the API proxy and th
 
 **The weather layers are not from PAGASA.** PAGASA has no public map or data service, and scraping its pages would break. The layers use RainViewer (radar), NASA IMERG (satellite rainfall) and JTWC through GDACS (typhoon tracks), are labelled as unofficial, and link out to PAGASA for official warnings. The typhoon feed is slow, so the API refreshes it in the background and keeps the last copy in the database.
 
-**A real bug a test caught.** `(byte)VoteType.Deny` is 255, so every "it has gone" vote used to add 255 to a report's confidence instead of removing one.
+**A real bug a test caught.** `(byte)VoteType.Deny` is 255, so every "cleared" vote used to add 255 to a report's confidence instead of removing one.
 
 **A hidden report is a 404.** A report staff hide, or one from a shadow banned source, answers 404 to everyone except the person who sent it. Otherwise a ban would show itself and a share link could expose a hidden report.
 
