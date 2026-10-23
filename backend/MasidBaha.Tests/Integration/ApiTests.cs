@@ -437,6 +437,39 @@ public class ApiTests : IAsyncLifetime
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType!.MediaType);
     }
 
+    // A real image in a format we do not accept, sent with an accepted content type: the decoder must not be reached
+    [Theory]
+    [InlineData("image/jpeg", "flood.jpg")]
+    [InlineData("image/png", "flood.png")]
+    public async Task Photo_Upload_RejectsAGifEvenWhenItIsLabelledAsAnAcceptedType(string contentType, string fileName)
+    {
+        // a valid 1x1 GIF
+        byte[] gif = [0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00, 0x01, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
+            0x21, 0xF9, 0x04, 0x01, 0x00, 0x00, 0x00, 0x00, 0x2C, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x02, 0x02, 0x44, 0x01, 0x00, 0x3B];
+        var content = new ByteArrayContent(gif);
+        content.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+        using var form = new MultipartFormDataContent { { content, "file", fileName } };
+
+        var response = await _factory.CreateClient().PostAsync($"{Api}/photos", form);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Photo_Upload_StillAcceptsAJpeg()
+    {
+        using var image = new Image<Rgba32>(40, 30, new Rgba32(30, 120, 200));
+        using var stream = new MemoryStream();
+        image.SaveAsJpeg(stream);
+        var content = new ByteArrayContent(stream.ToArray());
+        content.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+        using var form = new MultipartFormDataContent { { content, "file", "flood.jpg" } };
+
+        var response = await _factory.CreateClient().PostAsync($"{Api}/photos", form);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     // ---------- startup validation ----------
 
     [Fact]
