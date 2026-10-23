@@ -1,0 +1,62 @@
+@use 'mixins' as m;
+
+:host {
+  display: block;
+  background: var(--mb-paper);
+  color: var(--mb-ink);
+  font-family: var(--mb-font-body);
+}
+
+@include m.button-system;
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--mb-paper);
+  border-bottom: var(--mb-border);
+}
+
+.nav__inner {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.nav__links {
+  display: flex;
+  gap: 24px;
+
+  a {
+    @include m.mono-label;
+    color: var(--mb-ink);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+
+    &:hover {
+      border-bottom-color: var(--mb-water);
+    }
+  }
+
+  @media (max-width: 760px) {
+    display: none;
+  }
+}
+.nav__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.footer {
+  border-top: var(--mb-border);
+  padding: 28px 24px 40px;
+  text-align: center;
+  color: var(--mb-muted);
+  font-size: 0.78rem;
+  font-family: var(--mb-font-mono);
+}

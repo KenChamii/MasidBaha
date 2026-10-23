@@ -1,0 +1,26 @@
+import { ApplicationConfig, isDevMode, provideZoneChangeDetection } from '@angular/core';
+import { provideRouter, withInMemoryScrolling } from '@angular/router';
+import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
+import { provideServiceWorker } from '@angular/service-worker';
+import { routes } from './app.routes';
+import { apiCredentialsInterceptor, errorToastInterceptor, provideApiBase } from '@masidbaha/shared';
+import { environment } from '../environments/environment';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    // Zone-based change detection is declared explicitly: since Angular 21 an app
+    // without this provider is zoneless, and much of this UI relies on zones
+    provideZoneChangeDetection(),
+    provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'top' })),
+    provideApiBase(environment.apiUrl),
+    provideHttpClient(withXhr(), withInterceptors([apiCredentialsInterceptor, errorToastInterceptor])),
+    // registerWhenStable:30000 registers the SW after the app is stable (or
+    // after 30s, whichever comes first) so it never competes with initial
+    // page load. isDevMode() guard means `ng serve` never installs it —
+    // the SW is a production-build artifact only (see angular.json).
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000'
+    })
+  ]
+};

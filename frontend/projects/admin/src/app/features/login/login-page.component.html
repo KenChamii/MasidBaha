@@ -1,0 +1,25 @@
+<div class="login">
+  <div class="login__theme"><mb-theme-toggle /></div>
+
+  <form class="login__card" (ngSubmit)="signIn()">
+    <mb-brand />
+    <h1>Admin panel</h1>
+    <p>Sign in with your staff account to review reports.</p>
+
+    <label class="login__field">
+      Email
+      <input type="email" name="email" [(ngModel)]="email" autocomplete="username" required />
+    </label>
+
+    <label class="login__field">
+      Password
+      <input type="password" name="password" [(ngModel)]="password" autocomplete="current-password" required />
+    </label>
+
+    <button type="submit" [disabled]="isSigningIn()">{{ isSigningIn() ? 'Signing in…' : 'Sign in' }}</button>
+
+    @if (error(); as message) {
+      <p class="login__error" role="alert">{{ message }}</p>
+    }
+  </form>
+</div>

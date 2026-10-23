@@ -1,0 +1,81 @@
+@use 'mixins' as m;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--mb-paper);
+  color: var(--mb-ink);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 24px;
+  background: var(--mb-surface);
+  border-bottom: var(--mb-border);
+}
+
+.topbar__left,
+.topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.topbar__nav {
+  display: flex;
+  gap: 16px;
+  margin-left: 8px;
+}
+
+.topbar__tag {
+  @include m.mono-label;
+  background: var(--mb-ink);
+  color: var(--mb-on-ink);
+  padding: 3px 8px;
+}
+
+.topbar__link {
+  @include m.mono-label;
+  color: var(--mb-ink);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+
+  &:hover,
+  &--active {
+    border-bottom-color: var(--mb-water);
+  }
+
+  &--external {
+    @media (max-width: 760px) {
+      display: none;
+    }
+  }
+}
+
+.topbar__who {
+  @include m.mono-label;
+  color: var(--mb-muted);
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 760px) {
+    display: none;
+  }
+}
+
+.topbar__signout {
+  @include m.press-button;
+  padding: 6px 14px;
+  font-size: 0.72rem;
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+}

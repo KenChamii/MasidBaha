@@ -1,0 +1,59 @@
+@use '../../../styles/mixins' as m;
+
+.toasts {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(360px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.toast {
+  @include m.panel(var(--mb-shadow-sm));
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  animation: toast-in 0.15s ease;
+
+  &--error {
+    border-left: 8px solid var(--mb-danger);
+  }
+  &--success {
+    border-left: 8px solid var(--mb-ok);
+  }
+  &--info {
+    border-left: 8px solid var(--mb-water);
+  }
+}
+
+.toast__message {
+  flex: 1;
+}
+
+.toast__close {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

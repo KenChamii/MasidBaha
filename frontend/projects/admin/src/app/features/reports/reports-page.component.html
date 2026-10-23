@@ -1,0 +1,110 @@
+<div class="reports">
+  <div class="reports__toolbar">
+    <div class="reports__filters" role="group" aria-label="Filter by status">
+      <button type="button" [class.active]="filter() === 'all'" (click)="setFilter('all')">Lahat</button>
+      <button type="button" [class.active]="filter() === 1" (click)="setFilter(1)">Active</button>
+      <button type="button" [class.active]="filter() === 2" (click)="setFilter(2)">Resolved</button>
+      <button type="button" [class.active]="filter() === 3" (click)="setFilter(3)">Expired</button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <p>Naglo-load...</p>
+  } @else {
+    <table class="reports__table">
+      <thead>
+        <tr>
+          <th>Lokasyon</th>
+          <th>Severity</th>
+          <th>Notes</th>
+          <th>Confidence</th>
+          <th>Status</th>
+          <th>Reporter Session</th>
+          <th>Reported</th>
+          @if (auth.canModerate()) {
+            <th>Actions</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (report of reports(); track report.id) {
+          <tr>
+            <td>{{ locationOf(report) }}</td>
+            <td>{{ report.severity }}</td>
+            <td class="reports__notes">{{ report.notes || '—' }}</td>
+            <td>{{ report.confidenceScore }}</td>
+            <td>{{ statusLabel[report.status] }}</td>
+            <td class="reports__session">
+              <span class="reports__session-id" [title]="report.reporterSessionId">{{ report.reporterSessionId }}</span>
+              <button
+                type="button"
+                class="reports__trust-btn"
+                (click)="toggleTrust(report.reporterSessionId)"
+                title="Tingnan ang trust score ng session na ito"
+                aria-label="Show trust score for this session"
+              >
+                🛡️
+              </button>
+
+              @let state = trust()[report.reporterSessionId];
+              @if (state === 'loading') {
+                <p class="reports__trust-info">Naglo-load...</p>
+              } @else if (state === 'error') {
+                <p class="reports__trust-info reports__trust-info--error">Hindi na-load ang trust score.</p>
+              } @else if (isTrustData(state)) {
+                <div class="reports__trust-info">
+                  <strong>{{ state.trustScore === null ? 'Walang rating pa' : state.trustScore + '% trust' }}</strong>
+                  <span>{{ state.resolvedReports }}/{{ state.totalReports }} na-confirm</span>
+                </div>
+              }
+            </td>
+            <td>{{ timeAgo(report.reportedAt) }}</td>
+            @if (auth.canModerate()) {
+              <td class="reports__actions">
+                @if (report.status !== 2) {
+                  <button type="button" (click)="verify(report)" title="Mark as Resolved (verified legit and handled)">
+                    ✅ Verify
+                  </button>
+                }
+                @if (report.status !== 3) {
+                  <button type="button" (click)="markExpired(report)" title="Mark as Expired (clear from active map)">
+                    🕑 Expire
+                  </button>
+                }
+                @if (report.status !== 1) {
+                  <button type="button" (click)="reactivate(report)" title="Reactivate">↩️ Reactivate</button>
+                }
+                <button
+                  type="button"
+                  class="reports__delete"
+                  (click)="deleteReport(report)"
+                  title="Delete permanently (spam/fake)"
+                >
+                  🗑️ Delete
+                </button>
+              </td>
+            }
+          </tr>
+        } @empty {
+          <tr>
+            <td [attr.colspan]="auth.canModerate() ? 8 : 7" class="reports__empty">Walang report dito.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @for (report of reports(); track report.id) {
+      @if (actionErrors()[report.id]; as message) {
+        <p class="reports__row-error" role="alert">{{ message }}</p>
+      }
+    }
+
+    @if (totalCount() > 0) {
+      <div class="reports__pagination">
+        <button type="button" [disabled]="page() <= 1" (click)="goToPage(page() - 1)">← Prev</button>
+        <span>Page {{ page() }} of {{ totalPages() }} ({{ totalCount() }} total)</span>
+        <button type="button" [disabled]="page() >= totalPages()" (click)="goToPage(page() + 1)">Next →</button>
+      </div>
+    }
+  }
+</div>

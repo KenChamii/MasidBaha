@@ -1,0 +1,5 @@
+dist
+.angular
+node_modules
+masidbaha-web
+package-lock.json

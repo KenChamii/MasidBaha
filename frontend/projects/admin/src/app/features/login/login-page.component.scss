@@ -1,0 +1,71 @@
+@use 'mixins' as m;
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--mb-paper);
+  color: var(--mb-ink);
+}
+
+.login {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login__theme {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.login__card {
+  @include m.panel;
+  width: min(380px, 100%);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  h1 {
+    font-family: var(--mb-font-display);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    margin: 1rem 0 0;
+  }
+
+  p {
+    margin: 0 0 1rem;
+    color: var(--mb-muted);
+    font-size: 0.9rem;
+  }
+
+  button[type='submit'] {
+    @include m.press-button(var(--mb-water), var(--mb-white));
+    align-self: center;
+    margin-top: 0.5rem;
+    padding: 0.6rem 1.5rem;
+  }
+}
+
+.login__field {
+  display: block;
+  @include m.mono-label;
+
+  input {
+    @include m.form-field;
+    display: block;
+    width: 100%;
+    margin: 0.35rem 0 1rem;
+  }
+}
+
+.login__error {
+  color: var(--mb-danger);
+  font-weight: 600;
+  text-align: center;
+  margin: 0.75rem 0 0;
+}
