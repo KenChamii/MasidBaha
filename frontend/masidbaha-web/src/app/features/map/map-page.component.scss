@@ -41,7 +41,7 @@
 // floating controls share one hard-edged chip style
 .map-page__list-toggle,
 .map-page__push-toggle {
-  @include m.press-button(var(--mb-white), var(--mb-ink));
+  @include m.press-button(var(--mb-surface), var(--mb-ink));
   position: absolute;
   top: 16px;
   z-index: 500;
@@ -148,11 +148,11 @@
 
   & + & { border-left: var(--mb-border); }
 
-  &:hover:not(&--active) { background: var(--mb-white); }
+  &:hover:not(&--active) { background: var(--mb-surface); }
 
   &--active {
     background: var(--mb-ink);
-    color: var(--mb-white);
+    color: var(--mb-on-ink);
   }
 }
 
@@ -215,7 +215,7 @@
   flex-shrink: 0;
   width: 22px;
   height: 22px;
-  background: var(--mb-white);
+  background: var(--mb-surface);
   border: 2px solid var(--mb-ink);
   color: var(--mb-ink);
   font-family: var(--mb-font-mono);
@@ -268,7 +268,7 @@
   display: block;
   margin-top: 2px;
   @include m.mono-label;
-  color: var(--mb-water);
+  color: var(--mb-water-text);
   font-weight: 500;
 }
 
@@ -312,7 +312,7 @@
     bottom: -6px;
     right: -6px;
     font-size: 0.7rem;
-    background: var(--mb-white);
+    background: var(--mb-surface);
     border: 2px solid var(--mb-ink);
     padding: 1px 3px;
     line-height: 1;
@@ -430,7 +430,7 @@
     position: absolute;
     top: 4px;
     right: 4px;
-    @include m.press-button(var(--mb-white), var(--mb-ink));
+    @include m.press-button(var(--mb-surface), var(--mb-ink));
     font-size: 0.65rem;
     padding: 3px 8px;
   }
@@ -479,7 +479,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--mb-white);
+  background: var(--mb-surface);
   border: 2px solid var(--mb-ink);
   font-size: 8px;
   display: flex;

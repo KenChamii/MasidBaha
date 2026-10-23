@@ -46,7 +46,7 @@
   justify-content: space-between;
   padding: 12px 16px;
   border-bottom: var(--mb-border);
-  background: var(--mb-white);
+  background: var(--mb-surface);
 }
 
 .screen__brand {
@@ -69,11 +69,12 @@
 .screen__map {
   position: relative;
   flex: 1;
-  background: linear-gradient(180deg, var(--mb-mist) 0%, #C5DDEA 100%);
+  background: linear-gradient(180deg, var(--mb-mist) 0%, color-mix(in srgb, var(--mb-mist) 70%, var(--mb-water)) 100%);
   overflow: hidden;
 }
 
 .map__roads {
+  color: var(--mb-ink);
   position: absolute;
   inset: 0;
   width: 100%;
@@ -92,7 +93,7 @@
   left: 12px;
   right: 12px;
   bottom: 12px;
-  background: var(--mb-white);
+  background: var(--mb-surface);
   border: var(--mb-border);
   box-shadow: var(--mb-shadow-sm);
   padding: 12px;
@@ -123,10 +124,10 @@
 .card__line {
   display: block;
   height: 6px;
-  background: rgba(11, 31, 51, 0.25);
+  background: color-mix(in srgb, var(--mb-ink) 25%, transparent);
 
   &--title { width: 70%; }
-  &--sub { width: 45%; background: rgba(11, 31, 51, 0.12); }
+  &--sub { width: 45%; background: color-mix(in srgb, var(--mb-ink) 12%, transparent); }
 }
 
 .card__actions {

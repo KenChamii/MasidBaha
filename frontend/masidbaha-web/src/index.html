@@ -10,6 +10,14 @@
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0B1F33">
   <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+  <script>
+    // Apply the saved/OS theme before first paint to avoid a light flash in dark mode
+    try {
+      var t = localStorage.getItem('masidbaha-theme') ||
+        (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">

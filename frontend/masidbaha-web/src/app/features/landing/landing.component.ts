@@ -26,8 +26,6 @@ interface GalleryCardData {
   styleUrls: ['./landing.component.scss']
 })
 export class LandingComponent {
-  readonly currentYear = new Date().getFullYear();
-
   constructor(private router: Router) {}
 
   readonly features: FeatureCardData[] = [

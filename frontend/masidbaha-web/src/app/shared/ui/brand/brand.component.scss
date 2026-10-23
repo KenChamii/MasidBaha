@@ -1,0 +1,27 @@
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--mb-ink);
+}
+
+.brand__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: var(--mb-water);
+  border: var(--mb-border);
+  color: var(--mb-white);
+  box-shadow: var(--mb-shadow-sm);
+}
+
+.brand__name {
+  font-family: var(--mb-font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
