@@ -103,7 +103,7 @@ jobs:
 
       # Build only (nothing is pushed): catches a broken Dockerfile before it reaches a deploy
       - name: Build ${{ matrix.name }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
           build-args: ${{ matrix.args }}
