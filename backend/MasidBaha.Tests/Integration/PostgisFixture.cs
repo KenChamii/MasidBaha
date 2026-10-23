@@ -25,6 +25,8 @@ public class PostgisFixture : IAsyncLifetime
 
     public async Task DisposeAsync() => await _container.DisposeAsync();
 
+    public string ConnectionString => _container.GetConnectionString();
+
     public MasidBahaDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<MasidBahaDbContext>()

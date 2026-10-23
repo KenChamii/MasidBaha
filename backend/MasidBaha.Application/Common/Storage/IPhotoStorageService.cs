@@ -1,9 +1,9 @@
 ﻿namespace MasidBaha.Application.Common.Storage;
 
 /// <summary>
-/// Abstraction over where processed report photos actually end up (local disk today,
-/// Azure Blob Storage later). Callers only ever see a relative path back — building
-/// the public, absolute URL is the WebAPI's job (it knows the request scheme/host).
+/// Abstraction over where processed report photos actually end up (local disk or S3-compatible,
+/// chosen by Storage:Provider). Callers get back either a relative path (local) or an absolute URL (S3);
+/// IPhotoUrlPolicy turns that into the public URL.
 /// </summary>
 public interface IPhotoStorageService
 {
