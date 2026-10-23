@@ -318,6 +318,10 @@ namespace MasidBaha.Application.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("city");
 
+                    b.Property<Guid?>("ClientRequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("client_request_id");
+
                     b.Property<int>("ConfidenceScore")
                         .HasColumnType("integer")
                         .HasColumnName("confidence_score");
@@ -382,6 +386,11 @@ namespace MasidBaha.Application.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_flood_reports");
+
+                    b.HasIndex("ClientRequestId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_flood_reports_client_request")
+                        .HasFilter("client_request_id IS NOT NULL");
 
                     b.HasIndex("Location")
                         .HasDatabaseName("ix_flood_reports_location");

@@ -30,6 +30,10 @@ public class FloodReport
     // Reports from a shadow-banned source are saved but never shown publicly
     public bool IsHidden { get; set; }
 
+    // A random id the reporter's device makes up for each report. A retry after a lost connection carries the same
+    // id, so the report is saved once even if the first answer never arrived.
+    public Guid? ClientRequestId { get; set; }
+
     public List<ReportVote> Votes { get; set; } = new();
 
     // A report only accepts votes and shows on the map while it is active and

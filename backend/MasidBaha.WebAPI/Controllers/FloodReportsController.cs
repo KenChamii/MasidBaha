@@ -101,9 +101,11 @@ public class FloodReportsController : ControllerBase
         // the report is saved hidden and nothing is shown, broadcast or pushed
         request.IsHidden = verdict == BanVerdict.Shadow;
 
-        var report = await _createService.CreateAsync(request);
+        var created = await _createService.CreateOrGetAsync(request);
+        var report = created.Report;
 
-        if (request.IsHidden)
+        // A retry of a report that was already saved gets the same answer, without telling everyone again
+        if (request.IsHidden || created.WasAlreadySaved)
         {
             return CreatedAtAction(nameof(GetById), new { id = report.Id, version = "1" }, report);
         }
