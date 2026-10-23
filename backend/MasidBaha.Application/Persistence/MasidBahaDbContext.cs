@@ -1,9 +1,13 @@
+using MasidBaha.Application.Admin;
 using MasidBaha.Application.PushNotifications;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace MasidBaha.Application.Persistence;
 
-public class MasidBahaDbContext : DbContext
+// Reports, votes and push subscriptions, plus the back-office accounts (ASP.NET Identity)
+public class MasidBahaDbContext : IdentityDbContext<AdminUser, IdentityRole<Guid>, Guid>
 {
     public const int Wgs84Srid = 4326;
 
@@ -15,7 +19,23 @@ public class MasidBahaDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Identity first: it configures its own tables, which we then rename below
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.HasPostgresExtension("postgis");
+
+        modelBuilder.Entity<AdminUser>(e =>
+        {
+            e.ToTable("admin_users");
+            e.Property(x => x.DisplayName).HasMaxLength(100).IsRequired();
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
+        });
+        modelBuilder.Entity<IdentityRole<Guid>>().ToTable("admin_roles");
+        modelBuilder.Entity<IdentityUserRole<Guid>>().ToTable("admin_user_roles");
+        modelBuilder.Entity<IdentityUserClaim<Guid>>().ToTable("admin_user_claims");
+        modelBuilder.Entity<IdentityUserLogin<Guid>>().ToTable("admin_user_logins");
+        modelBuilder.Entity<IdentityUserToken<Guid>>().ToTable("admin_user_tokens");
+        modelBuilder.Entity<IdentityRoleClaim<Guid>>().ToTable("admin_role_claims");
 
         modelBuilder.Entity<FloodReport>(e =>
         {

@@ -1,3 +1,4 @@
+using MasidBaha.Application.Admin;
 using MasidBaha.Application.Common.Options;
 using MasidBaha.Application.Persistence;
 using MasidBaha.WebAPI.Extensions;
@@ -36,6 +37,9 @@ using (var scope = app.Services.CreateScope())
     if (app.Configuration.GetValue("Database:MigrateOnStartup", true))
         await db.Database.MigrateAsync();
 
+    // Roles always; the first SuperAdmin only if configured and none exists yet
+    await AdminSeeder.SeedAsync(scope.ServiceProvider);
+
     if (app.Configuration.GetValue("Database:SeedDemoData", false))
         await DemoDataSeeder.SeedAsync(db, scope.ServiceProvider.GetRequiredService<IOptions<ReportOptions>>().Value.Lifetime);
 }
@@ -58,6 +62,8 @@ app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseCors("Frontend");
 app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseOutputCache();
 
 // Serves wwwroot/uploads/** at /uploads/** (what LocalDiskPhotoStorageService writes).

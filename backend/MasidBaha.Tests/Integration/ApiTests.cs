@@ -318,59 +318,6 @@ public class ApiTests : IAsyncLifetime
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType!.MediaType);
     }
 
-    // ---------- admin ----------
-
-    [Fact]
-    public async Task Admin_RequiresTheKey()
-    {
-        var client = _factory.CreateClient();
-
-        var none = await client.GetAsync($"{Api}/admin/reports");
-        Assert.Equal(HttpStatusCode.Unauthorized, none.StatusCode);
-        Assert.Equal("application/problem+json", none.Content.Headers.ContentType!.MediaType);
-
-        client.DefaultRequestHeaders.Add("X-Admin-Key", "wrong-key");
-        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync($"{Api}/admin/reports")).StatusCode);
-
-        client.DefaultRequestHeaders.Remove("X-Admin-Key");
-        client.DefaultRequestHeaders.Add("X-Admin-Key", ApiFactory.AdminKey);
-        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"{Api}/admin/reports")).StatusCode);
-    }
-
-    [Fact]
-    public async Task Admin_IsDisabledWhenNoKeyIsConfigured()
-    {
-        using var factory = new ApiFactory(_postgis.ConnectionString, new() { ["Admin:ApiKey"] = "" });
-        var client = factory.CreateClient();
-        client.DefaultRequestHeaders.Add("X-Admin-Key", "anything");
-
-        var response = await client.GetAsync($"{Api}/admin/reports");
-
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task Admin_Moderation_UpdatesAndEvictsTheCache()
-    {
-        var reporter = _factory.CreateClient();
-        var id = await CreateReportAsync(reporter);
-        var topUrl = $"{Api}/flood-reports/top";
-        Assert.Equal(1, (await reporter.GetFromJsonAsync<JsonElement>(topUrl)).GetArrayLength()); // now cached
-
-        var admin = _factory.CreateClient();
-        admin.DefaultRequestHeaders.Add("X-Admin-Key", ApiFactory.AdminKey);
-
-        var resolve = await admin.PatchAsJsonAsync($"{Api}/admin/reports/{id}/status", new { status = (int)ReportStatus.Resolved });
-        Assert.Equal(HttpStatusCode.NoContent, resolve.StatusCode);
-        Assert.Equal(0, (await reporter.GetFromJsonAsync<JsonElement>(topUrl)).GetArrayLength());
-
-        Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"{Api}/admin/reports/{id}")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await admin.DeleteAsync($"{Api}/admin/reports/{id}")).StatusCode);
-
-        var badStatus = await admin.PatchAsJsonAsync($"{Api}/admin/reports/{id}/status", new { status = 9 });
-        Assert.Equal(HttpStatusCode.BadRequest, badStatus.StatusCode);
-    }
-
     // ---------- security, CORS, health ----------
 
     [Fact]

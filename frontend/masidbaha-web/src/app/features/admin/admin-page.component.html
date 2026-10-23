@@ -1,20 +1,36 @@
-<div class="admin-page" *ngIf="!isUnlocked">
-  <div class="admin-page__unlock">
+<div class="admin-page" *ngIf="!isRestoring && !auth.isSignedIn()">
+  <form class="admin-page__unlock" (ngSubmit)="signIn()">
     <h2>Admin Panel</h2>
-    <p>Ilagay ang admin API key para makapag-moderate ng mga report.</p>
-    <input
-      type="password"
-      [(ngModel)]="apiKeyInput"
-      (keydown.enter)="unlock()"
-      placeholder="X-Admin-Key"
-      autocomplete="off"
-    />
-    <button type="button" (click)="unlock()">Pumasok</button>
-    <p class="admin-page__error" *ngIf="authError">{{ authError }}</p>
-  </div>
+    <p>Sign in with your staff account to review reports.</p>
+
+    <label class="admin-page__field">
+      Email
+      <input
+        type="email"
+        name="email"
+        [(ngModel)]="emailInput"
+        autocomplete="username"
+        required
+      />
+    </label>
+
+    <label class="admin-page__field">
+      Password
+      <input
+        type="password"
+        name="password"
+        [(ngModel)]="passwordInput"
+        autocomplete="current-password"
+        required
+      />
+    </label>
+
+    <button type="submit" [disabled]="isSigningIn">{{ isSigningIn ? 'Signing in…' : 'Sign in' }}</button>
+    <p class="admin-page__error" role="alert" *ngIf="authError">{{ authError }}</p>
+  </form>
 </div>
 
-<div class="admin-page" *ngIf="isUnlocked">
+<div class="admin-page" *ngIf="auth.isSignedIn()">
   <div class="admin-page__toolbar">
     <div class="admin-page__filters">
       <button type="button" [class.active]="filter === 'all'" (click)="setFilter('all')">Lahat</button>
@@ -22,10 +38,16 @@
       <button type="button" [class.active]="filter === 2" (click)="setFilter(2)">Resolved</button>
       <button type="button" [class.active]="filter === 3" (click)="setFilter(3)">Expired</button>
     </div>
-    <button type="button" class="admin-page__lock" (click)="lock()">Lumabas</button>
+
+    <div class="admin-page__account">
+      <span class="admin-page__who" *ngIf="auth.user() as user">
+        {{ user.displayName || user.email }} · {{ user.roles.join(', ') }}
+      </span>
+      <button type="button" class="admin-page__lock" (click)="signOut()">Sign out</button>
+    </div>
   </div>
 
-  <p class="admin-page__error" *ngIf="authError">{{ authError }}</p>
+  <p class="admin-page__error" role="alert" *ngIf="authError">{{ authError }}</p>
   <p *ngIf="isLoading">Naglo-load...</p>
 
   <table class="admin-page__table" *ngIf="!isLoading">
@@ -38,7 +60,7 @@
         <th>Status</th>
         <th>Reporter Session</th>
         <th>Reported</th>
-        <th>Actions</th>
+        <th *ngIf="auth.canModerate()">Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -75,7 +97,7 @@
           </ng-container>
         </td>
         <td>{{ timeAgo(r.reportedAt) }}</td>
-        <td class="admin-page__actions">
+        <td class="admin-page__actions" *ngIf="auth.canModerate()">
           <button type="button" *ngIf="r.status !== 2" (click)="verify(r)" title="Mark as Resolved (verified legit and handled)">✅ Verify</button>
           <button type="button" *ngIf="r.status !== 3" (click)="markExpired(r)" title="Mark as Expired (clear from active map)">🕑 Expire</button>
           <button type="button" *ngIf="r.status !== 1" (click)="reactivate(r)" title="Reactivate">↩️ Reactivate</button>
@@ -83,7 +105,7 @@
         </td>
       </tr>
       <tr *ngIf="reports.length === 0">
-        <td colspan="8" class="admin-page__empty">Walang report dito.</td>
+        <td [attr.colspan]="auth.canModerate() ? 8 : 7" class="admin-page__empty">Walang report dito.</td>
       </tr>
     </tbody>
   </table>

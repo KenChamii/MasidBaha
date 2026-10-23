@@ -3,19 +3,21 @@ using MasidBaha.Application.Admin;
 using MasidBaha.Application.Common.Enums;
 using MasidBaha.Application.Trust;
 using MasidBaha.WebAPI.Hubs;
-using MasidBaha.WebAPI.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.SignalR;
 
 namespace MasidBaha.WebAPI.Controllers;
 
-// Everything here requires the X-Admin-Key header (see AdminApiKeyAttribute)
+// Back-office endpoints. Everything needs a signed-in staff account; the policies
+// below decide who may do what (Viewer reads, Moderator acts, SuperAdmin manages)
 [ApiController]
 [ApiVersion("1.0")]
-[AdminApiKey]
+[Authorize(Policy = AdminPolicies.CanView)]
 [Route("api/v{version:apiVersion}/admin")]
 [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
 public class AdminController : ControllerBase
 {
     private readonly IAdminReportsService _adminReportsService;
@@ -59,6 +61,7 @@ public class AdminController : ControllerBase
     // legit/fake and shouldn't wait on community votes to resolve.
     /// <summary>Forces a report's status, bypassing community votes.</summary>
     [HttpPatch("reports/{id:guid}/status")]
+    [Authorize(Policy = AdminPolicies.CanModerate)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -82,6 +85,7 @@ public class AdminController : ControllerBase
 
     /// <summary>Permanently deletes a report and its votes (spam or fake).</summary>
     [HttpDelete("reports/{id:guid}")]
+    [Authorize(Policy = AdminPolicies.CanModerate)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken)
