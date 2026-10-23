@@ -42,8 +42,12 @@ public class PhotoUrlPolicy : IPhotoUrlPolicy
             && uri.AbsolutePath.StartsWith("/uploads/", StringComparison.Ordinal);
     }
 
+    // S3 stores a full URL already; local storage returns a path such as /uploads/x.jpg. Only an
+    // http(s) address counts as "already a full URL": on Linux a path starting with / also parses as an
+    // absolute (file://) URI, which would otherwise leave the path unqualified.
     public string ToPublicUrl(string storedPath, string requestBaseUrl) =>
-        Uri.TryCreate(storedPath, UriKind.Absolute, out _)
-            ? storedPath                                        // S3: already a full URL
-            : $"{requestBaseUrl.TrimEnd('/')}{storedPath}";     // local: relative to this API
+        Uri.TryCreate(storedPath, UriKind.Absolute, out var absolute) &&
+        (absolute.Scheme == Uri.UriSchemeHttp || absolute.Scheme == Uri.UriSchemeHttps)
+            ? storedPath
+            : $"{requestBaseUrl.TrimEnd('/')}{storedPath}";
 }
