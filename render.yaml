@@ -1,5 +1,5 @@
-# Render blueprint for the API. Postgres lives on Neon, photos on Cloudflare R2, and
-# the two sites on Cloudflare Pages (see docs/deploy.md for the whole walkthrough).
+# Render blueprint for the API. Postgres lives on Neon and the two sites on Cloudflare Pages
+# (photos can move to Cloudflare R2 later). See docs/deploy.md for the whole walkthrough.
 #
 # Values marked `sync: false` are asked for once, in the Render dashboard, when the
 # blueprint is first applied. They are secrets, so none of them are in this file.
@@ -41,26 +41,11 @@ services:
       - key: AdminAuth__InitialAdmin__Password
         sync: false
 
-      # Render's disk is wiped on every deploy, so photos go to Cloudflare R2 (S3-compatible)
+      # Photos are kept on the container's disk, which Render wipes on every deploy. That is fine
+      # for a demo; for real use switch to Cloudflare R2 (S3-compatible): set Storage__Provider to S3
+      # and add Storage__S3__ServiceUrl, Bucket, AccessKey, SecretKey, PublicBaseUrl (docs/deploy.md).
       - key: Storage__Provider
-        value: S3
-      - key: Storage__S3__ServiceUrl
-        sync: false
-      - key: Storage__S3__Bucket
-        sync: false
-      - key: Storage__S3__AccessKey
-        sync: false
-      - key: Storage__S3__SecretKey
-        sync: false
-      - key: Storage__S3__Region
-        value: auto
-      - key: Storage__S3__PublicBaseUrl
-        sync: false
+        value: Local
 
-      # Web push (optional: leave empty to run without push notifications)
-      - key: Vapid__PublicKey
-        sync: false
-      - key: Vapid__PrivateKey
-        sync: false
-      - key: Vapid__Subject
-        sync: false
+      # Web push is off until you add Vapid__PublicKey, Vapid__PrivateKey and Vapid__Subject
+      # (mailto:you@example.com) in the Render dashboard. Generate the keys with: npx web-push generate-vapid-keys
