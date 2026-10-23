@@ -17,8 +17,14 @@ export * from './lib/core/theme.service';
 export * from './lib/core/api-credentials.interceptor';
 export * from './lib/core/error-toast.interceptor';
 
+// Language
+export * from './lib/i18n/i18n.service';
+export * from './lib/i18n/translate.pipe';
+export * from './lib/i18n/provide-i18n';
+
 // UI
 export * from './lib/ui/brand/brand.component';
+export * from './lib/ui/lang-toggle/lang-toggle.component';
 export * from './lib/ui/theme-toggle/theme-toggle.component';
 export * from './lib/ui/modal/modal.component';
 export * from './lib/ui/toast/toast.service';

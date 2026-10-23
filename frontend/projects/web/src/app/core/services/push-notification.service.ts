@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { SwPush } from '@angular/service-worker';
 import { firstValueFrom } from 'rxjs';
+import { I18nService } from '@masidbaha/shared';
 import { environment } from '../../../environments/environment';
 
 export interface PushSubscriptionRequest {
@@ -20,6 +21,7 @@ export interface PushSubscriptionRequest {
 export class PushNotificationService {
   private http = inject(HttpClient);
   private swPush = inject(SwPush);
+  private i18n = inject(I18nService);
 
   private readonly baseUrl = `${environment.apiUrl}/api/v1/push`;
 
@@ -38,9 +40,7 @@ export class PushNotificationService {
 
   async subscribe(): Promise<void> {
     if (!this.isSupported) {
-      throw new Error(
-        'Hindi supported ang push notifications dito (kailangan ng production build at HTTPS/localhost).'
-      );
+      throw new Error(this.i18n.t('push.unsupported'));
     }
 
     const { publicKey } = await firstValueFrom(
@@ -48,7 +48,7 @@ export class PushNotificationService {
     );
 
     if (!publicKey) {
-      throw new Error('Hindi pa na-configure ang push notifications sa server na ito.');
+      throw new Error(this.i18n.t('push.notConfigured'));
     }
 
     const subscription = await this.swPush.requestSubscription({ serverPublicKey: publicKey });

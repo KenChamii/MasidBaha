@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, computed, inject, signal, viewChild } from '@angular/core';
-import { FloodReportService, HeatmapPoint } from '@masidbaha/shared';
+import { FloodReportService, HeatmapPoint, TranslatePipe } from '@masidbaha/shared';
 import * as L from 'leaflet';
 import 'leaflet.heat';
 
@@ -31,6 +31,7 @@ type HeatLayerFactory = (points: [number, number, number][], options: Record<str
 
 @Component({
   selector: 'app-analytics-page',
+  imports: [TranslatePipe],
   templateUrl: './analytics-page.component.html',
   styleUrls: ['./analytics-page.component.scss']
 })

@@ -13,7 +13,8 @@
     "test:functions": "node --test \"functions-lib/*.test.mjs\"",
     "format": "prettier --write \"projects/**/*.{ts,html,scss,json}\"",
     "format:check": "prettier --check \"projects/**/*.{ts,html,scss,json}\"",
-    "prepare": "cd .. && husky frontend/.husky"
+    "prepare": "cd .. && husky frontend/.husky",
+    "check:i18n": "node scripts/check-i18n.mjs"
   },
   "private": true,
   "dependencies": {

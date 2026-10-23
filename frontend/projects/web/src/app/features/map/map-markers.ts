@@ -1,5 +1,6 @@
 import * as L from 'leaflet';
 import { PULSE_BY_SEVERITY, SEVERITY_META, Severity } from '@masidbaha/shared';
+import { Translate, english } from '../../core/i18n/english';
 
 export function buildFloodIcon(severity: Severity, hasPhoto: boolean): L.DivIcon {
   const meta = SEVERITY_META[severity];
@@ -23,20 +24,21 @@ export function buildFloodIcon(severity: Severity, hasPhoto: boolean): L.DivIcon
   });
 }
 
-export function buildPopupHtml(confidenceScore: number, hasPhoto: boolean): string {
+// The words come from the message list and the number is a number, so nothing user-written reaches the HTML
+export function buildPopupHtml(confidenceScore: number, hasPhoto: boolean, t: Translate = english): string {
   const photoButton = hasPhoto
-    ? '<button type="button" class="flood-popup__photo-btn" data-action="view-photo">📷 Tingnan ang larawan</button>'
+    ? `<button type="button" class="flood-popup__photo-btn" data-action="view-photo">${t('popup.viewPhoto')}</button>`
     : '';
 
   return `
     <div class="flood-popup">
-      <p class="flood-popup__confidence">Confidence: ${confidenceScore}</p>
+      <p class="flood-popup__confidence">${t('popup.confidence', { n: confidenceScore })}</p>
       ${photoButton}
       <div class="flood-popup__actions">
-        <button type="button" data-action="confirm">Kumpirmahin</button>
-        <button type="button" data-action="deny">Wala na</button>
+        <button type="button" data-action="confirm">${t('popup.confirm')}</button>
+        <button type="button" data-action="deny">${t('popup.deny')}</button>
       </div>
-      <button type="button" class="flood-popup__share-btn" data-action="share">🔗 Ibahagi</button>
+      <button type="button" class="flood-popup__share-btn" data-action="share">${t('popup.share')}</button>
     </div>
   `;
 }

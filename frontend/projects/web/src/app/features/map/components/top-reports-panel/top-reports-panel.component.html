@@ -1,8 +1,8 @@
 <aside class="reports-panel">
   <div class="reports-panel__header">
-    <h3 class="reports-panel__title">Pinaka-kumpirmadong ulat</h3>
+    <h3 class="reports-panel__title">{{ 'panel.title' | t }}</h3>
     <span class="reports-panel__count">{{ store.topReports().length }}</span>
-    <a routerLink="/analytics" class="reports-panel__analytics-link" title="Historical heatmap">📊</a>
+    <a routerLink="/analytics" class="reports-panel__analytics-link" [title]="'panel.analytics' | t">📊</a>
   </div>
 
   <div class="reports-panel__scope-tabs">
@@ -13,7 +13,7 @@
         [class.reports-panel__scope-tab--active]="store.scope() === scope.value"
         (click)="store.setScope(scope.value)"
       >
-        {{ scope.label }}
+        {{ scope.label | t }}
       </button>
     }
   </div>
@@ -22,12 +22,12 @@
     <div class="reports-panel__scope-filters">
       <select
         class="reports-panel__scope-select"
-        aria-label="Rehiyon"
+        [attr.aria-label]="'scope.region' | t"
         [ngModel]="store.selectedRegion()"
         (ngModelChange)="store.setRegion($event)"
         [ngModelOptions]="{ standalone: true }"
       >
-        <option [ngValue]="null">Piliin ang rehiyon…</option>
+        <option [ngValue]="null">{{ 'panel.pickRegion' | t }}</option>
         @for (region of store.availableRegions(); track region) {
           <option [ngValue]="region">{{ region }}</option>
         }
@@ -36,12 +36,12 @@
       @if ((store.scope() === 'province' || store.scope() === 'city') && store.selectedRegion()) {
         <select
           class="reports-panel__scope-select"
-          aria-label="Probinsya"
+          [attr.aria-label]="'scope.province' | t"
           [ngModel]="store.selectedProvince()"
           (ngModelChange)="store.setProvince($event)"
           [ngModelOptions]="{ standalone: true }"
         >
-          <option [ngValue]="null">Piliin ang probinsya…</option>
+          <option [ngValue]="null">{{ 'panel.pickProvince' | t }}</option>
           @for (province of store.availableProvinces(); track province) {
             <option [ngValue]="province">{{ province }}</option>
           }
@@ -51,12 +51,12 @@
       @if (store.scope() === 'city' && store.selectedProvince()) {
         <select
           class="reports-panel__scope-select"
-          aria-label="Lungsod"
+          [attr.aria-label]="'scope.city' | t"
           [ngModel]="store.selectedCity()"
           (ngModelChange)="store.setCity($event)"
           [ngModelOptions]="{ standalone: true }"
         >
-          <option [ngValue]="null">Piliin ang lungsod…</option>
+          <option [ngValue]="null">{{ 'panel.pickCity' | t }}</option>
           @for (city of store.availableCities(); track city) {
             <option [ngValue]="city">{{ city }}</option>
           }
@@ -66,9 +66,9 @@
   }
 
   @if (store.isLoading()) {
-    <div class="reports-panel__loading">Naglo-load…</div>
+    <div class="reports-panel__loading">{{ 'panel.loading' | t }}</div>
   } @else if (store.topReports().length === 0) {
-    <div class="reports-panel__empty">Walang ulat sa napiling lugar.</div>
+    <div class="reports-panel__empty">{{ 'panel.empty' | t }}</div>
   } @else {
     <ul class="reports-panel__items">
       @for (report of store.topReports(); track report.id; let i = $index) {
@@ -88,7 +88,7 @@
           <span class="reports-panel__dot" [style.background]="severityColor(report.severity)"></span>
           <div class="reports-panel__info">
             <div class="reports-panel__row">
-              <span class="reports-panel__severity">{{ severityLabel(report.severity) }}</span>
+              <span class="reports-panel__severity">{{ 'severity.' + report.severity | t }}</span>
               <span class="reports-panel__confidence">👍 {{ report.confidenceScore }}</span>
             </div>
             @if (locationLabel(report); as location) {
@@ -97,7 +97,7 @@
             @if (report.notes) {
               <p class="reports-panel__notes">{{ report.notes }}</p>
             }
-            <span class="reports-panel__time">{{ timeAgo(report.reportedAt) }}</span>
+            <span class="reports-panel__time">{{ i18n.timeAgo(report.reportedAt) }}</span>
           </div>
           @if (report.photoUrl) {
             <button
@@ -105,7 +105,7 @@
               class="reports-panel__photo-btn"
               [style.backgroundImage]="'url(' + report.photoUrl + ')'"
               (click)="openPhoto(report.photoUrl, $event)"
-              aria-label="Tingnan ang larawan ng ulat"
+              [attr.aria-label]="'panel.photoAria' | t"
             ></button>
           }
         </li>

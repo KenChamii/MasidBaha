@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
-import { FloodReportService, PhotoService, SEVERITY_OPTIONS, Severity } from '@masidbaha/shared';
+import { FloodReportService, PhotoService, SEVERITY_OPTIONS, Severity, TranslatePipe } from '@masidbaha/shared';
 
 const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 @Component({
   selector: 'app-report-form',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './report-form.component.html',
   styleUrl: './report-form.component.scss'
@@ -28,6 +28,7 @@ export class ReportFormComponent implements OnDestroy {
   readonly isSubmitting = signal(false);
   readonly isUploadingPhoto = signal(false);
   readonly photoPreviewUrl = signal<string | null>(null);
+  // a message key (see core/i18n/messages.ts), so it follows the language if that changes
   readonly photoError = signal<string | null>(null);
   private selectedPhotoFile: File | null = null;
 
@@ -48,13 +49,13 @@ export class ReportFormComponent implements OnDestroy {
     }
 
     if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
-      this.photoError.set('Tanging JPEG, PNG, o WebP na larawan lang ang tinatanggap.');
+      this.photoError.set('form.err.type');
       input.value = '';
       return;
     }
 
     if (file.size > MAX_PHOTO_BYTES) {
-      this.photoError.set('Ang photo ay dapat hindi lalagpas sa 8MB.');
+      this.photoError.set('form.err.size');
       input.value = '';
       return;
     }
@@ -90,7 +91,7 @@ export class ReportFormComponent implements OnDestroy {
       error: () => {
         this.isUploadingPhoto.set(false);
         this.isSubmitting.set(false);
-        this.photoError.set('Nabigo ang pag-upload ng photo. Subukan ulit.');
+        this.photoError.set('form.err.upload');
       }
     });
   }

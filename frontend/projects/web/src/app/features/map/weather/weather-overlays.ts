@@ -1,5 +1,6 @@
 import * as L from 'leaflet';
 import { NASA_RAIN_TILES, PAGASA_LINKS, RadarFrame, Typhoon } from '../../../core/services/weather.service';
+import { Translate, english } from '../../../core/i18n/english';
 
 // What the map should be showing right now (the store decides; this class makes it so)
 export interface WeatherState {
@@ -27,11 +28,15 @@ export class WeatherOverlays {
   private readonly storms = L.layerGroup();
   private readonly stormBounds = new Map<number, L.LatLngBounds>();
   private stormsKey = '';
+  private lastStorms: Typhoon[] | null = null;
 
   // Reports which frame is showing, so the panel can print its time
   onRadarFrame: (frame: RadarFrame | null) => void = () => undefined;
 
-  constructor(private readonly map: L.Map) {
+  constructor(
+    private readonly map: L.Map,
+    private readonly t: Translate = english
+  ) {
     const pane = map.createPane('weather');
     pane.style.zIndex = '250'; // above the base tiles (200), below shapes and markers
     pane.style.pointerEvents = 'none';
@@ -41,6 +46,12 @@ export class WeatherOverlays {
     this.syncRadar(state.radar);
     this.syncSatellite(state.satellite);
     this.syncTyphoons(state.typhoons);
+  }
+
+  // The popups are built with their words, so they are drawn again when the language changes
+  refreshLanguage(): void {
+    this.stormsKey = '';
+    this.syncTyphoons(this.lastStorms);
   }
 
   zoomTo(stormId: number): void {
@@ -143,6 +154,7 @@ export class WeatherOverlays {
   // ---- typhoons ----
 
   private syncTyphoons(storms: Typhoon[] | null): void {
+    this.lastStorms = storms;
     if (storms === null) {
       this.storms.clearLayers();
       this.storms.remove();
@@ -232,14 +244,14 @@ export class WeatherOverlays {
     const title = document.createElement('strong');
     title.textContent = storm.name;
     const alert = document.createElement('p');
-    alert.textContent = `${storm.alertLevel} alert${storm.country ? ' · ' + storm.country : ''}`;
+    alert.textContent = `${this.t('typhoon.alert', { level: storm.alertLevel })}${storm.country ? ' · ' + storm.country : ''}`;
     const source = document.createElement('p');
     source.className = 'typhoon-popup__muted';
-    source.textContent = `Forecast from ${storm.source ?? 'JTWC'} via GDACS. Not an official PAGASA product.`;
+    source.textContent = this.t('typhoon.source', { source: storm.source ?? 'JTWC' });
 
-    root.append(title, alert, source, this.link('PAGASA cyclone bulletin ↗', PAGASA_LINKS.cycloneBulletin));
+    root.append(title, alert, source, this.link(this.t('typhoon.pagasa'), PAGASA_LINKS.cycloneBulletin));
     if (storm.reportUrl && /^https:\/\//.test(storm.reportUrl))
-      root.append(this.link('GDACS report ↗', storm.reportUrl));
+      root.append(this.link(this.t('typhoon.gdacs'), storm.reportUrl));
     return root;
   }
 

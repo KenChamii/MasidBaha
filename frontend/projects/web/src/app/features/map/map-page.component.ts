@@ -7,6 +7,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
   viewChild
 } from '@angular/core';
 import * as L from 'leaflet';
@@ -29,7 +30,16 @@ import { GeolocationService } from '../../core/services/geolocation.service';
 import { OfflineCacheService } from '../../core/services/offline-cache.service';
 import { WatchAreaService } from '../../core/services/watch-area.service';
 import { ActivatedRoute } from '@angular/router';
-import { FloodReport, FloodReportService, ModalComponent, ThemeToggleComponent, ToastService } from '@masidbaha/shared';
+import {
+  FloodReport,
+  FloodReportService,
+  I18nService,
+  LangToggleComponent,
+  ModalComponent,
+  ThemeToggleComponent,
+  ToastService,
+  TranslatePipe
+} from '@masidbaha/shared';
 import { shareReport } from './share-report';
 
 const PHILIPPINES_CENTER: L.LatLngExpression = [12.8797, 121.774];
@@ -47,7 +57,9 @@ const DEFAULT_RADIUS_METERS = 5000;
     ReportFormComponent,
     TopReportsPanelComponent,
     ModalComponent,
-    ThemeToggleComponent
+    LangToggleComponent,
+    ThemeToggleComponent,
+    TranslatePipe
   ],
   providers: [FloodReportsStore, WeatherLayersStore],
   templateUrl: './map-page.component.html',
@@ -64,6 +76,7 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly weatherStore = inject(WeatherLayersStore);
   private readonly toast = inject(ToastService);
+  private readonly i18n = inject(I18nService);
   readonly store = inject(FloodReportsStore);
 
   private map!: L.Map;
@@ -79,6 +92,8 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   private reportPhotoUrls = new Map<string, string | undefined>();
   // The place name per report, for the words in a shared message
   private reportPlaces = new Map<string, string | null>();
+  // The confidence per report, so a popup can be redrawn in another language
+  private reportConfidences = new Map<string, number>();
 
   // Where the map is centred: a new watch area is added here
   protected readonly mapCenter = signal<{ lat: number; lng: number }>({
@@ -100,6 +115,15 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   constructor() {
     // Redraw the watched places whenever the list changes (the map exists once the view is ready)
     effect(() => this.drawWatchAreas(this.watchAreaService.areas()));
+
+    // Words already on the map (marker popups, storm popups) follow the language switch
+    effect(() => {
+      this.i18n.lang();
+      untracked(() => {
+        this.markers.forEach((marker, id) => this.refreshPopupContent(marker, id, this.reportConfidences.get(id) ?? 0));
+        this.weatherOverlays?.refreshLanguage();
+      });
+    });
 
     // Keep the weather layers on the map in step with the panel
     effect(() => {
@@ -140,7 +164,7 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
 
     this.watchLayer = L.layerGroup().addTo(this.map);
 
-    this.weatherOverlays = new WeatherOverlays(this.map);
+    this.weatherOverlays = new WeatherOverlays(this.map, (key, params) => this.i18n.t(key, params));
     this.weatherOverlays.onRadarFrame = frame => this.weatherStore.radarFrame.set(frame);
     this.weatherOverlays.sync(this.weatherStore.state());
     this.drawWatchAreas(this.watchAreaService.areas());
@@ -293,6 +317,7 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   private upsertMarker(report: FloodReport): void {
     this.reportPhotoUrls.set(report.id, report.photoUrl);
     this.reportPlaces.set(report.id, report.city ?? report.province ?? null);
+    this.reportConfidences.set(report.id, report.confidenceScore);
 
     const existing = this.markers.get(report.id);
     if (existing) {
@@ -303,7 +328,7 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
 
     const marker = L.marker([report.lat, report.lng], { icon: buildFloodIcon(report.severity, !!report.photoUrl) })
       .addTo(this.map)
-      .bindPopup(buildPopupHtml(report.confidenceScore, !!report.photoUrl));
+      .bindPopup(this.popupHtml(report.confidenceScore, !!report.photoUrl));
 
     marker.on('popupopen', (e: L.PopupEvent) => {
       const popupEl = e.popup.getElement();
@@ -317,12 +342,17 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   // click listeners wirePopupButtons() had attached.
   private refreshPopupContent(marker: L.Marker, reportId: string, confidenceScore: number): void {
     const hasPhoto = !!this.reportPhotoUrls.get(reportId);
-    marker.setPopupContent(buildPopupHtml(confidenceScore, hasPhoto));
+    this.reportConfidences.set(reportId, confidenceScore);
+    marker.setPopupContent(this.popupHtml(confidenceScore, hasPhoto));
 
     if (marker.isPopupOpen()) {
       const popupEl = marker.getPopup()?.getElement();
       if (popupEl) this.wirePopupButtons(reportId, popupEl);
     }
+  }
+
+  private popupHtml(confidenceScore: number, hasPhoto: boolean): string {
+    return buildPopupHtml(confidenceScore, hasPhoto, (key, params) => this.i18n.t(key, params));
   }
 
   private removeMarker(id: string): void {
@@ -356,10 +386,12 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   private async share(reportId: string): Promise<void> {
-    const result = await shareReport({ id: reportId, place: this.reportPlaces.get(reportId) }, window.location.origin);
+    const place = this.reportPlaces.get(reportId);
+    const text = place ? this.i18n.t('share.textIn', { place }) : this.i18n.t('share.text');
+    const result = await shareReport({ id: reportId, place, text }, window.location.origin);
 
-    if (result === 'copied') this.toast.success('Link copied. Paste it anywhere to share this report.');
-    else if (result === 'failed') this.toast.error('Could not share. Copy the address from the browser instead.');
+    if (result === 'copied') this.toast.success(this.i18n.t('map.linkCopied'));
+    else if (result === 'failed') this.toast.error(this.i18n.t('map.shareFailed'));
   }
 
   // A shared link lands here as /map?report=<id>: show that report, even if it is far from where the map starts
@@ -375,9 +407,9 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
         }
         // Closed reports are not on the live map, so say what happened and show where it was
         this.map.setView([report.lat, report.lng], LOCATED_ZOOM);
-        this.toast.show(`This report has been ${report.status === 2 ? 'resolved' : 'closed'}.`, 'info');
+        this.toast.show(this.i18n.t(report.status === 2 ? 'map.reportResolved' : 'map.reportClosed'), 'info');
       },
-      error: () => this.toast.show('That report is no longer available.', 'info')
+      error: () => this.toast.show(this.i18n.t('map.reportGone'), 'info')
     });
   }
 

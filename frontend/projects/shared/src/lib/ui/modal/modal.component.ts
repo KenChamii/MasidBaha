@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, HostListener, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, inject, input, output } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
 
 @Component({
   selector: 'mb-modal',
@@ -14,7 +15,9 @@ import { ChangeDetectionStrategy, Component, HostListener, input, output } from 
       (click)="closed.emit()"
       (keydown.escape)="closed.emit()"
     >
-      <button type="button" class="modal__close" aria-label="Close" (click)="closed.emit()">✕</button>
+      <button type="button" class="modal__close" [attr.aria-label]="i18n.t('common.close')" (click)="closed.emit()">
+        ✕
+      </button>
       <div class="modal__body" role="presentation" (click)="$event.stopPropagation()">
         <ng-content />
       </div>
@@ -23,6 +26,8 @@ import { ChangeDetectionStrategy, Component, HostListener, input, output } from 
   styleUrl: './modal.component.scss'
 })
 export class ModalComponent {
+  private readonly i18n = inject(I18nService);
+
   readonly closed = output<void>();
 
   // Panels (settings, filters) rise from the bottom on phones; a photo stays centred

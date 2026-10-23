@@ -2,31 +2,30 @@ import { ChangeDetectionStrategy, Component, inject, output } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FloodReportsStore } from '../../state/flood-reports.store';
-import { FloodReport, ReportScope, severityColor, severityLabel, timeAgo } from '@masidbaha/shared';
+import { FloodReport, I18nService, ReportScope, TranslatePipe, severityColor } from '@masidbaha/shared';
 
 @Component({
   selector: 'app-top-reports-panel',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './top-reports-panel.component.html',
   styleUrl: './top-reports-panel.component.scss'
 })
 export class TopReportsPanelComponent {
   readonly store = inject(FloodReportsStore);
+  protected readonly i18n = inject(I18nService);
 
   readonly reportFocused = output<FloodReport>();
   readonly photoRequested = output<string>();
 
   readonly scopes: { value: ReportScope; label: string }[] = [
-    { value: 'national', label: 'Bansa' },
-    { value: 'region', label: 'Rehiyon' },
-    { value: 'province', label: 'Probinsya' },
-    { value: 'city', label: 'Lungsod' }
+    { value: 'national', label: 'scope.national' },
+    { value: 'region', label: 'scope.region' },
+    { value: 'province', label: 'scope.province' },
+    { value: 'city', label: 'scope.city' }
   ];
 
-  readonly severityLabel = severityLabel;
   readonly severityColor = severityColor;
-  readonly timeAgo = timeAgo;
 
   locationLabel(report: FloodReport): string | null {
     return report.city ?? report.province ?? report.region ?? null;

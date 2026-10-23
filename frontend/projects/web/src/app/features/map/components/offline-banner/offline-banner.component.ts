@@ -1,21 +1,20 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { timeAgo } from '@masidbaha/shared';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { I18nService, TranslatePipe } from '@masidbaha/shared';
 
 @Component({
   selector: 'app-offline-banner',
+  imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (isOffline() || isShowingCachedData()) {
       <div class="map-page__offline-banner" role="status">
         @if (isOffline()) {
-          <span>📶 Walang internet connection.</span>
+          <span>{{ 'offline.none' | t }}</span>
         }
         @if (isShowingCachedData()) {
-          <span>
-            Ipinapakita ang huling na-fetch na data{{
-              cachedDataSavedAt() ? ' (' + timeAgo(cachedDataSavedAt()!) + ')' : ''
-            }}.</span
-          >
+          <span>{{
+            'offline.cached' | t: { when: cachedDataSavedAt() ? ' (' + i18n.timeAgo(cachedDataSavedAt()!) + ')' : '' }
+          }}</span>
         }
       </div>
     }
@@ -27,5 +26,5 @@ export class OfflineBannerComponent {
   readonly isShowingCachedData = input(false);
   readonly cachedDataSavedAt = input<string | null>(null);
 
-  readonly timeAgo = timeAgo;
+  protected readonly i18n = inject(I18nService);
 }

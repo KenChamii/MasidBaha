@@ -1,40 +1,40 @@
 <form class="report-form" (ngSubmit)="submit()">
-  <h3>Bagong ulat</h3>
+  <h3>{{ 'form.title' | t }}</h3>
 
   <label>
-    Lalim ng baha
+    {{ 'form.depth' | t }}
     <select name="severity" [(ngModel)]="severity">
       @for (option of severityOptions; track option.value) {
-        <option [ngValue]="option.value">{{ option.label }}</option>
+        <option [ngValue]="option.value">{{ 'severity.' + option.value | t }}</option>
       }
     </select>
   </label>
 
   <label>
-    Note (opsyonal)
-    <textarea name="notes" rows="2" [(ngModel)]="notes" placeholder="Hal. mabagal umagos ang tubig dito"></textarea>
+    {{ 'form.notes' | t }}
+    <textarea name="notes" rows="2" [(ngModel)]="notes" [placeholder]="'form.notesPlaceholder' | t"></textarea>
   </label>
 
   <label>
-    Photo (opsyonal, bilang patunay)
+    {{ 'form.photo' | t }}
     <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" (change)="onPhotoSelected($event)" />
   </label>
 
   @if (photoError()) {
-    <p class="report-form__error" role="alert">{{ photoError() }}</p>
+    <p class="report-form__error" role="alert">{{ photoError()! | t }}</p>
   }
 
   @if (photoPreviewUrl(); as previewUrl) {
     <div class="report-form__photo-preview">
-      <img [src]="previewUrl" alt="Preview ng na-attach na photo" />
-      <button type="button" (click)="clearPhoto()">Alisin</button>
+      <img [src]="previewUrl" [alt]="'form.photoAlt' | t" />
+      <button type="button" (click)="clearPhoto()">{{ 'form.photoRemove' | t }}</button>
     </div>
   }
 
   <div class="report-form__actions">
-    <button type="button" (click)="cancelled.emit()">Kanselahin</button>
+    <button type="button" (click)="cancelled.emit()">{{ 'form.cancel' | t }}</button>
     <button type="submit" [disabled]="isSubmitting()">
-      {{ isUploadingPhoto() ? 'Ina-upload ang photo...' : isSubmitting() ? 'Isinusumite...' : 'I-post ang ulat' }}
+      {{ isUploadingPhoto() ? ('form.uploading' | t) : isSubmitting() ? ('form.sending' | t) : ('form.submit' | t) }}
     </button>
   </div>
 </form>

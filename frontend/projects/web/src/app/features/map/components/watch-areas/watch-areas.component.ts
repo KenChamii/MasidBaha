@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ModalComponent } from '@masidbaha/shared';
+import { I18nService, ModalComponent, TranslatePipe } from '@masidbaha/shared';
 import { PushNotificationService } from '../../../../core/services/push-notification.service';
 import { MAX_WATCH_AREAS, WatchAreaService } from '../../../../core/services/watch-area.service';
 
@@ -11,7 +11,7 @@ export const RADIUS_CHOICES = [1000, 2000, 5000, 10000, 20000];
 // "Watch this place": the button that opens a panel to choose where alerts should come from
 @Component({
   selector: 'app-watch-areas',
-  imports: [FormsModule, ModalComponent],
+  imports: [FormsModule, ModalComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './watch-areas.component.html',
   styleUrl: './watch-areas.component.scss'
@@ -19,6 +19,7 @@ export const RADIUS_CHOICES = [1000, 2000, 5000, 10000, 20000];
 export class WatchAreasComponent {
   private readonly push = inject(PushNotificationService);
   protected readonly watchAreas = inject(WatchAreaService);
+  private readonly i18n = inject(I18nService);
 
   // The middle of the map, which is where a new place is added
   readonly center = input.required<{ lat: number; lng: number }>();
@@ -53,7 +54,7 @@ export class WatchAreasComponent {
     if (this.busy() || this.isFull()) return;
 
     const { lat, lng } = this.center();
-    const name = this.name().trim() || `Place ${this.watchAreas.areas().length + 1}`;
+    const name = this.name().trim() || this.i18n.t('watch.defaultName', { n: this.watchAreas.areas().length + 1 });
 
     this.busy.set(true);
     this.error.set(null);
@@ -80,10 +81,8 @@ export class WatchAreasComponent {
   private messageFor(err: unknown): string {
     if (err instanceof HttpErrorResponse) {
       const validation = err.error?.errors as Record<string, string[]> | undefined;
-      return (
-        Object.values(validation ?? {}).flat()[0] ?? err.error?.detail ?? 'Something went wrong. Please try again.'
-      );
+      return Object.values(validation ?? {}).flat()[0] ?? err.error?.detail ?? this.i18n.t('watch.error');
     }
-    return 'Something went wrong. Please try again.';
+    return this.i18n.t('watch.error');
   }
 }

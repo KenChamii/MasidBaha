@@ -8,17 +8,18 @@
   <div #mapContainer class="map-page__map"></div>
 
   <div class="map-page__toolbar">
+    <mb-lang-toggle />
     <mb-theme-toggle />
     <app-push-toggle />
     <app-watch-areas [center]="mapCenter()" />
     <app-weather-layers (zoomToStorm)="zoomToStorm($event)" />
     <button type="button" class="map-page__list-toggle" (click)="toggleList()">
       @if (showList()) {
-        <span class="map-page__long">Itago ang listahan</span>
-        <span class="map-page__short">Itago</span>
+        <span class="map-page__long">{{ 'map.listHide' | t }}</span>
+        <span class="map-page__short">{{ 'map.listHideShort' | t }}</span>
       } @else {
-        <span class="map-page__long">Ipakita ang listahan ({{ store.topReports().length }})</span>
-        <span class="map-page__short">Listahan ({{ store.topReports().length }})</span>
+        <span class="map-page__long">{{ 'map.listShow' | t: { n: store.topReports().length } }}</span>
+        <span class="map-page__short">{{ 'map.listShowShort' | t: { n: store.topReports().length } }}</span>
       }
     </button>
   </div>
@@ -33,11 +34,11 @@
     [class.map-page__report-btn--active]="pinDropMode()"
     (click)="togglePinDropMode()"
   >
-    {{ pinDropMode() ? 'Kanselahin' : 'Mag-ulat dito' }}
+    {{ pinDropMode() ? ('map.cancel' | t) : ('map.report' | t) }}
   </button>
 
   @if (pinDropMode() && !pendingPin()) {
-    <div class="map-page__hint">I-click ang mapa sa lugar na may baha.</div>
+    <div class="map-page__hint">{{ 'map.hint' | t }}</div>
   }
 
   @if (pendingPin(); as pin) {
@@ -46,7 +47,7 @@
 
   @if (viewingPhotoUrl(); as photoUrl) {
     <mb-modal (closed)="closePhoto()">
-      <img class="map-page__photo" [src]="photoUrl" alt="Larawan ng ulat bilang patunay" />
+      <img class="map-page__photo" [src]="photoUrl" [alt]="'map.photoAlt' | t" />
     </mb-modal>
   }
 </div>

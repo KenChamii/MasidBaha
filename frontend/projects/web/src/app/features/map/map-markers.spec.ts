@@ -1,4 +1,5 @@
-import { SEVERITY_META } from '@masidbaha/shared';
+import { SEVERITY_META, translate } from '@masidbaha/shared';
+import { WEB_MESSAGES } from '../../core/i18n/messages';
 import { buildFloodIcon, buildPopupHtml } from './map-markers';
 
 describe('map markers', () => {
@@ -30,6 +31,14 @@ describe('map markers', () => {
       expect(html).toContain('Confidence: 7');
       expect(html).toContain('data-action="confirm"');
       expect(html).toContain('data-action="deny"');
+    });
+
+    it('speaks Filipino when asked to', () => {
+      const html = buildPopupHtml(7, true, (key, params) => translate(WEB_MESSAGES, 'fil', key, params));
+
+      expect(html).toContain('Tiwala: 7');
+      expect(html).toContain('Kumpirmahin');
+      expect(html).toContain('Tingnan ang larawan');
     });
 
     it('lets people share the report', () => {
