@@ -44,7 +44,8 @@ jobs:
       # The admin panel's "Live map" link should lead to the public site, not back to the admin site
       - name: Point the admin's "Live map" link at the public site
         if: matrix.app == 'admin' && vars.PUBLIC_SITE_URL != ''
-        run: sed -i "s#publicSiteUrl: '/'#publicSiteUrl: '${{ vars.PUBLIC_SITE_URL }}'#" projects/admin/src/environments/environment.prod.ts
+        run: |
+          sed -i "s#publicSiteUrl: '/'#publicSiteUrl: '${{ vars.PUBLIC_SITE_URL }}'#" projects/admin/src/environments/environment.prod.ts
 
       - run: npx ng build ${{ matrix.app }} --configuration production
 
