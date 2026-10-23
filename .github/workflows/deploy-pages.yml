@@ -47,6 +47,14 @@ jobs:
         run: |
           sed -i "s#publicSiteUrl: '/'#publicSiteUrl: '${{ vars.PUBLIC_SITE_URL }}'#" projects/admin/src/environments/environment.prod.ts
 
+      # Link previews on Facebook and similar sites need an absolute image address
+      - name: Make the preview image address absolute
+        if: matrix.app == 'web' && vars.PUBLIC_SITE_URL != ''
+        env:
+          SITE: ${{ vars.PUBLIC_SITE_URL }}
+        run: |
+          sed -i "s#content=\"/og-default.png\"#content=\"${SITE%/}/og-default.png\"#g" projects/web/src/index.html
+
       - run: npx ng build ${{ matrix.app }} --configuration production
 
       # Runs from frontend/ so wrangler finds functions/ (the API proxy) next to the build output

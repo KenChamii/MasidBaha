@@ -9,6 +9,10 @@ commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 - **Watch areas.** Visitors choose up to five places (home, work, school) and are alerted only about new
   reports near them. Nobody signs up: the places belong to the anonymous session. Matching runs in
   PostGIS (`ST_DWithin` on a GiST index). People who never choose a place keep getting every alert.
+- **Shareable report links.** A "share" button on every report opens the phone's share sheet (or copies
+  the link). The link, `/r/<id>`, shows a preview card on Facebook, Messenger, Viber and X with the
+  report's severity, place and photo, then opens the map on that report. Served by a Cloudflare Pages
+  Function, since link previews are read from HTML and not from the single-page app.
 - **Area-limited announcements.** Staff can send a broadcast only to people who watch a place inside a
   chosen circle (for example, a typhoon warning for Metro Manila).
 - Docker images for the API and for each Angular app (nginx), and a `docker compose --profile app up`
@@ -21,6 +25,8 @@ commit messages follow [Conventional Commits](https://www.conventionalcommits.or
   limits and bans, only when it presents the shared secret.
 
 ### Fixed
+- A report that staff hid (or that came from a shadow-banned source) could still be fetched by its id.
+  It is now a 404 for everyone except the person who sent it.
 - Uploaded photos could not be attached to a report on Linux servers (a path starting with `/` was
   mistaken for an absolute URL).
 - The OpenStreetMap map tiles were blocked on the deployed sites by an overly strict referrer policy.

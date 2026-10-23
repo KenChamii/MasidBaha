@@ -65,4 +65,12 @@ describe('FloodReportService', () => {
     expect(req.request.params.has('toDate')).toBe(false);
     req.flush([]);
   });
+
+  it('fetches one report by id', () => {
+    service.getById('abc').subscribe();
+
+    const req = backend.expectOne('/api/v1/flood-reports/abc');
+    expect(req.request.method).toBe('GET');
+    req.flush({});
+  });
 });
