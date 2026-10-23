@@ -78,6 +78,7 @@ public class RateLimitOptions
     [Required, ValidateObjectMembers] public RateLimitPolicyOptions ReportWrites { get; set; } = new() { PermitLimit = 5 };
     [Required, ValidateObjectMembers] public RateLimitPolicyOptions VoteWrites { get; set; } = new() { PermitLimit = 20 };
     [Required, ValidateObjectMembers] public RateLimitPolicyOptions PushWrites { get; set; } = new() { PermitLimit = 10 };
+    [Required, ValidateObjectMembers] public RateLimitPolicyOptions AuthAttempts { get; set; } = new() { PermitLimit = 10 };
 }
 
 public class GeocodingOptions
@@ -143,4 +144,38 @@ public class SecurityOptions
     [RegularExpression("^(Lax|Strict|None)$")] public string SessionCookieSameSite { get; set; } = "Lax";
 
     [Range(1, 3650)] public int SessionCookieDays { get; set; } = 365;
+}
+
+public class InitialAdminOptions
+{
+    public string? Email { get; set; }
+    public string? Password { get; set; }
+    public string DisplayName { get; set; } = "Administrator";
+
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(Email) && !string.IsNullOrWhiteSpace(Password);
+}
+
+// Staff accounts (the back-office). Replaces the old shared X-Admin-Key.
+public class AdminAuthOptions
+{
+    public const string Section = "AdminAuth";
+
+    [Required] public string CookieName { get; set; } = "mb_admin";
+
+    // How long a login lasts without activity (the cookie slides forward while in use)
+    [Range(1, 168)] public int SessionHours { get; set; } = 12;
+
+    // Length is what matters for password strength; no forced symbol rules
+    [Range(8, 128)] public int MinPasswordLength { get; set; } = 12;
+
+    // How often an existing login is re-checked against the account (role changes,
+    // password changes and lockouts sign other sessions out within this window)
+    [Range(0, 3600)] public int SecurityCheckSeconds { get; set; } = 60;
+
+    [Range(1, 20)] public int MaxFailedAttempts { get; set; } = 5;
+    [Range(1, 1440)] public int LockoutMinutes { get; set; } = 15;
+
+    // Creates the first SuperAdmin on startup if no SuperAdmin exists yet.
+    // Set via user-secrets / environment variables, never in a tracked file.
+    public InitialAdminOptions InitialAdmin { get; set; } = new();
 }

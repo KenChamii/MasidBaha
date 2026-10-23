@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { AdminAuthService } from '../../core/services/admin-auth.service';
 import { AdminService } from './services/admin.service';
@@ -24,8 +25,10 @@ const STATUS_LABEL: Record<AdminReportStatus, string> = {
 export class AdminPageComponent implements OnInit {
   readonly statusLabel = STATUS_LABEL;
 
-  apiKeyInput = '';
-  isUnlocked = false;
+  emailInput = '';
+  passwordInput = '';
+  isSigningIn = false;
+  isRestoring = true;
   authError: string | null = null;
 
   reports: AdminFloodReport[] = [];
@@ -40,27 +43,39 @@ export class AdminPageComponent implements OnInit {
   // page load. Most reports on a page share only a few sessions anyway.
   trustBySessionId: Record<string, SessionTrustDto | 'loading' | 'error' | undefined> = {};
 
-  constructor(private adminAuth: AdminAuthService, private adminService: AdminService) {}
+  constructor(public auth: AdminAuthService, private adminService: AdminService) {}
 
   ngOnInit(): void {
-    if (this.adminAuth.hasApiKey) {
-      this.isUnlocked = true;
-      this.loadReports();
-    }
+    // The session cookie survives a reload, so ask the API who is signed in
+    this.auth.restore().subscribe(user => {
+      this.isRestoring = false;
+      if (user) this.loadReports();
+    });
   }
 
-  unlock(): void {
-    if (!this.apiKeyInput.trim()) return;
-    this.adminAuth.setApiKey(this.apiKeyInput.trim());
-    this.isUnlocked = true;
+  signIn(): void {
+    if (!this.emailInput.trim() || !this.passwordInput || this.isSigningIn) return;
+
+    this.isSigningIn = true;
     this.authError = null;
-    this.loadReports();
+
+    this.auth.login(this.emailInput.trim(), this.passwordInput).subscribe({
+      next: () => {
+        this.isSigningIn = false;
+        this.passwordInput = '';
+        this.loadReports();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.isSigningIn = false;
+        // The API's problem details carry a safe, human-readable message
+        this.authError = err.error?.detail
+          ?? (err.status === 429 ? 'Too many attempts. Please wait a moment.' : 'Could not sign in. Please try again.');
+      }
+    });
   }
 
-  lock(): void {
-    this.adminAuth.clearApiKey();
-    this.isUnlocked = false;
-    this.reports = [];
+  signOut(): void {
+    this.auth.logout().subscribe(() => this.reports = []);
   }
 
   setFilter(filter: StatusFilter): void {
@@ -91,16 +106,14 @@ export class AdminPageComponent implements OnInit {
         this.totalCount = result.totalCount;
         this.isLoading = false;
       },
-      error: err => {
+      error: (err: HttpErrorResponse) => {
         this.isLoading = false;
-        if (err.status === 401 || err.status === 503) {
-          // Wrong/missing key, or admin isn't configured on the backend —
-          // either way, drop back to the unlock screen rather than show an
-          // empty table with no explanation.
-          this.authError = err.status === 503
-            ? 'Hindi pa naka-configure ang admin panel sa backend (Admin:ApiKey).'
-            : 'Maling API key.';
-          this.lock();
+        if (err.status === 401) {
+          // The session ended (expired, signed out elsewhere, password changed):
+          // go back to the sign-in screen instead of showing an empty table
+          this.authError = 'Your session has ended. Please sign in again.';
+          this.auth.clearLocalSession();
+          this.reports = [];
         }
       }
     });
@@ -122,7 +135,7 @@ export class AdminPageComponent implements OnInit {
     delete this.actionErrorByReportId[report.id];
     this.adminService.setStatus(report.id, status).subscribe({
       next: () => this.loadReports(),
-      error: () => this.actionErrorByReportId[report.id] = 'Nabigo ang aksyon. Subukan ulit.'
+      error: (err: HttpErrorResponse) => this.actionErrorByReportId[report.id] = this.actionError(err, 'Nabigo ang aksyon. Subukan ulit.')
     });
   }
 
@@ -132,8 +145,12 @@ export class AdminPageComponent implements OnInit {
     delete this.actionErrorByReportId[report.id];
     this.adminService.delete(report.id).subscribe({
       next: () => this.loadReports(),
-      error: () => this.actionErrorByReportId[report.id] = 'Nabigo ang pagtanggal. Subukan ulit.'
+      error: (err: HttpErrorResponse) => this.actionErrorByReportId[report.id] = this.actionError(err, 'Nabigo ang pagtanggal. Subukan ulit.')
     });
+  }
+
+  private actionError(err: HttpErrorResponse, fallback: string): string {
+    return err.status === 403 ? 'Your role is not allowed to do this.' : fallback;
   }
 
   // ---- session trust ----

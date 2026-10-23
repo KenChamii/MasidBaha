@@ -79,6 +79,7 @@ public static class WebApiExtensions
                 .Tag(FloodReportsController.CacheTag));
         });
 
+        services.AddMasidBahaAuth();
         services.AddMasidBahaCors(configuration);
         services.AddMasidBahaRateLimiting();
         services.AddMasidBahaForwardedHeaders(configuration);
@@ -133,6 +134,7 @@ public static class WebApiExtensions
                 AddPolicy(limiter, "report-writes", limits.Value.ReportWrites);
                 AddPolicy(limiter, "vote-writes", limits.Value.VoteWrites);
                 AddPolicy(limiter, "push-writes", limits.Value.PushWrites);
+                AddPolicy(limiter, "auth-attempts", limits.Value.AuthAttempts);
             });
     }
 

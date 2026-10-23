@@ -1,8 +1,11 @@
+using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
+using MasidBaha.Application.Admin;
 using MasidBaha.Application.Common.Geocoding;
 using MasidBaha.Application.Common.Storage;
 using MasidBaha.Application.PushNotifications;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
@@ -40,7 +43,6 @@ public class FakeGeocoder : IGeocodingService
 // The only substitutes are the outside world: geocoding, push delivery, photo disk.
 public class ApiFactory : WebApplicationFactory<Program>
 {
-    public const string AdminKey = "test-admin-key";
 
     private readonly Dictionary<string, string?> _settings;
     private readonly string _environment;
@@ -59,12 +61,12 @@ public class ApiFactory : WebApplicationFactory<Program>
             ["ConnectionStrings:MasidBahaDb"] = connectionString,
             ["Database:MigrateOnStartup"] = "true",
             ["Database:SeedDemoData"] = "false",
-            ["Admin:ApiKey"] = AdminKey,
             ["Security:SessionSigningKey"] = new string('k', 40),
             ["Cors:AllowedOrigins:0"] = "http://localhost:4200",
             ["RateLimits:ReportWrites:PermitLimit"] = "1000",
             ["RateLimits:VoteWrites:PermitLimit"] = "1000",
             ["RateLimits:PushWrites:PermitLimit"] = "1000",
+            ["RateLimits:AuthAttempts:PermitLimit"] = "1000",
             ["Serilog:MinimumLevel:Default"] = "Warning"
         };
 
@@ -95,6 +97,36 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<IPhotoStorageService>();
             services.AddSingleton<IPhotoStorageService>(new LocalDiskPhotoStorageService(_uploadsDir));
         });
+    }
+
+    public const string StaffPassword = "correct-horse-battery-staple";
+
+    // Creates a staff account with the given role (the roles are seeded at startup)
+    public async Task<string> CreateStaffAsync(string role)
+    {
+        using var scope = Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<AdminUser>>();
+
+        var email = $"{role.ToLowerInvariant()}-{Guid.NewGuid():N}@test.local";
+        var user = new AdminUser { Id = Guid.CreateVersion7(), UserName = email, Email = email, EmailConfirmed = true, DisplayName = role };
+
+        var created = await users.CreateAsync(user, StaffPassword);
+        if (!created.Succeeded)
+            throw new InvalidOperationException(string.Join("; ", created.Errors.Select(e => e.Description)));
+
+        await users.AddToRoleAsync(user, role);
+        return email;
+    }
+
+    // A browser that has already signed in as a new staff member of the given role
+    public async Task<HttpClient> CreateSignedInClientAsync(string role)
+    {
+        var email = await CreateStaffAsync(role);
+        var client = CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/v1/auth/login", new { email, password = StaffPassword });
+        response.EnsureSuccessStatusCode();
+        return client;
     }
 
     protected override void Dispose(bool disposing)

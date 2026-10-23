@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { BrandComponent } from '../../ui/brand/brand.component';
 import { ThemeToggleComponent } from '../../ui/theme-toggle/theme-toggle.component';
@@ -7,7 +7,6 @@ import { ThemeToggleComponent } from '../../ui/theme-toggle/theme-toggle.compone
   selector: 'app-admin-layout',
   standalone: true,
   imports: [RouterOutlet, RouterLink, BrandComponent, ThemeToggleComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss'
 })

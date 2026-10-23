@@ -44,6 +44,7 @@ public static class ServiceCollectionExtensions
         services.AddValidatedOptions<GeocodingOptions>(configuration, GeocodingOptions.Section);
         services.AddValidatedOptions<StorageOptions>(configuration, StorageOptions.Section);
         services.AddValidatedOptions<SecurityOptions>(configuration, SecurityOptions.Section);
+        services.AddValidatedOptions<AdminAuthOptions>(configuration, AdminAuthOptions.Section);
         return services;
     }
 

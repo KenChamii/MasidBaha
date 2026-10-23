@@ -4,7 +4,7 @@
 
 .DESCRIPTION
   - Prompts for the PostgreSQL connection string (Enter = the docker-compose database).
-  - Generates a fresh admin API key, a session-cookie signing key and a fresh VAPID key pair (web push).
+  - Generates the first back-office admin login, a session-cookie signing key and a fresh VAPID key pair (web push).
   Run from the repo root:  pwsh ./scripts/init-dev-secrets.ps1
   Requires the .NET SDK and Node.js (for `npx web-push`).
 #>
@@ -20,10 +20,14 @@ $connection = Read-Host "PostgreSQL connection string (press Enter for the local
 if ([string]::IsNullOrWhiteSpace($connection)) { $connection = $localDocker }
 Set-Secret 'ConnectionStrings:MasidBahaDb' $connection
 
-$bytes = New-Object byte[] 32
+# The first SuperAdmin, created on the API's first start if no SuperAdmin exists yet
+$adminEmail = Read-Host 'Admin email for the back-office login (press Enter for admin@masidbaha.local)'
+if ([string]::IsNullOrWhiteSpace($adminEmail)) { $adminEmail = 'admin@masidbaha.local' }
+$bytes = New-Object byte[] 18
 [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
-$adminKey = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
-Set-Secret 'Admin:ApiKey' $adminKey
+$adminPassword = [Convert]::ToBase64String($bytes).Replace('+', '-').Replace('/', '_')
+Set-Secret 'AdminAuth:InitialAdmin:Email' $adminEmail
+Set-Secret 'AdminAuth:InitialAdmin:Password' $adminPassword
 
 # Signs the anonymous session cookie, so a visitor can't forge another visitor's id
 $signingBytes = New-Object byte[] 48
@@ -36,4 +40,6 @@ Set-Secret 'Vapid:PrivateKey' $vapid.privateKey
 Set-Secret 'Vapid:Subject' 'mailto:admin@masidbaha.local'
 
 Write-Host "Done. Secrets saved to the user-secrets store."
-Write-Host "Admin panel key (save it somewhere safe, you need it to log in): $adminKey"
+Write-Host "Back-office login (save it, then change the password after signing in):"
+Write-Host "  email:    $adminEmail"
+Write-Host "  password: $adminPassword"
