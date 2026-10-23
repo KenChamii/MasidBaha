@@ -23,6 +23,16 @@ public class TyphoonRefreshService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Whatever was saved last time is served straight away, while the slow download runs
+        try
+        {
+            await _typhoons.LoadSavedAsync(stoppingToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Could not load the saved typhoon data");
+        }
+
         while (!stoppingToken.IsCancellationRequested)
         {
             var wait = TimeSpan.FromMinutes(_options.CacheMinutes);

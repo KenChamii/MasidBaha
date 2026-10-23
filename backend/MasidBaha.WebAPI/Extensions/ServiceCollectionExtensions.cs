@@ -156,6 +156,7 @@ public static class ServiceCollectionExtensions
                 options.CircuitBreaker.SamplingDuration = attempt * 3; // at least twice the attempt timeout
             });
         services.AddSingleton(TimeProvider.System);
+        services.AddScoped<ITyphoonStore, DbTyphoonStore>();
         services.AddSingleton<ITyphoonService, TyphoonService>();
         services.AddHostedService<TyphoonRefreshService>();
 

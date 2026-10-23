@@ -19,6 +19,9 @@ import { OfflineBannerComponent } from './components/offline-banner/offline-bann
 import { PushToggleComponent } from './components/push-toggle/push-toggle.component';
 import { ReportFormComponent } from './components/report-form/report-form.component';
 import { WatchAreasComponent } from './components/watch-areas/watch-areas.component';
+import { WeatherLayersComponent } from './components/weather-layers/weather-layers.component';
+import { WeatherLayersStore } from './weather/weather-layers.store';
+import { WeatherOverlays } from './weather/weather-overlays';
 import { TopReportsPanelComponent } from './components/top-reports-panel/top-reports-panel.component';
 
 import { SignalRService } from '../../core/services/signalr.service';
@@ -40,12 +43,13 @@ const DEFAULT_RADIUS_METERS = 5000;
     OfflineBannerComponent,
     PushToggleComponent,
     WatchAreasComponent,
+    WeatherLayersComponent,
     ReportFormComponent,
     TopReportsPanelComponent,
     ModalComponent,
     ThemeToggleComponent
   ],
-  providers: [FloodReportsStore],
+  providers: [FloodReportsStore, WeatherLayersStore],
   templateUrl: './map-page.component.html',
   styleUrls: ['./map-page.component.scss']
 })
@@ -58,6 +62,7 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   private readonly offlineCacheService = inject(OfflineCacheService);
   private readonly watchAreaService = inject(WatchAreaService);
   private readonly route = inject(ActivatedRoute);
+  private readonly weatherStore = inject(WeatherLayersStore);
   private readonly toast = inject(ToastService);
   readonly store = inject(FloodReportsStore);
 
@@ -65,6 +70,8 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   private markers = new Map<string, L.Marker>();
   // The places this visitor watches, drawn as circles so the alert area is visible
   private watchLayer?: L.LayerGroup;
+  // Rain radar, satellite rainfall and typhoons, switched from the weather panel
+  private weatherOverlays?: WeatherOverlays;
   private subscriptions: Subscription[] = [];
   // Popup content gets rebuilt from partial data on live updates (see
   // reportUpdated$ below), which doesn't carry photoUrl — so we remember it
@@ -93,6 +100,14 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   constructor() {
     // Redraw the watched places whenever the list changes (the map exists once the view is ready)
     effect(() => this.drawWatchAreas(this.watchAreaService.areas()));
+
+    // Keep the weather layers on the map in step with the panel
+    effect(() => {
+      // Read the state first: the overlay does not exist until the view is ready, and an effect only
+      // watches what it actually reads
+      const state = this.weatherStore.state();
+      this.weatherOverlays?.sync(state);
+    });
   }
 
   // ---- lifecycle ----
@@ -124,6 +139,10 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     });
 
     this.watchLayer = L.layerGroup().addTo(this.map);
+
+    this.weatherOverlays = new WeatherOverlays(this.map);
+    this.weatherOverlays.onRadarFrame = frame => this.weatherStore.radarFrame.set(frame);
+    this.weatherOverlays.sync(this.weatherStore.state());
     this.drawWatchAreas(this.watchAreaService.areas());
 
     // Map clicks only matter while pin drop mode is active.
@@ -181,9 +200,14 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.weatherOverlays?.dispose();
     // Without this, navigating away and back to /map throws
     // "Map container is already initialized".
     this.map?.remove();
+  }
+
+  protected zoomToStorm(id: number): void {
+    this.weatherOverlays?.zoomTo(id);
   }
 
   // ---- watch areas ----

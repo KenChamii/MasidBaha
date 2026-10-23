@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
 using MasidBaha.Application.Common.Options;
+using MasidBaha.Application.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -241,8 +243,50 @@ public class GdacsTyphoonSource : ITyphoonSource
         _http.GetStringAsync(_options.TyphoonSourceUrl, cancellationToken);
 }
 
+// Where the last good copy is kept between restarts
+public interface ITyphoonStore
+{
+    Task<(DateTime FetchedAt, List<TyphoonDto> Storms)?> LoadAsync(CancellationToken cancellationToken = default);
+    Task SaveAsync(DateTime fetchedAt, List<TyphoonDto> storms, CancellationToken cancellationToken = default);
+}
+
+public class DbTyphoonStore : ITyphoonStore
+{
+    private const string Key = "weather.typhoons";
+
+    private readonly MasidBahaDbContext _db;
+
+    public DbTyphoonStore(MasidBahaDbContext db) => _db = db;
+
+    public async Task<(DateTime FetchedAt, List<TyphoonDto> Storms)?> LoadAsync(CancellationToken cancellationToken = default)
+    {
+        var row = await _db.CachedDocuments.AsNoTracking().FirstOrDefaultAsync(d => d.Key == Key, cancellationToken);
+        if (row is null) return null;
+
+        var storms = JsonSerializer.Deserialize<List<TyphoonDto>>(row.Json);
+        return storms is null ? null : (DateTime.SpecifyKind(row.FetchedAt, DateTimeKind.Utc), storms);
+    }
+
+    public async Task SaveAsync(DateTime fetchedAt, List<TyphoonDto> storms, CancellationToken cancellationToken = default)
+    {
+        var json = JsonSerializer.Serialize(storms);
+
+        // One row, replaced each time
+        var updated = await _db.CachedDocuments.Where(d => d.Key == Key)
+            .ExecuteUpdateAsync(s => s.SetProperty(d => d.Json, json).SetProperty(d => d.FetchedAt, fetchedAt), cancellationToken);
+        if (updated == 0)
+        {
+            _db.CachedDocuments.Add(new CachedDocument { Key = Key, Json = json, FetchedAt = fetchedAt });
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+    }
+}
+
 public interface ITyphoonService
 {
+    // Picks up the copy saved by an earlier run, if there is one, so a restart is not blank
+    Task LoadSavedAsync(CancellationToken cancellationToken = default);
+
     // The latest copy, straight from memory. Null until the first refresh has finished.
     TyphoonsDto? Current { get; }
 
@@ -291,13 +335,38 @@ public class TyphoonService : ITyphoonService
         }
     }
 
+    public async Task LoadSavedAsync(CancellationToken cancellationToken = default)
+    {
+        using var scope = _scopes.CreateScope();
+        var store = scope.ServiceProvider.GetService<ITyphoonStore>();
+        if (store is null || _snapshot is not null) return;
+
+        if (await store.LoadAsync(cancellationToken) is { } saved)
+        {
+            _snapshot = new Snapshot(saved.FetchedAt, saved.Storms);
+            _logger.LogInformation("Loaded saved typhoon data from {FetchedAt:u}", saved.FetchedAt);
+        }
+    }
+
     public async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
         using var scope = _scopes.CreateScope();
         var source = scope.ServiceProvider.GetRequiredService<ITyphoonSource>();
 
         var storms = TyphoonParser.Parse(await source.FetchAsync(cancellationToken), _options);
-        _snapshot = new Snapshot(_time.GetUtcNow().UtcDateTime, storms);
+        var fetchedAt = _time.GetUtcNow().UtcDateTime;
+        _snapshot = new Snapshot(fetchedAt, storms);
+
+        // Keeping a copy is a bonus: failing to save it must not lose the fresh data
+        try
+        {
+            var store = scope.ServiceProvider.GetService<ITyphoonStore>();
+            if (store is not null) await store.SaveAsync(fetchedAt, storms, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Could not save the typhoon data for the next start");
+        }
         _logger.LogInformation("Typhoon data refreshed: {Count} storm(s) near the Philippines", storms.Count);
     }
 }

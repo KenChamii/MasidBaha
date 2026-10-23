@@ -142,3 +142,55 @@
   background: var(--mb-surface);
   color: var(--mb-ink);
 }
+
+// ---- typhoon overlay ----
+.typhoon-marker {
+  background: none;
+  border: none;
+}
+
+.typhoon-marker__eye {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  font-size: 1.6rem;
+  border-radius: 50%;
+  background: var(--mb-surface);
+  border: 3px solid var(--alert, #d62839);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--alert, #d62839) 30%, transparent);
+  animation: typhoon-spin 6s linear infinite;
+}
+
+@keyframes typhoon-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typhoon-marker__eye {
+    animation: none;
+  }
+}
+
+.typhoon-popup {
+  font-family: var(--mb-font-body);
+  min-width: 190px;
+
+  p {
+    margin: 4px 0;
+    font-size: 0.8rem;
+  }
+
+  a {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  &__muted {
+    color: var(--mb-muted);
+  }
+}

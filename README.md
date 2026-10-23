@@ -15,6 +15,8 @@ passable right now. Nobody has to sign up, because nobody signs up during a floo
 - **Alerts that matter to you.** Web push for new serious reports. Choose up to five places you care about
   and you hear only about floods near them. Staff can broadcast announcements, to everyone or only to people
   near an area.
+- **Weather context.** Optional rain radar, satellite rainfall and typhoon tracks on the map, with links to
+  PAGASA for official warnings.
 - **Easy to share.** Every report has a share link with a proper preview card on Facebook, Messenger and Viber.
 - **History.** A heatmap and analytics of where and how often it floods.
 - **Works as an app.** An installable PWA that keeps working on a weak connection.
@@ -117,7 +119,6 @@ The step-by-step guide is in [docs/deploy.md](docs/deploy.md).
 ## Roadmap
 
 - Route check: "can I get from A to B?" against active reports.
-- PAGASA rainfall and typhoon overlays.
 - Offline report queue with background sync.
 - Filipino / English language toggle.
 
