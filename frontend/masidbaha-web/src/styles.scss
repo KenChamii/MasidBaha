@@ -1,16 +1,49 @@
-/* You can add global styles to this file, and also import other style files */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
-
+// Design tokens: hard-edged "weather station" look (fonts are loaded in index.html)
 :root {
-  --mb-void: #0A1220;
-  --mb-surface: #101B33;
-  --mb-water: #34C6E8;
-  --mb-alert: #FF7A47;
-  --mb-text-primary: #EEF3FB;
-  --mb-text-muted: #8493B3;
+  // Palette
+  --mb-ink: #0B1F33;
+  --mb-paper: #F3F8FB;
+  --mb-mist: #E1EEF5;
+  --mb-white: #FFFFFF;
+  --mb-water: #0077B6;
+  --mb-cyan: #00B4D8;
+  --mb-alert: #FF6B2C;
+  --mb-warn: #FFC145;
+  --mb-danger: #D62839;
+  --mb-ok: #1B9E77;
+  --mb-muted: #5B7186;
+
+  // Borders & shadows
+  --mb-border: 2px solid var(--mb-ink);
+  --mb-hair: 1px solid rgba(11, 31, 51, 0.14);
+  --mb-shadow: 4px 4px 0 var(--mb-ink);
+  --mb-shadow-sm: 2px 2px 0 var(--mb-ink);
+  --mb-shadow-water: 4px 4px 0 var(--mb-water);
+
+  // Type
   --mb-font-display: 'Space Grotesk', sans-serif;
   --mb-font-body: 'Inter', sans-serif;
   --mb-font-mono: 'IBM Plex Mono', monospace;
 }
 
-body { margin: 0; background: var(--mb-void); }
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--mb-paper);
+  color: var(--mb-ink);
+  font-family: var(--mb-font-body);
+}
+
+::selection {
+  background: var(--mb-water);
+  color: var(--mb-white);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -15,7 +15,7 @@
   width: 34%;
   height: 34%;
   border-radius: 50%;
-  box-shadow: 0 0 8px 1px rgba(52, 198, 232, 0.6);
+  box-shadow: 0 0 8px 1px rgba(0, 119, 182, 0.55);
 }
 
 .pulse-pin__ring {
@@ -40,7 +40,7 @@
   color: var(--mb-alert);
   .pulse-pin__dot {
     background: var(--mb-alert);
-    box-shadow: 0 0 8px 1px rgba(255, 122, 71, 0.6);
+    box-shadow: 0 0 8px 1px rgba(255, 107, 44, 0.55);
   }
 }
 
