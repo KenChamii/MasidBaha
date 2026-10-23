@@ -7,6 +7,8 @@
   background: var(--mb-paper);
 }
 
+section[id] { scroll-margin-top: 72px; }
+
 .landing {
   overflow-x: hidden;
 }
@@ -25,92 +27,13 @@ h1, h2, h3 {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--mb-water);
+  color: var(--mb-water-text);
 
   &--muted { color: var(--mb-muted); }
 }
 
-.btn {
-  @include m.press-button(var(--mb-white), var(--mb-ink));
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  padding: 12px 22px;
-  text-decoration: none;
+@include m.button-system;
 
-  &--primary { background: var(--mb-water); color: var(--mb-white); }
-  &--ghost { background: transparent; }
-  &--dark { background: var(--mb-ink); color: var(--mb-white); }
-
-  &--sm { padding: 8px 16px; font-size: 0.75rem; }
-  &--lg { padding: 16px 32px; font-size: 1rem; }
-}
-
-// ============ navbar ============
-
-.nav {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: var(--mb-paper);
-  border-bottom: var(--mb-border);
-}
-
-.nav__inner {
-  max-width: 1160px;
-  margin: 0 auto;
-  padding: 12px 24px;
-  display: flex;
-  align-items: center;
-  gap: 32px;
-}
-
-.nav__brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: var(--mb-ink);
-}
-
-.nav__logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  background: var(--mb-water);
-  border: var(--mb-border);
-  color: var(--mb-white);
-  box-shadow: var(--mb-shadow-sm);
-}
-
-.nav__name {
-  font-family: var(--mb-font-display);
-  font-weight: 700;
-  font-size: 1.1rem;
-  text-transform: uppercase;
-  letter-spacing: -0.01em;
-}
-
-.nav__links {
-  display: flex;
-  gap: 24px;
-  margin-left: auto;
-
-  a {
-    @include m.mono-label;
-    color: var(--mb-ink);
-    text-decoration: none;
-    border-bottom: 2px solid transparent;
-
-    &:hover { border-bottom-color: var(--mb-water); }
-  }
-
-  @media (max-width: 760px) { display: none; }
-}
 
 // ============ hero ============
 
@@ -140,9 +63,13 @@ h1, h2, h3 {
     linear-gradient(rgba(0, 119, 182, 0.08) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 119, 182, 0.08) 1px, transparent 1px);
   background-size: 40px 40px;
+  -webkit-mask-image: linear-gradient(#000 55%, transparent);
+  mask-image: linear-gradient(#000 55%, transparent);
   pointer-events: none;
   z-index: -1;
 }
+
+section[id] { scroll-margin-top: 72px; }
 
 .landing {
   position: relative;
@@ -195,7 +122,7 @@ h1, h2, h3 {
     font-family: var(--mb-font-display);
     font-weight: 700;
     font-size: 1.4rem;
-    color: var(--mb-water);
+    color: var(--mb-water-text);
   }
   dd {
     margin: 2px 0 0;
@@ -326,11 +253,11 @@ h1, h2, h3 {
 
   &--dark {
     background: var(--mb-ink);
-    color: var(--mb-white);
+    color: var(--mb-on-ink);
     box-shadow: var(--mb-shadow-water);
 
-    p { color: rgba(255, 255, 255, 0.7); }
-    .btn--primary { border-color: var(--mb-white); box-shadow: 2px 2px 0 var(--mb-white); }
+    p { color: color-mix(in srgb, var(--mb-on-ink) 75%, transparent); }
+    .btn--primary { border-color: var(--mb-on-ink); box-shadow: 2px 2px 0 var(--mb-on-ink); }
   }
 }
 
@@ -371,7 +298,7 @@ h1, h2, h3 {
 .thumb__label {
   @include m.mono-label;
   color: var(--mb-ink);
-  background: var(--mb-white);
+  background: var(--mb-surface);
   border: var(--mb-border);
   padding: 4px 10px;
 }
@@ -410,7 +337,7 @@ h1, h2, h3 {
 
 .gallery-card__eyebrow {
   @include m.mono-label;
-  color: var(--mb-water);
+  color: var(--mb-water-text);
   margin: 16px 18px 0;
 }
 
@@ -422,7 +349,7 @@ h1, h2, h3 {
   margin: 0 auto 96px;
   padding: 56px 24px;
   background: var(--mb-ink);
-  color: var(--mb-white);
+  color: var(--mb-on-ink);
   border: var(--mb-border);
   box-shadow: var(--mb-shadow-water);
 
@@ -433,20 +360,12 @@ h1, h2, h3 {
   }
 
   p {
-    color: rgba(255, 255, 255, 0.7);
+    color: color-mix(in srgb, var(--mb-on-ink) 75%, transparent);
     margin: 0 0 28px;
   }
 
-  .btn--primary { border-color: var(--mb-white); box-shadow: 2px 2px 0 var(--mb-white); }
+  .btn--primary { border-color: var(--mb-on-ink); box-shadow: 2px 2px 0 var(--mb-on-ink); }
 
   @media (max-width: 960px) { margin-inline: 24px; }
 }
 
-.footer {
-  border-top: var(--mb-border);
-  padding: 28px 24px 40px;
-  text-align: center;
-  color: var(--mb-muted);
-  font-size: 0.78rem;
-  font-family: var(--mb-font-mono);
-}

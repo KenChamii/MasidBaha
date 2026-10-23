@@ -1,0 +1,11 @@
+@use '../../../../styles/mixins' as m;
+
+.theme-toggle {
+  @include m.press-button;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}

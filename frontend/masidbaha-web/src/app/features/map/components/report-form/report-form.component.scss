@@ -1,0 +1,102 @@
+@use '../../../../../styles/mixins' as m;
+
+.report-form {
+  @include m.panel;
+  position: absolute;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  padding: 16px;
+  width: min(320px, calc(100vw - 32px));
+  color: var(--mb-ink);
+
+  h3 {
+    margin: 0 0 12px;
+    font-family: var(--mb-font-display);
+    text-transform: uppercase;
+    font-size: 1.05rem;
+  }
+
+  label {
+    display: block;
+    @include m.mono-label;
+    margin-bottom: 10px;
+    color: var(--mb-muted);
+  }
+
+  select, textarea {
+    @include m.form-field;
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 0.85rem;
+  }
+
+  input[type='file'] {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    font-size: 0.75rem;
+    color: var(--mb-muted);
+
+    &::file-selector-button {
+      background: var(--mb-mist);
+      border: 2px solid var(--mb-ink);
+      color: var(--mb-ink);
+      padding: 6px 10px;
+      margin-right: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  }
+}
+
+.report-form__error {
+  margin: -4px 0 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--mb-danger);
+}
+
+.report-form__photo-preview {
+  position: relative;
+  margin-bottom: 12px;
+  display: inline-block;
+
+  img {
+    display: block;
+    max-width: 100%;
+    max-height: 140px;
+    border: var(--mb-border);
+  }
+
+  button {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    @include m.press-button(var(--mb-surface), var(--mb-ink));
+    font-size: 0.65rem;
+    padding: 3px 8px;
+  }
+}
+
+.report-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+
+  button {
+    @include m.press-button;
+    padding: 8px 16px;
+    font-size: 0.78rem;
+
+    &[type='submit'] {
+      background: var(--mb-water);
+      color: var(--mb-white);
+    }
+  }
+}
+

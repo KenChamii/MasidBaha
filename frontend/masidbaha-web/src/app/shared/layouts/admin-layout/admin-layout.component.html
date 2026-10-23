@@ -1,0 +1,16 @@
+<header class="topbar">
+  <div class="topbar__left">
+    <app-brand />
+    <span class="topbar__tag">Admin</span>
+  </div>
+
+  <div class="topbar__right">
+    <a class="topbar__link" routerLink="/map">Live map</a>
+    <a class="topbar__link" routerLink="/analytics">Analytics</a>
+    <app-theme-toggle />
+  </div>
+</header>
+
+<main class="content">
+  <router-outlet />
+</main>

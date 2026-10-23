@@ -1,0 +1,121 @@
+// Leaflet markers and popups render outside Angular's view encapsulation, so they live here
+@use 'mixins' as m;
+
+.flood-marker__badge {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--mb-ink);
+  box-shadow: 2px 2px 0 var(--mb-ink);
+}
+
+.flood-marker__icon {
+  width: 16px;
+  height: 16px;
+}
+
+.flood-marker__photo-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--mb-surface);
+  border: 2px solid var(--mb-ink);
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+// Every marker pulses (duration/scale set per-instance via --pulse-duration
+// and --pulse-scale custom properties, see buildIcon() / PULSE_BY_SEVERITY).
+.flood-marker__badge::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: inherit;
+  z-index: -1;
+  animation: flood-marker-pulse var(--pulse-duration, 2s) ease-out infinite;
+}
+
+@keyframes flood-marker-pulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(var(--pulse-scale, 1.6));
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.flood-popup {
+  font-family: var(--mb-font-body);
+  min-width: 160px;
+}
+
+.flood-popup__confidence {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.flood-popup__actions {
+  display: flex;
+  gap: 6px;
+
+  button {
+    flex: 1;
+    border: 2px solid var(--mb-ink);
+    background: var(--mb-mist);
+    color: var(--mb-ink);
+    padding: 6px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover { background: var(--mb-cyan); }
+  }
+}
+
+.flood-popup__photo-btn {
+  display: block;
+  width: 100%;
+  border: 2px solid var(--mb-ink);
+  background: var(--mb-mist);
+  color: var(--mb-ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+
+  &:hover { background: var(--mb-cyan); }
+}
+
+// Leaflet popup chrome matches the square panels
+.leaflet-popup-content-wrapper {
+  border: var(--mb-border);
+  border-radius: 0;
+  box-shadow: var(--mb-shadow-sm);
+}
+
+.leaflet-popup-tip { border: var(--mb-border); box-shadow: none; }
+
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--mb-surface);
+  color: var(--mb-ink);
+}

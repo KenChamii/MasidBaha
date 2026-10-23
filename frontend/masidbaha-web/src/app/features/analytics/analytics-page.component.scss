@@ -27,7 +27,7 @@
     flex-shrink: 0;
     padding: 1.25rem;
     overflow-y: auto;
-    background: var(--mb-white);
+    background: var(--mb-surface);
     border-right: var(--mb-border);
     z-index: 1;
   }
@@ -66,7 +66,7 @@
 
       &.active {
         background: var(--mb-ink);
-        color: var(--mb-white);
+        color: var(--mb-on-ink);
       }
     }
   }

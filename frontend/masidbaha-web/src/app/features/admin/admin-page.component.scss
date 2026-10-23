@@ -58,7 +58,7 @@
 
       &.active {
         background: var(--mb-ink);
-        color: var(--mb-white);
+        color: var(--mb-on-ink);
       }
     }
   }
@@ -73,7 +73,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 0.85rem;
-    background: var(--mb-white);
+    background: var(--mb-surface);
     border: var(--mb-border);
     box-shadow: var(--mb-shadow);
 
@@ -87,7 +87,7 @@
     th {
       @include m.mono-label;
       background: var(--mb-ink);
-      color: var(--mb-white);
+      color: var(--mb-on-ink);
       font-weight: 500;
     }
 
@@ -137,7 +137,7 @@
     flex-direction: column;
     gap: 0.1rem;
 
-    strong { color: var(--mb-water); }
+    strong { color: var(--mb-water-text); }
 
     &--error { color: var(--mb-danger); }
   }

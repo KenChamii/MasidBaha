@@ -1,50 +1,52 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import * as L from 'leaflet';
-import { Observable, Subscription, fromEvent } from 'rxjs';
+import { Subscription, fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
 import { FloodReportService } from './services/flood-report.service';
+import { FloodReportsStore } from './state/flood-reports.store';
+import { buildFloodIcon, buildPopupHtml } from './map-markers';
+import { OfflineBannerComponent } from './components/offline-banner/offline-banner.component';
+import { PushToggleComponent } from './components/push-toggle/push-toggle.component';
+import { ReportFormComponent } from './components/report-form/report-form.component';
+import { TopReportsPanelComponent } from './components/top-reports-panel/top-reports-panel.component';
+import { ModalComponent } from '../../shared/ui/modal/modal.component';
+import { ThemeToggleComponent } from '../../shared/ui/theme-toggle/theme-toggle.component';
 import { SignalRService } from '../../core/services/signalr.service';
 import { GeolocationService } from '../../core/services/geolocation.service';
 import { SessionService } from '../../core/services/session.service';
-import { PhotoService } from '../../core/services/photo.service';
 import { OfflineCacheService } from '../../core/services/offline-cache.service';
-import { PushNotificationService } from '../../core/services/push-notification.service';
-import { FloodReport, ReportScope, Severity } from '../../shared/models/flood-report.model';
+import { FloodReport } from '../../shared/models/flood-report.model';
 
 const PHILIPPINES_CENTER: L.LatLngExpression = [12.8797, 121.7740];
 const DEFAULT_ZOOM = 6;
 const LOCATED_ZOOM = 14;
 const DEFAULT_RADIUS_METERS = 5000;
 
-const SEVERITY_META: Record<Severity, { label: string; color: string }> = {
-  1: { label: 'Madadaanan', color: '#34C6E8' },
-  2: { label: 'Tuhod ang lalim', color: '#FFD166' },
-  3: { label: 'Baywang ang lalim', color: '#FF7A47' },
-  4: { label: 'Hindi madadaanan', color: '#E63946' }
-};
-
-// Every marker pulses; higher severity pulses faster and wider so the
-// visual hierarchy between severities still reads instantly on the map.
-const PULSE_BY_SEVERITY: Record<Severity, { duration: number; scale: number }> = {
-  1: { duration: 3.2, scale: 1.35 },
-  2: { duration: 2.6, scale: 1.45 },
-  3: { duration: 2.0, scale: 1.6 },
-  4: { duration: 1.4, scale: 1.8 }
-};
-
 @Component({
   selector: 'app-map-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [
+    OfflineBannerComponent,
+    PushToggleComponent,
+    ReportFormComponent,
+    TopReportsPanelComponent,
+    ModalComponent,
+    ThemeToggleComponent
+  ],
+  providers: [FloodReportsStore],
   templateUrl: './map-page.component.html',
   styleUrls: ['./map-page.component.scss']
 })
 export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   @ViewChild('mapContainer', { static: true }) mapContainerRef!: ElementRef<HTMLDivElement>;
+
+  private readonly floodReportService = inject(FloodReportService);
+  private readonly signalRService = inject(SignalRService);
+  private readonly geolocationService = inject(GeolocationService);
+  private readonly sessionService = inject(SessionService);
+  private readonly offlineCacheService = inject(OfflineCacheService);
+  readonly store = inject(FloodReportsStore);
 
   private map!: L.Map;
   private markers = new Map<string, L.Marker>();
@@ -54,94 +56,22 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   // here per report id instead of losing it on every rebuild.
   private reportPhotoUrls = new Map<string, string | undefined>();
 
-  readonly severityOptions: { value: Severity; label: string }[] =
-    (Object.keys(SEVERITY_META).map(Number) as Severity[])
-      .map(value => ({ value, label: SEVERITY_META[value].label }));
-
   pinDropMode = false;
   pendingPin: { lat: number; lng: number } | null = null;
-  newReport: { severity: Severity; notes: string } = { severity: 1, notes: '' };
-  isSubmitting = false;
-  showList = true;
-
-  // photo attachment (step 10) — client-side guard mirrors the backend's own
-  // checks, so people get instant feedback instead of waiting on a round trip.
-  private static readonly MAX_PHOTO_BYTES = 8 * 1024 * 1024;
-  private static readonly ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-  selectedPhotoFile: File | null = null;
-  photoPreviewUrl: string | null = null;
-  photoError: string | null = null;
-  isUploadingPhoto = false;
-
-  // full-screen photo viewer (for photos already attached to a report)
+  // the list covers most of a phone screen, so start it collapsed there
+  showList = window.innerWidth > 640;
   viewingPhotoUrl: string | null = null;
-
-  // top reports (national/regional/provincial/local)
- 
-  scope: ReportScope = 'national';
-  selectedRegion: string | null = null;
-  selectedProvince: string | null = null;
-  selectedCity: string | null = null;
-  topReports: FloodReport[] = [];
-  isLoadingTopReports = false;
-
-  private filterSample: FloodReport[] = [];
 
   // offline / PWA fallback (see OfflineCacheService for the why)
   isOffline = !navigator.onLine;
   isShowingCachedData = false;
   cachedDataSavedAt: string | null = null;
 
-  // push notification bell state. pushSupported means the browser and
-  // build support it (needs a production build, HTTPS or localhost).
-  // pushEnabled tracks whether this device is currently subscribed.
-  pushSupported = false;
-  pushEnabled = false;
-  isTogglingPush = false;
-  pushError: string | null = null;
-
-  get availableRegions(): string[] {
-    return this.distinct(this.filterSample.map(r => r.region));
-  }
-
-  get availableProvinces(): string[] {
-    return this.distinct(
-      this.filterSample
-        .filter(r => !this.selectedRegion || r.region === this.selectedRegion)
-        .map(r => r.province)
-    );
-  }
-
-  get availableCities(): string[] {
-    return this.distinct(
-      this.filterSample
-        .filter(r =>
-          (!this.selectedRegion || r.region === this.selectedRegion) &&
-          (!this.selectedProvince || r.province === this.selectedProvince)
-        )
-        .map(r => r.city)
-    );
-  }
-
-  private distinct(values: (string | undefined)[]): string[] {
-    return Array.from(new Set(values.filter((v): v is string => !!v))).sort();
-  }
-
-  constructor(
-    private floodReportService: FloodReportService,
-    private signalRService: SignalRService,
-    private geolocationService: GeolocationService,
-    private sessionService: SessionService,
-    private photoService: PhotoService,
-    private offlineCacheService: OfflineCacheService,
-    private pushNotificationService: PushNotificationService
-  ) {}
-
   // ---- lifecycle ----
 
   ngAfterViewInit(): void {
-    // Step 1: the map container <div> must exist in the DOM first —
-    // that's why this runs in ngAfterViewInit, not ngOnInit.
+    // The map container <div> must exist in the DOM first, which is why this
+    // runs in ngAfterViewInit, not ngOnInit.
     this.map = L.map(this.mapContainerRef.nativeElement).setView(PHILIPPINES_CENTER, DEFAULT_ZOOM);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -149,114 +79,92 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
       maxZoom: 19
     }).addTo(this.map);
 
-    // Step 2: try to center on the user, then load whatever is nearby.
+    // Try to center on the user, then load whatever is nearby.
     this.geolocationService.getCurrentPosition()
       .then(({ lat, lng }) => {
         this.map.setView([lat, lng], LOCATED_ZOOM);
         this.loadNearby(lat, lng);
       })
       .catch(() => {
-        // Permission denied or unsupported — fall back to the country-wide
-        // view, still load whatever is near the default center.
+        // Permission denied or unsupported: fall back to the country-wide view
         const center = this.map.getCenter();
         this.loadNearby(center.lat, center.lng);
       });
 
-    // Step 3: refetch on pan/zoom, debounced so we don't spam the API.
-    const moveEnd$ = fromEvent(this.map, 'moveend').pipe(debounceTime(500));
+    // Refetch on pan/zoom, debounced so we don't spam the API.
     this.subscriptions.push(
-      moveEnd$.subscribe(() => {
-        const center = this.map.getCenter();
-        this.loadNearby(center.lat, center.lng);
-      })
+      fromEvent(this.map, 'moveend').pipe(debounceTime(500)).subscribe(() => this.reloadAtCenter())
     );
 
-    // Map clicks only matter while "pin drop" mode is active (step 8).
+    // Map clicks only matter while pin drop mode is active.
     this.map.on('click', (event: L.LeafletMouseEvent) => this.handleMapClick(event));
   }
 
   ngOnInit(): void {
-    // Step 5: connect before subscribing, so the socket is already opening
-    // while we attach listeners.
+    // Connect before subscribing, so the socket is already opening while we attach listeners.
     this.signalRService.connect();
 
-    // Step 6: live add / update / remove without refetching.
+    // Live add / update / remove without refetching.
     this.subscriptions.push(
-      this.signalRService.newReport$.subscribe(report => this.upsertMarker(report))
+      this.signalRService.newReport$.subscribe(report => {
+        this.upsertMarker(report);
+        this.store.refresh();
+      })
     );
 
     this.subscriptions.push(
       this.signalRService.reportUpdated$.subscribe(update => {
-        // ReportUpdated only carries confidence/status, not lat/lng — if we
+        // ReportUpdated only carries confidence/status, not lat/lng. If we
         // don't already have this marker (e.g. outside our last fetch
-        // radius), there's nothing on the map to refresh, so skip it.
+        // radius), there's nothing on the map to refresh.
         const marker = this.markers.get(update.floodReportId);
         if (marker) {
           this.refreshPopupContent(marker, update.floodReportId, update.confidenceScore);
         }
+        this.store.refresh();
       })
     );
 
     this.subscriptions.push(
-      this.signalRService.removeReport$.subscribe(id => this.removeMarker(id))
-    );
-
-    // Step 7: catch up on anything missed while the socket was down.
-    this.subscriptions.push(
-      this.signalRService.reconnected$.subscribe(() => {
-        const center = this.map.getCenter();
-        this.loadNearby(center.lat, center.lng);
+      this.signalRService.removeReport$.subscribe(id => {
+        this.removeMarker(id);
+        this.store.refresh();
       })
     );
 
-    // top reports panel
-    // Loads once for the current scope, plus a broad unfiltered sample used
- 
-    // (~20 rows) so this stays cheap.
-    this.loadFilterSample();
-    this.refreshTopReports();
-
+    // Catch up on anything missed while the socket was down.
     this.subscriptions.push(
-      this.signalRService.newReport$.subscribe(() => this.refreshTopReports())
-    );
-    this.subscriptions.push(
-      this.signalRService.reportUpdated$.subscribe(() => this.refreshTopReports())
-    );
-    this.subscriptions.push(
-      this.signalRService.removeReport$.subscribe(() => this.refreshTopReports())
+      this.signalRService.reconnected$.subscribe(() => this.reloadAtCenter())
     );
 
-    // Step 10 (PWA): track connectivity so the offline banner reflects
-    // reality even if the person's connection drops mid-session, not just
-    // at initial load.
+    this.store.init();
+
+    // Track connectivity so the offline banner reflects reality even if the
+    // connection drops mid-session, not just at initial load.
     this.subscriptions.push(
       fromEvent(window, 'offline').subscribe(() => this.isOffline = true)
     );
     this.subscriptions.push(
       fromEvent(window, 'online').subscribe(() => {
         this.isOffline = false;
-        // Connection is back — refetch live data immediately rather than
-        // waiting for the next pan/zoom to clear the "cached" banner.
-        const center = this.map.getCenter();
-        this.loadNearby(center.lat, center.lng);
+        // Connection is back: refetch now instead of waiting for the next pan/zoom
+        this.reloadAtCenter();
       })
     );
-
-    // push notifications: reflect whatever subscription state the browser
-    // already has, in case it was enabled on a previous visit.
-    this.pushSupported = this.pushNotificationService.isSupported;
-    if (this.pushSupported) {
-      this.subscriptions.push(
-        this.pushNotificationService.subscription$.subscribe((sub: PushSubscription | null) => this.pushEnabled = !!sub)
-      );
-    }
   }
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
-    // Step 9: without this, navigating away and back to /map throws
+    // Without this, navigating away and back to /map throws
     // "Map container is already initialized".
     this.map?.remove();
+  }
+
+  // ---- data loading ----
+
+  private reloadAtCenter(): void {
+    const center = this.map.getCenter();
+    this.loadNearby(center.lat, center.lng);
   }
 
   private loadNearby(lat: number, lng: number): void {
@@ -273,8 +181,7 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
 
           reports.forEach(report => this.upsertMarker(report));
 
-          // Snapshot for offline fallback — fire-and-forget, never blocks
-          // the UI on IndexedDB writes.
+          // Snapshot for offline fallback: fire-and-forget, never blocks the UI on IndexedDB writes.
           this.offlineCacheService.saveLastKnownReports(reports);
         },
         error: () => this.loadFromOfflineCache()
@@ -282,8 +189,7 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   // Called when a live fetch fails (most likely no network). Shows whatever
-  // was last successfully fetched, clearly labeled as cached/stale so users
-  // don't mistake it for a live view.
+  // was last fetched, clearly labeled as cached so it isn't mistaken for a live view.
   private loadFromOfflineCache(): void {
     this.offlineCacheService.getLastKnownReports().then(cached => {
       if (!cached) return;
@@ -293,6 +199,8 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
       cached.reports.forEach(report => this.upsertMarker(report));
     });
   }
+
+  // ---- markers and popups ----
 
   private upsertMarker(report: FloodReport): void {
     this.reportPhotoUrls.set(report.id, report.photoUrl);
@@ -304,9 +212,9 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    const marker = L.marker([report.lat, report.lng], { icon: this.buildIcon(report.severity, !!report.photoUrl) })
+    const marker = L.marker([report.lat, report.lng], { icon: buildFloodIcon(report.severity, !!report.photoUrl) })
       .addTo(this.map)
-      .bindPopup(this.buildPopupHtml(report.id, report.confidenceScore));
+      .bindPopup(buildPopupHtml(report.confidenceScore, !!report.photoUrl));
 
     marker.on('popupopen', (e: L.PopupEvent) => {
       const popupEl = e.popup.getElement();
@@ -319,7 +227,8 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   // setPopupContent() replaces the popup's inner DOM, which wipes out any
   // click listeners wirePopupButtons() had attached.
   private refreshPopupContent(marker: L.Marker, reportId: string, confidenceScore: number): void {
-    marker.setPopupContent(this.buildPopupHtml(reportId, confidenceScore));
+    const hasPhoto = !!this.reportPhotoUrls.get(reportId);
+    marker.setPopupContent(buildPopupHtml(confidenceScore, hasPhoto));
 
     if (marker.isPopupOpen()) {
       const popupEl = marker.getPopup()?.getElement();
@@ -335,53 +244,8 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     }
   }
 
-  private buildIcon(severity: Severity, hasPhoto: boolean): L.DivIcon {
-    const meta = SEVERITY_META[severity];
-    // Every marker pulses now, graduated by severity — higher severity pulses
-    // faster and wider, so the hierarchy still reads at a glance even though
-    // all four now animate (previously only severity 4 did).
-    const pulse = PULSE_BY_SEVERITY[severity];
-    const photoBadge = hasPhoto
-      ? '<span class="flood-marker__photo-badge">📷</span>'
-      : '';
-
-    return L.divIcon({
-      className: 'flood-marker',
-      html: `
-        <div class="flood-marker__badge" style="background:${meta.color}; --pulse-duration:${pulse.duration}s; --pulse-scale:${pulse.scale};">
-          <svg class="flood-marker__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 9.5c1.6 1.4 3.2 1.4 4.8 0s3.2-1.4 4.8 0 3.2 1.4 4.8 0 3.2-1.4 4.8 0" stroke="#0B1F33" stroke-width="2" stroke-linecap="round"/>
-            <path d="M3 15c1.6 1.4 3.2 1.4 4.8 0s3.2-1.4 4.8 0 3.2 1.4 4.8 0 3.2-1.4 4.8 0" stroke="#0B1F33" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
-          </svg>
-          ${photoBadge}
-        </div>
-      `,
-      iconSize: [34, 34],
-      iconAnchor: [17, 17],
-      popupAnchor: [0, -17]
-    });
-  }
-  private buildPopupHtml(reportId: string, confidenceScore: number): string {
-    const photoUrl = this.reportPhotoUrls.get(reportId);
-    const photoButton = photoUrl
-      ? `<button type="button" class="flood-popup__photo-btn" data-action="view-photo">📷 Tingnan ang larawan</button>`
-      : '';
-
-    return `
-      <div class="flood-popup">
-        <p class="flood-popup__confidence">Confidence: ${confidenceScore}</p>
-        ${photoButton}
-        <div class="flood-popup__actions">
-          <button type="button" data-action="confirm">Kumpirmahin</button>
-          <button type="button" data-action="deny">Wala na</button>
-        </div>
-      </div>
-    `;
-  }
-
   // Scoped to this popup's own DOM element (not document-wide) so we can
-  // never accidentally wire — or fail to find — buttons belonging to a
-  // different marker's popup.
+  // never wire buttons belonging to a different marker's popup.
   private wirePopupButtons(reportId: string, popupEl: HTMLElement): void {
     const confirmBtn = popupEl.querySelector<HTMLButtonElement>('[data-action="confirm"]');
     const denyBtn = popupEl.querySelector<HTMLButtonElement>('[data-action="deny"]');
@@ -391,7 +255,7 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     denyBtn?.addEventListener('click', () => this.vote(reportId, -1), { once: true });
     photoBtn?.addEventListener('click', () => {
       const url = this.reportPhotoUrls.get(reportId);
-      if (url) this.openPhotoModal(url);
+      if (url) this.openPhoto(url);
     }, { once: true });
   }
 
@@ -400,89 +264,10 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
       .subscribe(() => this.map.closePopup());
   }
 
-  // ---- list panel ----
+  // ---- panel and toolbar actions ----
 
   toggleList(): void {
     this.showList = !this.showList;
-  }
-
-  // ---- push notifications ----
-
-  async togglePush(): Promise<void> {
-    if (!this.pushSupported || this.isTogglingPush) return;
-
-    this.isTogglingPush = true;
-    this.pushError = null;
-
-    try {
-      if (this.pushEnabled) {
-        await this.pushNotificationService.unsubscribe();
-      } else {
-        await this.pushNotificationService.subscribe();
-      }
-      // pushEnabled updates on its own through the subscription$ listener
-      // set up in ngOnInit.
-    } catch (err) {
-      // Usually means the person blocked the browser's permission prompt.
-      this.pushError = err instanceof Error
-        ? err.message
-        : 'Hindi ma-enable ang push notifications. Subukan ulit.';
-    } finally {
-      this.isTogglingPush = false;
-    }
-  }
-
-  setScope(scope: ReportScope): void {
-    this.scope = scope;
-    if (scope === 'national') {
-      this.selectedRegion = null;
-      this.selectedProvince = null;
-      this.selectedCity = null;
-    }
-    this.refreshTopReports();
-  }
-
-  onRegionChange(region: string): void {
-    this.selectedRegion = region || null;
-    this.selectedProvince = null;
-    this.selectedCity = null;
-    this.refreshTopReports();
-  }
-
-  onProvinceChange(province: string): void {
-    this.selectedProvince = province || null;
-    this.selectedCity = null;
-    this.refreshTopReports();
-  }
-
-  onCityChange(city: string): void {
-    this.selectedCity = city || null;
-    this.refreshTopReports();
-  }
-
-  private loadFilterSample(): void {
-    this.floodReportService.getTop({ limit: 200 })
-      .subscribe(reports => this.filterSample = reports);
-  }
-
-  private refreshTopReports(): void {
-    this.isLoadingTopReports = true;
-    this.floodReportService.getTop({
-      region: this.selectedRegion ?? undefined,
-      province: this.selectedProvince ?? undefined,
-      city: this.selectedCity ?? undefined,
-      limit: 20
-    }).subscribe({
-      next: reports => {
-        this.topReports = reports;
-        this.isLoadingTopReports = false;
-      },
-      error: () => this.isLoadingTopReports = false
-    });
-  }
-
-  locationLabel(report: FloodReport): string | null {
-    return report.city ?? report.province ?? report.region ?? null;
   }
 
   focusReport(report: FloodReport): void {
@@ -495,9 +280,9 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    // The top-reports list is scope-based (national/regional/etc.), so the
-    // report may be far outside whatever the map last fetched — pull in
-    // markers around it first, then open the popup once it exists.
+    // The top-reports list is scope-based, so the report may be far outside
+    // whatever the map last fetched: pull in markers around it first, then
+    // open the popup once it exists.
     this.floodReportService.getNearby(report.lat, report.lng, DEFAULT_RADIUS_METERS)
       .subscribe(reports => {
         reports.forEach(r => this.upsertMarker(r));
@@ -505,25 +290,15 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
       });
   }
 
-  severityLabel(severity: Severity): string {
-    return SEVERITY_META[severity].label;
+  openPhoto(url: string): void {
+    this.viewingPhotoUrl = url;
   }
 
-  severityColor(severity: Severity): string {
-    return SEVERITY_META[severity].color;
+  closePhoto(): void {
+    this.viewingPhotoUrl = null;
   }
 
-  timeAgo(isoDate: string): string {
-    const diffMs = Date.now() - new Date(isoDate).getTime();
-    const minutes = Math.floor(diffMs / 60000);
-    if (minutes < 1) return 'ngayon lang';
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
-  }
-
-  // ---- pin drop / create (step 8) ----
+  // ---- pin drop / create ----
 
   togglePinDropMode(): void {
     this.pinDropMode = !this.pinDropMode;
@@ -535,123 +310,8 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     this.pendingPin = { lat: event.latlng.lat, lng: event.latlng.lng };
   }
 
-  cancelPendingPin(): void {
+  closeReportForm(): void {
     this.pendingPin = null;
     this.pinDropMode = false;
-    this.clearPhoto();
-  }
-
-  // ---- photo attachment ----
-
-  onPhotoSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    this.photoError = null;
-
-    if (!file) {
-      this.clearPhoto();
-      return;
-    }
-
-    if (!MapPageComponent.ALLOWED_PHOTO_TYPES.includes(file.type)) {
-      this.photoError = 'Tanging JPEG, PNG, o WebP na larawan lang ang tinatanggap.';
-      input.value = '';
-      return;
-    }
-
-    if (file.size > MapPageComponent.MAX_PHOTO_BYTES) {
-      this.photoError = 'Ang photo ay dapat hindi lalagpas sa 8MB.';
-      input.value = '';
-      return;
-    }
-
-    if (this.photoPreviewUrl) {
-      URL.revokeObjectURL(this.photoPreviewUrl);
-    }
-
-    this.selectedPhotoFile = file;
-    this.photoPreviewUrl = URL.createObjectURL(file);
-  }
-
-  clearPhoto(): void {
-    if (this.photoPreviewUrl) {
-      URL.revokeObjectURL(this.photoPreviewUrl);
-    }
-    this.selectedPhotoFile = null;
-    this.photoPreviewUrl = null;
-    this.photoError = null;
-  }
-
-  // ---- photo viewer modal ----
-
-  openPhotoModal(url: string, event?: Event): void {
-    // Stops list-item clicks from also triggering focusReport() underneath.
-    event?.stopPropagation();
-    this.viewingPhotoUrl = url;
-  }
-
-  closePhotoModal(): void {
-    this.viewingPhotoUrl = null;
-  }
-
-  @HostListener('document:keydown.escape')
-  onEscapeKey(): void {
-    if (this.viewingPhotoUrl) {
-      this.closePhotoModal();
-    }
-  }
-
-  submitNewReport(): void {
-    if (!this.pendingPin || this.isSubmitting) return;
-
-    this.isSubmitting = true;
-
-    // Photo is optional — upload it first (if present) to get a URL, then
-    // create the report exactly as before. CreateFloodReportRequest's shape
-    // never changes; it just receives a real PhotoUrl now instead of none.
-    let uploadStep$: Observable<{ url: string }> | null = null;
-    if (this.selectedPhotoFile) {
-      this.isUploadingPhoto = true;
-      uploadStep$ = this.photoService.upload(this.selectedPhotoFile);
-    }
-
-    const createReport = (photoUrl: string | undefined) => {
-      this.floodReportService.create({
-        lat: this.pendingPin!.lat,
-        lng: this.pendingPin!.lng,
-        severity: this.newReport.severity,
-        notes: this.newReport.notes || undefined,
-        photoUrl,
-        reporterSessionId: this.sessionService.sessionId
-      }).subscribe({
-        next: () => {
-          this.isSubmitting = false;
-          this.pendingPin = null;
-          this.pinDropMode = false;
-          this.newReport = { severity: 1, notes: '' };
-          this.clearPhoto();
-          // No manual upsertMarker() call here 
-        },
-        error: () => {
-          this.isSubmitting = false;
-        }
-      });
-    };
-
-    if (uploadStep$) {
-      uploadStep$.subscribe({
-        next: result => {
-          this.isUploadingPhoto = false;
-          createReport(result.url);
-        },
-        error: () => {
-          this.isUploadingPhoto = false;
-          this.isSubmitting = false;
-          this.photoError = 'Nabigo ang pag-upload ng photo. Subukan ulit.';
-        }
-      });
-    } else {
-      createReport(undefined);
-    }
   }
 }
