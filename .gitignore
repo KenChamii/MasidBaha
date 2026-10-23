@@ -366,3 +366,6 @@ FodyWeavers.xsd
 backend/MasidBaha.WebAPI/wwwroot/uploads/
 # Local overrides for docker-compose (secrets)
 .env
+
+# Local Cloudflare (wrangler) scratch files
+.wrangler/
