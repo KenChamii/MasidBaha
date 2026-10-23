@@ -456,6 +456,24 @@ public class ApiTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Photo_Upload_RejectsADamagedImage_WithA400NotA500()
+    {
+        // a real PNG with one byte near the end changed, so its checksum no longer matches
+        using var image = new Image<Rgba32>(40, 30, new Rgba32(30, 120, 200));
+        using var stream = new MemoryStream();
+        image.SaveAsPng(stream);
+        var bytes = stream.ToArray();
+        bytes[bytes.Length / 2] ^= 0xFF;
+        var content = new ByteArrayContent(bytes);
+        content.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        using var form = new MultipartFormDataContent { { content, "file", "flood.png" } };
+
+        var response = await _factory.CreateClient().PostAsync($"{Api}/photos", form);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Photo_Upload_StillAcceptsAJpeg()
     {
         using var image = new Image<Rgba32>(40, 30, new Rgba32(30, 120, 200));

@@ -67,7 +67,8 @@ public class UploadPhotoService : IUploadPhotoService
             // browser claimed the content-type was.
             image = await Image.LoadAsync(SafeDecoding, content, cancellationToken);
         }
-        catch (UnknownImageFormatException)
+        // not an image, or an image that is cut off or damaged: either way it is the sender's file, not our fault
+        catch (ImageFormatException)
         {
             throw new ArgumentException("Hindi wastong larawan ang na-upload na file.");
         }
