@@ -8,8 +8,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   background: rgba(8, 19, 31, 0.88);
   animation: modal-fade-in 0.15s ease;
+
+  // on a phone a panel sits at the bottom, under the close button, and uses the full width
+  &--sheet {
+    @media (max-width: 640px) {
+      align-items: flex-end;
+      padding: 0;
+
+      .modal__body {
+        width: 100%;
+      }
+    }
+  }
 }
 
 @keyframes modal-fade-in {
@@ -21,12 +35,23 @@
   }
 }
 
+.modal__body {
+  max-width: 100%;
+  min-width: 0;
+}
+
 .modal__close {
   @include m.press-button;
   position: absolute;
-  top: 20px;
-  right: 24px;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
   width: 40px;
   height: 40px;
   font-size: 1.1rem;
+  z-index: 1;
+
+  @media (pointer: coarse) {
+    width: 44px;
+    height: 44px;
+  }
 }

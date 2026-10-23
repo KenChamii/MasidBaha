@@ -10,7 +10,7 @@
 </button>
 
 @if (open()) {
-  <mb-modal (closed)="open.set(false)">
+  <mb-modal [sheet]="true" (closed)="open.set(false)">
     <section class="weather" aria-labelledby="weather-title">
       <h2 id="weather-title">Weather on the map</h2>
 

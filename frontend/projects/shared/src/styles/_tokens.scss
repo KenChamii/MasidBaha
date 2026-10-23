@@ -29,6 +29,23 @@
   --mb-font-display: 'Space Grotesk', sans-serif;
   --mb-font-body: 'Inter', sans-serif;
   --mb-font-mono: 'IBM Plex Mono', monospace;
+
+  // Layout. 100dvh follows the phone's collapsing address bar; 100vh is the fallback for older browsers
+  --mb-full-height: 100vh;
+  --mb-gutter: 16px;
+  --mb-toast-bottom: 16px;
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --mb-full-height: 100dvh;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --mb-gutter: 12px;
+  }
 }
 
 // Dark theme: ink flips to a light tone so borders and text stay readable
@@ -50,6 +67,20 @@
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+// Fields under 16px make iOS zoom the whole page when focused, and it never zooms back
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 body {

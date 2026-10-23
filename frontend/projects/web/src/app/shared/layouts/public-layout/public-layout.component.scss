@@ -24,7 +24,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 24px;
+
+  @media (max-width: 480px) {
+    padding: 10px var(--mb-gutter);
+    gap: 10px 12px;
+  }
 }
 
 .nav__links {
@@ -42,19 +48,44 @@
     }
   }
 
+  // a phone: the same links as a second row instead of a hidden menu
   @media (max-width: 760px) {
-    display: none;
+    order: 3;
+    flex: 1 1 100%;
+    justify-content: space-between;
+    gap: 4px;
+    padding-top: 6px;
+    border-top: var(--mb-hair);
+
+    a {
+      padding: 10px 2px;
+      white-space: nowrap;
+    }
   }
 }
 .nav__actions {
   display: flex;
   align-items: center;
   gap: 12px;
+
+  .btn {
+    white-space: nowrap;
+  }
+
+  @media (max-width: 480px) {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 400px) {
+  .nav__optional {
+    display: none;
+  }
 }
 
 .footer {
   border-top: var(--mb-border);
-  padding: 28px 24px 40px;
+  padding: 28px var(--mb-gutter) max(40px, env(safe-area-inset-bottom));
   text-align: center;
   color: var(--mb-muted);
   font-size: 0.78rem;

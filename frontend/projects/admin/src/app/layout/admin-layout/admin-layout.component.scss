@@ -3,7 +3,7 @@
 :host {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: var(--mb-full-height);
   background: var(--mb-paper);
   color: var(--mb-ink);
 }
@@ -14,12 +14,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px 16px;
-  padding: 10px 24px;
+  padding: max(10px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) 10px
+    max(24px, env(safe-area-inset-left));
   background: var(--mb-surface);
   border-bottom: var(--mb-border);
 
   @media (max-width: 760px) {
-    padding: 10px 16px;
+    padding: max(10px, env(safe-area-inset-top)) max(var(--mb-gutter), env(safe-area-inset-right)) 10px
+      max(var(--mb-gutter), env(safe-area-inset-left));
   }
 }
 
@@ -37,7 +39,24 @@
   display: flex;
   gap: 18px;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
   padding-bottom: 2px;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  // a phone: links are easy to hit, and a fade at the edge says the row scrolls
+  @media (max-width: 760px) {
+    gap: 4px;
+    padding-right: 32px;
+    mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+
+    .topbar__link {
+      padding: 12px 8px;
+    }
+  }
 }
 
 .topbar__tag {
@@ -90,10 +109,15 @@
   @include m.press-button;
   padding: 6px 14px;
   font-size: 0.72rem;
+
+  @media (max-width: 400px) {
+    padding: 6px 10px;
+  }
 }
 
 .content {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  padding-bottom: env(safe-area-inset-bottom);
 }

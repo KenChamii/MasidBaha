@@ -150,6 +150,9 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Toasts sit above the report button, not on top of it
+    document.documentElement.style.setProperty('--mb-toast-bottom', '92px');
+
     // Connect before subscribing, so the socket is already opening while we attach listeners.
     this.signalRService.connect();
 
@@ -199,6 +202,7 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    document.documentElement.style.removeProperty('--mb-toast-bottom');
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.weatherOverlays?.dispose();
     // Without this, navigating away and back to /map throws

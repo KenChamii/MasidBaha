@@ -11,7 +11,7 @@
   </button>
 
   @if (open()) {
-    <mb-modal (closed)="open.set(false)">
+    <mb-modal [sheet]="true" (closed)="open.set(false)">
       <section class="watch" aria-labelledby="watch-title">
         <h2 id="watch-title">Places you watch</h2>
         <p class="watch__lead">

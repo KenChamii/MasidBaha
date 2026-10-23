@@ -3,13 +3,30 @@
 .report-form {
   @include m.panel;
   position: absolute;
-  bottom: 90px;
+  bottom: max(90px, calc(env(safe-area-inset-bottom) + 78px));
   left: 50%;
   transform: translateX(-50%);
-  z-index: 500;
+  z-index: 460;
   padding: 16px;
   width: min(320px, calc(100vw - 32px));
+  // never taller than the space above the report button, however small the screen
+  max-height: calc(var(--mb-full-height) - 90px - 72px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   color: var(--mb-ink);
+
+  @media (max-width: 480px) {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    transform: none;
+  }
+
+  // sideways: between the toolbar and the report button
+  @media (max-height: 520px) {
+    bottom: 64px;
+    max-height: calc(var(--mb-full-height) - 64px - 64px);
+  }
 
   h3 {
     margin: 0 0 12px;
@@ -88,6 +105,12 @@
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+  // when the form scrolls (a short screen), the buttons stay in reach
+  position: sticky;
+  bottom: -16px;
+  margin: 0 -16px -16px;
+  padding: 10px 16px 16px;
+  background: var(--mb-surface);
 
   button {
     @include m.press-button;
