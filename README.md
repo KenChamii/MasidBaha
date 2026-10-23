@@ -12,7 +12,9 @@ passable right now. Nobody has to sign up, because nobody signs up during a floo
   photo, a place name and a confidence score built from community votes and the reporter's track record.
 - **Anonymous but accountable.** Reporting and voting need no account. The server issues a signed session
   cookie, rate-limits writes, expires reports after a few hours and lets staff ban abusers.
-- **Alerts.** Web push notifications for new serious reports, and staff can broadcast announcements.
+- **Alerts that matter to you.** Web push for new serious reports. Choose up to five places you care about
+  and you hear only about floods near them. Staff can broadcast announcements, to everyone or only to people
+  near an area.
 - **History.** A heatmap and analytics of where and how often it floods.
 - **Works as an app.** An installable PWA that keeps working on a weak connection.
 - **Admin portal.** Moderators review flagged reports, ban sources, send announcements and tune settings;
@@ -113,7 +115,6 @@ The step-by-step guide is in [docs/deploy.md](docs/deploy.md).
 
 ## Roadmap
 
-- Watch areas: push alerts only for places you care about (and area-limited announcements).
 - Route check: "can I get from A to B?" against active reports.
 - PAGASA rainfall and typhoon overlays.
 - Offline report queue with background sync.

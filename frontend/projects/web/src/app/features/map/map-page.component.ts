@@ -1,4 +1,14 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  effect,
+  inject,
+  signal,
+  viewChild
+} from '@angular/core';
 import * as L from 'leaflet';
 import { Subscription, fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -8,11 +18,13 @@ import { buildFloodIcon, buildPopupHtml } from './map-markers';
 import { OfflineBannerComponent } from './components/offline-banner/offline-banner.component';
 import { PushToggleComponent } from './components/push-toggle/push-toggle.component';
 import { ReportFormComponent } from './components/report-form/report-form.component';
+import { WatchAreasComponent } from './components/watch-areas/watch-areas.component';
 import { TopReportsPanelComponent } from './components/top-reports-panel/top-reports-panel.component';
 
 import { SignalRService } from '../../core/services/signalr.service';
 import { GeolocationService } from '../../core/services/geolocation.service';
 import { OfflineCacheService } from '../../core/services/offline-cache.service';
+import { WatchAreaService } from '../../core/services/watch-area.service';
 import { FloodReport, FloodReportService, ModalComponent, ThemeToggleComponent } from '@masidbaha/shared';
 
 const PHILIPPINES_CENTER: L.LatLngExpression = [12.8797, 121.774];
@@ -25,6 +37,7 @@ const DEFAULT_RADIUS_METERS = 5000;
   imports: [
     OfflineBannerComponent,
     PushToggleComponent,
+    WatchAreasComponent,
     ReportFormComponent,
     TopReportsPanelComponent,
     ModalComponent,
@@ -41,15 +54,24 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   private readonly signalRService = inject(SignalRService);
   private readonly geolocationService = inject(GeolocationService);
   private readonly offlineCacheService = inject(OfflineCacheService);
+  private readonly watchAreaService = inject(WatchAreaService);
   readonly store = inject(FloodReportsStore);
 
   private map!: L.Map;
   private markers = new Map<string, L.Marker>();
+  // The places this visitor watches, drawn as circles so the alert area is visible
+  private watchLayer?: L.LayerGroup;
   private subscriptions: Subscription[] = [];
   // Popup content gets rebuilt from partial data on live updates (see
   // reportUpdated$ below), which doesn't carry photoUrl — so we remember it
   // here per report id instead of losing it on every rebuild.
   private reportPhotoUrls = new Map<string, string | undefined>();
+
+  // Where the map is centred: a new watch area is added here
+  protected readonly mapCenter = signal<{ lat: number; lng: number }>({
+    lat: 12.8797,
+    lng: 121.774
+  });
 
   protected readonly pinDropMode = signal(false);
   protected readonly pendingPin = signal<{ lat: number; lng: number } | null>(null);
@@ -61,6 +83,11 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   protected readonly isOffline = signal(!navigator.onLine);
   protected readonly isShowingCachedData = signal(false);
   protected readonly cachedDataSavedAt = signal<string | null>(null);
+
+  constructor() {
+    // Redraw the watched places whenever the list changes (the map exists once the view is ready)
+    effect(() => this.drawWatchAreas(this.watchAreaService.areas()));
+  }
 
   // ---- lifecycle ----
 
@@ -93,6 +120,15 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
         .pipe(debounceTime(500))
         .subscribe(() => this.reloadAtCenter())
     );
+
+    // Keep the "middle of the map" current for the watch-areas panel
+    this.map.on('moveend', () => {
+      const { lat, lng } = this.map.getCenter();
+      this.mapCenter.set({ lat, lng });
+    });
+
+    this.watchLayer = L.layerGroup().addTo(this.map);
+    this.drawWatchAreas(this.watchAreaService.areas());
 
     // Map clicks only matter while pin drop mode is active.
     this.map.on('click', (event: L.LeafletMouseEvent) => this.handleMapClick(event));
@@ -152,6 +188,26 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     // Without this, navigating away and back to /map throws
     // "Map container is already initialized".
     this.map?.remove();
+  }
+
+  // ---- watch areas ----
+
+  private drawWatchAreas(areas: { name: string; lat: number; lng: number; radiusMeters: number }[]): void {
+    if (!this.watchLayer) return;
+
+    this.watchLayer.clearLayers();
+    for (const area of areas) {
+      L.circle([area.lat, area.lng], {
+        radius: area.radiusMeters,
+        color: '#0077b6',
+        weight: 2,
+        dashArray: '6 6',
+        fillOpacity: 0.06,
+        interactive: false
+      })
+        .bindTooltip(area.name, { permanent: false })
+        .addTo(this.watchLayer);
+    }
   }
 
   // ---- data loading ----

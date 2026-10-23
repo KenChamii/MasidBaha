@@ -20,6 +20,7 @@ using MasidBaha.Application.FloodReports.VoteOnReport;
 using MasidBaha.Application.Persistence;
 using MasidBaha.Application.Photos.UploadPhoto;
 using MasidBaha.Application.PushNotifications;
+using MasidBaha.Application.PushNotifications.WatchAreas;
 using MasidBaha.Application.Trust;
 using MasidBaha.WebAPI.BackgroundServices;
 using Microsoft.EntityFrameworkCore;
@@ -94,6 +95,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAdminUsersService, AdminUsersService>();
         services.AddScoped<IBroadcastService, BroadcastService>();
         services.AddScoped<IPushSubscriptionService, PushSubscriptionService>();
+        services.AddScoped<IWatchAreaService, WatchAreaService>();
         services.AddScoped<IPushNotificationService, PushNotificationService>();
         services.AddScoped<IUploadPhotoService, UploadPhotoService>();
 

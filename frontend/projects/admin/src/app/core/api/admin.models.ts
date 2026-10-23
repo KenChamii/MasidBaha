@@ -187,6 +187,16 @@ export interface Broadcast {
   sentAt: string;
   sentByEmail: string;
   recipients: number;
+  // Set when it went only to people watching a place inside this circle
+  areaLat: number | null;
+  areaLng: number | null;
+  areaRadiusMeters: number | null;
+}
+
+export interface BroadcastArea {
+  lat: number;
+  lng: number;
+  radiusMeters: number;
 }
 
 export interface AuditEntry {

@@ -1,0 +1,78 @@
+@if (visible()) {
+  <button
+    type="button"
+    class="watch-btn"
+    [class.watch-btn--active]="watchAreas.areas().length > 0"
+    (click)="open.set(true)"
+    title="Choose the places you want alerts about"
+    aria-label="Watch places"
+  >
+    📍
+  </button>
+
+  @if (open()) {
+    <mb-modal (closed)="open.set(false)">
+      <section class="watch" aria-labelledby="watch-title">
+        <h2 id="watch-title">Places you watch</h2>
+        <p class="watch__lead">
+          @if (watchAreas.areas().length === 0) {
+            You get an alert for every new report in the country. Add a place to hear only about floods near it.
+          } @else {
+            You are alerted about new reports near these places only.
+          }
+        </p>
+
+        <ul class="watch__list">
+          @for (area of watchAreas.areas(); track area.id) {
+            <li>
+              <span class="watch__name">{{ area.name }}</span>
+              <span class="watch__radius">within {{ kilometres(area.radiusMeters) }}</span>
+              <button
+                type="button"
+                class="watch__remove"
+                (click)="remove(area.id)"
+                [attr.aria-label]="'Remove ' + area.name"
+              >
+                ✕
+              </button>
+            </li>
+          }
+        </ul>
+
+        @if (isFull()) {
+          <p class="watch__note">You can watch up to {{ maxAreas }} places. Remove one to add another.</p>
+        } @else {
+          <form class="watch__form" (ngSubmit)="add()">
+            <p class="watch__note">Move the map so the place you care about is in the middle, then add it.</p>
+            <label>
+              Name
+              <input
+                type="text"
+                name="name"
+                maxlength="40"
+                placeholder="Home, work, school…"
+                [ngModel]="name()"
+                (ngModelChange)="name.set($event)"
+              />
+            </label>
+            <label>
+              Alert me about reports within
+              <select name="radius" [ngModel]="radius()" (ngModelChange)="radius.set(+$event)">
+                @for (meters of radiusChoices; track meters) {
+                  <option [ngValue]="meters">{{ kilometres(meters) }}</option>
+                }
+              </select>
+            </label>
+            <button type="submit" class="watch__add" [disabled]="busy()">
+              {{ busy() ? 'Adding…' : 'Add the middle of the map' }}
+            </button>
+          </form>
+        }
+
+        @if (error(); as message) {
+          <p class="watch__error" role="alert">{{ message }}</p>
+        }
+      </section>
+    </mb-modal>
+  }
+}

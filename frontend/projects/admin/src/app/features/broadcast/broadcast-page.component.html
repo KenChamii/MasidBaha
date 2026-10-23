@@ -40,6 +40,67 @@
             <small>A path inside the app, such as /map.</small>
           </label>
 
+          <label class="check">
+            <input
+              type="checkbox"
+              name="limitToArea"
+              [ngModel]="limitToArea()"
+              (ngModelChange)="limitToArea.set($event)"
+            />
+            Only people watching a place near…
+          </label>
+
+          @if (limitToArea()) {
+            <label class="field">
+              Area
+              <select name="areaChoice" [ngModel]="areaChoice()" (ngModelChange)="areaChoice.set($event)">
+                @for (preset of presets; track preset.id) {
+                  <option [value]="preset.id">{{ preset.label }}</option>
+                }
+                <option value="custom">Custom coordinates…</option>
+              </select>
+            </label>
+            @if (areaChoice() === 'custom') {
+              <div class="grid grid--2">
+                <label class="field">
+                  Latitude
+                  <input
+                    type="number"
+                    name="customLat"
+                    step="any"
+                    [ngModel]="customLat()"
+                    (ngModelChange)="customLat.set($event)"
+                  />
+                </label>
+                <label class="field">
+                  Longitude
+                  <input
+                    type="number"
+                    name="customLng"
+                    step="any"
+                    [ngModel]="customLng()"
+                    (ngModelChange)="customLng.set($event)"
+                  />
+                </label>
+              </div>
+            }
+            <label class="field">
+              Radius (km)
+              <input
+                type="number"
+                name="areaRadiusKm"
+                min="1"
+                max="300"
+                [ngModel]="areaRadiusKm()"
+                (ngModelChange)="areaRadiusKm.set($event)"
+              />
+              <small
+                >Reaches anyone who watches a place that overlaps this circle. People who never chose places are not
+                included.</small
+              >
+            </label>
+          }
+
           @if (error(); as message) {
             <p class="notice notice--error" role="alert">{{ message }}</p>
           }
@@ -65,6 +126,10 @@
           <p>{{ item.body }}</p>
           <p class="muted">
             {{ item.sentAt | date: 'medium' }} · {{ item.sentByEmail }} · {{ item.recipients }} subscriber(s)
+            @if (item.areaRadiusMeters) {
+              · within {{ item.areaRadiusMeters / 1000 }} km of {{ item.areaLat?.toFixed(2) }},
+              {{ item.areaLng?.toFixed(2) }}
+            }
           </p>
         </article>
       } @empty {

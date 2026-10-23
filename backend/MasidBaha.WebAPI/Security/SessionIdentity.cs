@@ -14,6 +14,10 @@ public interface ISessionIdentity
     // Returns the visitor's session id, creating and issuing a new cookie if
     // there is none yet or the signature doesn't verify.
     string GetOrCreate(HttpContext context);
+
+    // The visitor's session id if they already have a valid cookie, otherwise null. Never issues a cookie,
+    // so read-only requests stay free of side effects.
+    string? TryGet(HttpContext context);
 }
 
 public class SessionIdentity : ISessionIdentity
@@ -48,6 +52,9 @@ public class SessionIdentity : ISessionIdentity
 
         return id;
     }
+
+    public string? TryGet(HttpContext context) =>
+        context.Request.Cookies.TryGetValue(_options.SessionCookieName, out var cookie) && TryValidate(cookie, out var id) ? id : null;
 
     private bool TryValidate(string? cookie, out string id)
     {

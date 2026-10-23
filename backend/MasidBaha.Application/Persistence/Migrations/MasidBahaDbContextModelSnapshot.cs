@@ -228,6 +228,18 @@ namespace MasidBaha.Application.Persistence.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
+                    b.Property<double?>("AreaLat")
+                        .HasColumnType("double precision")
+                        .HasColumnName("area_lat");
+
+                    b.Property<double?>("AreaLng")
+                        .HasColumnType("double precision")
+                        .HasColumnName("area_lng");
+
+                    b.Property<int?>("AreaRadiusMeters")
+                        .HasColumnType("integer")
+                        .HasColumnName("area_radius_meters");
+
                     b.Property<string>("Body")
                         .IsRequired()
                         .HasMaxLength(300)
@@ -483,6 +495,54 @@ namespace MasidBaha.Application.Persistence.Migrations
 
                             t.HasCheckConstraint("ck_reporter_bans_mode", "mode IN (1, 2)");
                         });
+                });
+
+            modelBuilder.Entity("MasidBaha.Application.Persistence.WatchArea", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Point>("Location")
+                        .IsRequired()
+                        .HasColumnType("geography (point, 4326)")
+                        .HasColumnName("location");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("RadiusMeters")
+                        .HasColumnType("integer")
+                        .HasColumnName("radius_meters");
+
+                    b.Property<string>("SessionId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("session_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_watch_areas");
+
+                    b.HasIndex("Location")
+                        .HasDatabaseName("ix_watch_areas_location");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Location"), "gist");
+
+                    b.HasIndex("SessionId")
+                        .HasDatabaseName("ix_watch_areas_session_id");
+
+                    b.ToTable("watch_areas", (string)null);
                 });
 
             modelBuilder.Entity("MasidBaha.Application.PushNotifications.StoredPushSubscription", b =>

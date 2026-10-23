@@ -16,6 +16,7 @@ import {
   Ban,
   BanResult,
   Broadcast,
+  BroadcastArea,
   BulkAction,
   BulkActionResult,
   CreateBanRequest,
@@ -116,8 +117,15 @@ export class AdminApiService {
     });
   }
 
-  sendBroadcast(title: string, body: string, url?: string): Observable<Broadcast> {
-    return this.http.post<Broadcast>(`${this.baseUrl}/broadcasts`, { title, body, url: url || null });
+  sendBroadcast(title: string, body: string, url?: string, area?: BroadcastArea | null): Observable<Broadcast> {
+    return this.http.post<Broadcast>(`${this.baseUrl}/broadcasts`, {
+      title,
+      body,
+      url: url || null,
+      areaLat: area?.lat ?? null,
+      areaLng: area?.lng ?? null,
+      areaRadiusMeters: area?.radiusMeters ?? null
+    });
   }
 
   getAudit(query: AuditQuery): Observable<PagedResult<AuditEntry>> {
