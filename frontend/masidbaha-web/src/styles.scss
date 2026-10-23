@@ -1,3 +1,5 @@
+@use 'styles/map';
+
 // Design tokens: hard-edged "weather station" look (fonts are loaded in index.html)
 :root {
   color-scheme: light;
@@ -40,7 +42,7 @@
   --mb-paper: #08131F;
   --mb-surface: #0F2336;
   --mb-mist: #143049;
-  --mb-water: #0E86C8;
+  --mb-water: #0A74B0;
   --mb-water-text: #4CC3F0;
   --mb-muted: #8FA6B8;
   --mb-danger: #E5484D;

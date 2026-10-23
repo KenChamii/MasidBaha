@@ -1,0 +1,45 @@
+<form class="report-form" (ngSubmit)="submit()">
+  <h3>Bagong ulat</h3>
+
+  <label>
+    Lalim ng baha
+    <select name="severity" [(ngModel)]="severity">
+      @for (option of severityOptions; track option.value) {
+        <option [ngValue]="option.value">{{ option.label }}</option>
+      }
+    </select>
+  </label>
+
+  <label>
+    Note (opsyonal)
+    <textarea name="notes" rows="2" [(ngModel)]="notes" placeholder="Hal. mabagal umagos ang tubig dito"></textarea>
+  </label>
+
+  <label>
+    Photo (opsyonal, bilang patunay)
+    <input
+      type="file"
+      name="photo"
+      accept="image/jpeg,image/png,image/webp"
+      (change)="onPhotoSelected($event)"
+    />
+  </label>
+
+  @if (photoError()) {
+    <p class="report-form__error" role="alert">{{ photoError() }}</p>
+  }
+
+  @if (photoPreviewUrl(); as previewUrl) {
+    <div class="report-form__photo-preview">
+      <img [src]="previewUrl" alt="Preview ng na-attach na photo" />
+      <button type="button" (click)="clearPhoto()">Alisin</button>
+    </div>
+  }
+
+  <div class="report-form__actions">
+    <button type="button" (click)="cancelled.emit()">Kanselahin</button>
+    <button type="submit" [disabled]="isSubmitting()">
+      {{ isUploadingPhoto() ? 'Ina-upload ang photo...' : (isSubmitting() ? 'Isinusumite...' : 'I-post ang ulat') }}
+    </button>
+  </div>
+</form>

@@ -1,151 +1,26 @@
-<div class="map-page">
-  <div class="map-page__offline-banner" *ngIf="isOffline || isShowingCachedData">
-    <span *ngIf="isOffline">📶 Walang internet connection.</span>
-    <span *ngIf="isShowingCachedData"> Ipinapakita ang huling na-fetch na data{{ cachedDataSavedAt ? ' (' + timeAgo(cachedDataSavedAt) + ')' : '' }}.</span>
-  </div>
+<div class="map-page" role="main">
+  <app-offline-banner
+    [isOffline]="isOffline"
+    [isShowingCachedData]="isShowingCachedData"
+    [cachedDataSavedAt]="cachedDataSavedAt"
+  />
+
   <div #mapContainer class="map-page__map"></div>
 
-  <button
-    type="button"
-    class="map-page__list-toggle"
-    (click)="toggleList()"
-  >
-    {{ showList ? 'Itago ang listahan' : 'Ipakita ang listahan (' + topReports.length + ')' }}
-  </button>
-
-  <button
-    *ngIf="pushSupported"
-    type="button"
-    class="map-page__push-toggle"
-    [class.map-page__push-toggle--active]="pushEnabled"
-    [disabled]="isTogglingPush"
-    (click)="togglePush()"
-    [title]="pushEnabled ? 'I-off ang mga abiso ng baha' : 'Abisuhan ako ng mga bagong ulat ng baha'"
-  >
-    {{ pushEnabled ? '🔔' : '🔕' }}
-  </button>
-
-  <div class="map-page__push-error" *ngIf="pushError">
-    {{ pushError }}
-    <button type="button" (click)="pushError = null">✕</button>
+  <div class="map-page__toolbar">
+    <app-theme-toggle />
+    <app-push-toggle />
+    <button type="button" class="map-page__list-toggle" (click)="toggleList()">
+      {{ showList ? 'Itago ang listahan' : 'Ipakita ang listahan (' + store.topReports().length + ')' }}
+    </button>
   </div>
 
-  <aside class="map-page__list" *ngIf="showList">
-    <div class="map-page__list-header">
-      <h3 class="map-page__list-title">Pinaka-kumpirmadong ulat</h3>
-      <span class="map-page__list-count">{{ topReports.length }}</span>
-      <a routerLink="/analytics" class="map-page__analytics-link" title="Historical heatmap">📊</a>
-    </div>
-
-    <div class="map-page__scope-tabs">
-      <button
-        type="button"
-        class="map-page__scope-tab"
-        [class.map-page__scope-tab--active]="scope === 'national'"
-        (click)="setScope('national')"
-      >
-        Bansa
-      </button>
-      <button
-        type="button"
-        class="map-page__scope-tab"
-        [class.map-page__scope-tab--active]="scope === 'region'"
-        (click)="setScope('region')"
-      >
-        Rehiyon
-      </button>
-      <button
-        type="button"
-        class="map-page__scope-tab"
-        [class.map-page__scope-tab--active]="scope === 'province'"
-        (click)="setScope('province')"
-      >
-        Probinsya
-      </button>
-      <button
-        type="button"
-        class="map-page__scope-tab"
-        [class.map-page__scope-tab--active]="scope === 'city'"
-        (click)="setScope('city')"
-      >
-        Lungsod
-      </button>
-    </div>
-
-    <div class="map-page__scope-filters" *ngIf="scope !== 'national'">
-      <select
-        *ngIf="scope === 'region' || scope === 'province' || scope === 'city'"
-        class="map-page__scope-select"
-        [ngModel]="selectedRegion"
-        (ngModelChange)="onRegionChange($event)"
-        [ngModelOptions]="{ standalone: true }"
-      >
-        <option [ngValue]="null">Piliin ang rehiyon…</option>
-        <option *ngFor="let region of availableRegions" [ngValue]="region">{{ region }}</option>
-      </select>
-
-      <select
-        *ngIf="(scope === 'province' || scope === 'city') && selectedRegion"
-        class="map-page__scope-select"
-        [ngModel]="selectedProvince"
-        (ngModelChange)="onProvinceChange($event)"
-        [ngModelOptions]="{ standalone: true }"
-      >
-        <option [ngValue]="null">Piliin ang probinsya…</option>
-        <option *ngFor="let province of availableProvinces" [ngValue]="province">{{ province }}</option>
-      </select>
-
-      <select
-        *ngIf="scope === 'city' && selectedProvince"
-        class="map-page__scope-select"
-        [ngModel]="selectedCity"
-        (ngModelChange)="onCityChange($event)"
-        [ngModelOptions]="{ standalone: true }"
-      >
-        <option [ngValue]="null">Piliin ang lungsod…</option>
-        <option *ngFor="let city of availableCities" [ngValue]="city">{{ city }}</option>
-      </select>
-    </div>
-
-    <div class="map-page__list-loading" *ngIf="isLoadingTopReports">Naglo-load…</div>
-
-    <div class="map-page__list-empty" *ngIf="!isLoadingTopReports && topReports.length === 0">
-      Walang ulat sa napiling lugar.
-    </div>
-
-    <ul class="map-page__list-items" *ngIf="!isLoadingTopReports">
-      <li
-        *ngFor="let report of topReports; let i = index"
-        class="map-page__list-item"
-        (click)="focusReport(report)"
-      >
-        <span
-          class="map-page__list-rank"
-          [class.map-page__list-rank--gold]="i === 0"
-          [class.map-page__list-rank--silver]="i === 1"
-          [class.map-page__list-rank--bronze]="i === 2"
-        >{{ i + 1 }}</span>
-        <span class="map-page__list-dot" [style.background]="severityColor(report.severity)"></span>
-        <div class="map-page__list-info">
-          <div class="map-page__list-row">
-            <span class="map-page__list-severity">{{ severityLabel(report.severity) }}</span>
-            <span class="map-page__list-confidence">👍 {{ report.confidenceScore }}</span>
-          </div>
-          <span class="map-page__list-location" *ngIf="locationLabel(report)">{{ locationLabel(report) }}</span>
-          <p class="map-page__list-notes" *ngIf="report.notes">{{ report.notes }}</p>
-          <span class="map-page__list-time">{{ timeAgo(report.reportedAt) }}</span>
-        </div>
-        <button
-          *ngIf="report.photoUrl"
-          type="button"
-          class="map-page__list-photo-btn"
-          [style.backgroundImage]="'url(' + report.photoUrl + ')'"
-          (click)="openPhotoModal(report.photoUrl!, $event)"
-          aria-label="Tingnan ang larawan ng ulat"
-        ></button>
-      </li>
-    </ul>
-  </aside>
+  @if (showList) {
+    <app-top-reports-panel
+      (reportFocused)="focusReport($event)"
+      (photoRequested)="openPhoto($event)"
+    />
+  }
 
   <button
     type="button"
@@ -156,59 +31,21 @@
     {{ pinDropMode ? 'Kanselahin' : 'Mag-ulat dito' }}
   </button>
 
-  <div class="map-page__hint" *ngIf="pinDropMode && !pendingPin">
-    I-click ang mapa sa lugar na may baha.
-  </div>
+  @if (pinDropMode && !pendingPin) {
+    <div class="map-page__hint">I-click ang mapa sa lugar na may baha.</div>
+  }
 
-  <form class="report-form" *ngIf="pendingPin" (ngSubmit)="submitNewReport()">
-    <h3>Bagong ulat</h3>
-
-    <label>
-      Lalim ng baha
-      <select name="severity" [(ngModel)]="newReport.severity">
-        <option *ngFor="let option of severityOptions" [ngValue]="option.value">
-          {{ option.label }}
-        </option>
-      </select>
-    </label>
-
-    <label>
-      Note (opsyonal)
-      <textarea name="notes" rows="2" [(ngModel)]="newReport.notes" placeholder="Hal. mabagal umagos ang tubig dito"></textarea>
-    </label>
-
-    <label>
-      Photo (opsyonal, bilang patunay)
-      <input
-        type="file"
-        name="photo"
-        accept="image/jpeg,image/png,image/webp"
-        (change)="onPhotoSelected($event)"
-      />
-    </label>
-
-    <p class="report-form__error" *ngIf="photoError">{{ photoError }}</p>
-
-    <div class="report-form__photo-preview" *ngIf="photoPreviewUrl">
-      <img [src]="photoPreviewUrl" alt="Preview ng na-attach na photo" />
-      <button type="button" (click)="clearPhoto()">Alisin</button>
-    </div>
-
-    <div class="report-form__actions">
-      <button type="button" (click)="cancelPendingPin()">Kanselahin</button>
-      <button type="submit" [disabled]="isSubmitting">
-        {{ isUploadingPhoto ? 'Ina-upload ang photo...' : (isSubmitting ? 'Isinusumite...' : 'I-post ang ulat') }}
-      </button>
-    </div>
-  </form>
-
-  <div class="photo-modal" *ngIf="viewingPhotoUrl" (click)="closePhotoModal()">
-    <button type="button" class="photo-modal__close" (click)="closePhotoModal()" aria-label="Isara">✕</button>
-    <img
-      class="photo-modal__image"
-      [src]="viewingPhotoUrl"
-      alt="Larawan ng ulat bilang patunay"
-      (click)="$event.stopPropagation()"
+  @if (pendingPin) {
+    <app-report-form
+      [pin]="pendingPin"
+      (submitted)="closeReportForm()"
+      (cancelled)="closeReportForm()"
     />
-  </div>
+  }
+
+  @if (viewingPhotoUrl) {
+    <app-modal (closed)="closePhoto()">
+      <img class="map-page__photo" [src]="viewingPhotoUrl" alt="Larawan ng ulat bilang patunay" />
+    </app-modal>
+  }
 </div>

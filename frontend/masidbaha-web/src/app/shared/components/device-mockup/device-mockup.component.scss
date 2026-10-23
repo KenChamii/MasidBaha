@@ -84,8 +84,8 @@
 .map__pin {
   position: absolute;
   &--1 { top: 30%; left: 25%; }
-  &--2 { top: 48%; left: 62%; }
-  &--3 { top: 68%; left: 38%; }
+  &--2 { top: 38%; left: 62%; }
+  &--3 { top: 18%; left: 48%; }
 }
 
 .screen__card {
@@ -131,6 +131,7 @@
 }
 
 .card__actions {
+  flex-wrap: wrap;
   display: flex;
   gap: 8px;
 }
@@ -142,7 +143,8 @@
   font-weight: 700;
   color: var(--mb-ink);
   border: 2px solid var(--mb-ink);
-  padding: 4px 10px;
+  padding: 3px 8px;
+  white-space: nowrap;
 
   &--primary {
     color: var(--mb-white);
