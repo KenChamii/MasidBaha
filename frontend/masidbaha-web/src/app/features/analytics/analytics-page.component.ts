@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as L from 'leaflet';
@@ -34,6 +34,7 @@ const SEVERITY_WEIGHT: Record<number, number> = {
     selector: 'app-analytics-page',
     imports: [CommonModule, FormsModule],
     templateUrl: './analytics-page.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./analytics-page.component.scss']
 })
 export class AnalyticsPageComponent implements AfterViewInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, ChangeDetectionStrategy } from '@angular/core';
 import * as L from 'leaflet';
 import { Subscription, fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -34,6 +34,7 @@ const DEFAULT_RADIUS_METERS = 5000;
     ],
     providers: [FloodReportsStore],
     templateUrl: './map-page.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./map-page.component.scss']
 })
 export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -19,6 +19,7 @@ const STATUS_LABEL: Record<AdminReportStatus, string> = {
     selector: 'app-admin-page',
     imports: [CommonModule, FormsModule],
     templateUrl: './admin-page.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./admin-page.component.scss']
 })
 export class AdminPageComponent implements OnInit {

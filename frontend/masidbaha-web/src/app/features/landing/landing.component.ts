@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { PulsePinComponent } from '../../shared/components/pulse-pin/pulse-pin.component';
@@ -22,6 +22,7 @@ interface GalleryCardData {
     selector: 'app-landing',
     imports: [CommonModule, RouterLink, PulsePinComponent, DeviceMockupComponent],
     templateUrl: './landing.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./landing.component.scss']
 })
 export class LandingComponent {
