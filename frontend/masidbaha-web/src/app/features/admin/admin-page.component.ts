@@ -16,11 +16,10 @@ const STATUS_LABEL: Record<AdminReportStatus, string> = {
 };
 
 @Component({
-  selector: 'app-admin-page',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './admin-page.component.html',
-  styleUrls: ['./admin-page.component.scss']
+    selector: 'app-admin-page',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './admin-page.component.html',
+    styleUrls: ['./admin-page.component.scss']
 })
 export class AdminPageComponent implements OnInit {
   readonly statusLabel = STATUS_LABEL;

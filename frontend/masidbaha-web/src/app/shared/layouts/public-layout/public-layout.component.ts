@@ -4,11 +4,10 @@ import { BrandComponent } from '../../ui/brand/brand.component';
 import { ThemeToggleComponent } from '../../ui/theme-toggle/theme-toggle.component';
 
 @Component({
-  selector: 'app-public-layout',
-  standalone: true,
-  imports: [RouterOutlet, RouterLink, BrandComponent, ThemeToggleComponent],
-  templateUrl: './public-layout.component.html',
-  styleUrl: './public-layout.component.scss'
+    selector: 'app-public-layout',
+    imports: [RouterOutlet, RouterLink, BrandComponent, ThemeToggleComponent],
+    templateUrl: './public-layout.component.html',
+    styleUrl: './public-layout.component.scss'
 })
 export class PublicLayoutComponent {
   readonly currentYear = new Date().getFullYear();

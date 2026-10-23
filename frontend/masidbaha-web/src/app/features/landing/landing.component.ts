@@ -19,11 +19,10 @@ interface GalleryCardData {
 }
 
 @Component({
-  selector: 'app-landing',
-  standalone: true,
-  imports: [CommonModule, RouterLink, PulsePinComponent, DeviceMockupComponent],
-  templateUrl: './landing.component.html',
-  styleUrls: ['./landing.component.scss']
+    selector: 'app-landing',
+    imports: [CommonModule, RouterLink, PulsePinComponent, DeviceMockupComponent],
+    templateUrl: './landing.component.html',
+    styleUrls: ['./landing.component.scss']
 })
 export class LandingComponent {
   constructor(private router: Router) {}

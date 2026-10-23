@@ -31,11 +31,10 @@ const SEVERITY_WEIGHT: Record<number, number> = {
 };
 
 @Component({
-  selector: 'app-analytics-page',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './analytics-page.component.html',
-  styleUrls: ['./analytics-page.component.scss']
+    selector: 'app-analytics-page',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './analytics-page.component.html',
+    styleUrls: ['./analytics-page.component.scss']
 })
 export class AnalyticsPageComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mapContainer', { static: true }) mapContainerRef!: ElementRef<HTMLDivElement>;

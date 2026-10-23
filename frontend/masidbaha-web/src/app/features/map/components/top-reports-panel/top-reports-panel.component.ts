@@ -7,12 +7,11 @@ import { severityColor, severityLabel } from '../../../../shared/models/severity
 import { timeAgo } from '../../../../shared/utils/time-ago';
 
 @Component({
-  selector: 'app-top-reports-panel',
-  standalone: true,
-  imports: [FormsModule, RouterLink],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './top-reports-panel.component.html',
-  styleUrl: './top-reports-panel.component.scss'
+    selector: 'app-top-reports-panel',
+    imports: [FormsModule, RouterLink],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    templateUrl: './top-reports-panel.component.html',
+    styleUrl: './top-reports-panel.component.scss'
 })
 export class TopReportsPanelComponent {
   readonly store = inject(FloodReportsStore);

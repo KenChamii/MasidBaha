@@ -2,11 +2,10 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 @Component({
-  selector: 'app-brand',
-  standalone: true,
-  imports: [RouterLink],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-brand',
+    imports: [RouterLink],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
     <a class="brand" routerLink="/" aria-label="MasidBaha home">
       <span class="brand__logo">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
@@ -17,6 +16,6 @@ import { RouterLink } from '@angular/router';
       <span class="brand__name">MasidBaha</span>
     </a>
   `,
-  styleUrl: './brand.component.scss'
+    styleUrl: './brand.component.scss'
 })
 export class BrandComponent {}

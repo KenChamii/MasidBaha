@@ -10,12 +10,11 @@ const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 @Component({
-  selector: 'app-report-form',
-  standalone: true,
-  imports: [FormsModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './report-form.component.html',
-  styleUrl: './report-form.component.scss'
+    selector: 'app-report-form',
+    imports: [FormsModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    templateUrl: './report-form.component.html',
+    styleUrl: './report-form.component.scss'
 })
 export class ReportFormComponent implements OnDestroy {
   private readonly floodReportService = inject(FloodReportService);

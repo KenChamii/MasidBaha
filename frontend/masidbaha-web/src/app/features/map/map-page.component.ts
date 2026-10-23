@@ -23,19 +23,18 @@ const LOCATED_ZOOM = 14;
 const DEFAULT_RADIUS_METERS = 5000;
 
 @Component({
-  selector: 'app-map-page',
-  standalone: true,
-  imports: [
-    OfflineBannerComponent,
-    PushToggleComponent,
-    ReportFormComponent,
-    TopReportsPanelComponent,
-    ModalComponent,
-    ThemeToggleComponent
-  ],
-  providers: [FloodReportsStore],
-  templateUrl: './map-page.component.html',
-  styleUrls: ['./map-page.component.scss']
+    selector: 'app-map-page',
+    imports: [
+        OfflineBannerComponent,
+        PushToggleComponent,
+        ReportFormComponent,
+        TopReportsPanelComponent,
+        ModalComponent,
+        ThemeToggleComponent
+    ],
+    providers: [FloodReportsStore],
+    templateUrl: './map-page.component.html',
+    styleUrls: ['./map-page.component.scss']
 })
 export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   @ViewChild('mapContainer', { static: true }) mapContainerRef!: ElementRef<HTMLDivElement>;
