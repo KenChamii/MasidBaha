@@ -22,6 +22,9 @@ export interface CreateFloodReportRequest {
   severity: Severity;
   notes?: string;
   photoUrl?: string;
+  // Made up by the app for each report. Sending the same one again (after a dropped connection) returns the first
+  // report instead of making a second.
+  clientRequestId?: string;
 }
 
 export type ReportScope = 'national' | 'region' | 'province' | 'city';

@@ -18,6 +18,14 @@ describe('map markers', () => {
       expect(severe).toContain('--pulse-duration:1.4s');
     });
 
+    it('marks a report that is still waiting to be sent', () => {
+      const pending = buildFloodIcon(2, false, true);
+
+      expect(pending.options.className).toContain('flood-marker--pending');
+      expect(String(pending.options.html)).toContain('⏳');
+      expect(buildFloodIcon(2, false).options.className).not.toContain('pending');
+    });
+
     it('adds the camera badge only when there is a photo', () => {
       expect(String(buildFloodIcon(2, true).options.html)).toContain('flood-marker__photo-badge');
       expect(String(buildFloodIcon(2, false).options.html)).not.toContain('flood-marker__photo-badge');

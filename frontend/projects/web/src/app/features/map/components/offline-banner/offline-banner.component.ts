@@ -6,8 +6,13 @@ import { I18nService, TranslatePipe } from '@masidbaha/shared';
   imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @if (isOffline() || isShowingCachedData()) {
+    @if (isOffline() || isShowingCachedData() || queuedCount() > 0) {
       <div class="map-page__offline-banner" role="status">
+        @if (queuedCount() > 0) {
+          <span>{{
+            (queuedCount() === 1 ? 'offline.queued.one' : 'offline.queued.many') | t: { n: queuedCount() }
+          }}</span>
+        }
         @if (isOffline()) {
           <span>{{ 'offline.none' | t }}</span>
         }
@@ -23,6 +28,8 @@ import { I18nService, TranslatePipe } from '@masidbaha/shared';
 })
 export class OfflineBannerComponent {
   readonly isOffline = input(false);
+  // reports saved on this device and waiting to be sent
+  readonly queuedCount = input(0);
   readonly isShowingCachedData = input(false);
   readonly cachedDataSavedAt = input<string | null>(null);
 

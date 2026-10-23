@@ -1,7 +1,8 @@
-<div class="map-page" [class.map-page--banner]="isOffline() || isShowingCachedData()" role="main">
+<div class="map-page" [class.map-page--banner]="isOffline() || isShowingCachedData() || queuedCount() > 0" role="main">
   <app-offline-banner
     [isOffline]="isOffline()"
     [isShowingCachedData]="isShowingCachedData()"
+    [queuedCount]="queuedCount()"
     [cachedDataSavedAt]="cachedDataSavedAt()"
   />
 

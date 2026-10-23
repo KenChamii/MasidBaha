@@ -6,6 +6,23 @@ commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### Added
+- **Works on every screen.** The whole site was checked from 320 px phones to wide desktops, upright and
+  sideways. The map toolbar no longer runs off the screen, panels become bottom sheets on phones, the report
+  form and list never cover each other, analytics stacks its filters above the map, and the admin tables
+  turn into cards on a phone. Uses the phone's dynamic viewport height and safe areas (notches), touch-sized
+  buttons, and no zoom-on-focus in form fields.
+- **English and Filipino.** A language button on the landing page and the map; a first visit follows the
+  browser's language, and the choice is remembered. Everything on the public site is translated, including
+  marker popups and the weather panel. A check script and unit tests fail the build when a text is missing in
+  one language.
+- **Clustered markers.** Reports close together become one numbered badge in the colour of the worst flood
+  inside. Tapping it zooms in, and choosing a report from the list still opens it when it was inside a cluster.
+- **Reports made without signal are kept and sent later.** The report is saved on the phone (photo included)
+  and drawn on the map as waiting. It is sent by itself when the connection returns, even after a reload.
+  Each report carries its own id, so the server saves it once even when a send is repeated after a lost
+  answer (new nullable column and unique index). Sent while the app is open; there is no background sync.
+- **Loading skeletons** instead of the bare word "Loading", in the report list, analytics, the admin tables
+  and the dashboard. They stop shimmering for visitors who prefer reduced motion.
 - **Watch areas.** Visitors choose up to five places (home, work, school) and are alerted only about new
   reports near them. Nobody signs up: the places belong to the anonymous session. Matching runs in
   PostGIS (`ST_DWithin` on a GiST index). People who never choose a place keep getting every alert.
@@ -30,6 +47,11 @@ commit messages follow [Conventional Commits](https://www.conventionalcommits.or
   limits and bans, only when it presents the shared secret.
 
 ### Fixed
+- **Photo uploads (security).** The upload endpoint decoded whatever format the bytes really were, so a GIF
+  or TIFF sent with an image label reached those decoders and their known bugs. Only JPEG, PNG and WebP are
+  decoded now, metadata is not parsed, and ImageSharp moves to 3.1.12. The remaining advisories are fixed only
+  in ImageSharp 4, which needs a paid licence key; the restriction keeps the affected code out of reach.
+- A damaged or cut-off image made the upload answer 500. It is now a 400.
 - A report that staff hid (or that came from a shadow-banned source) could still be fetched by its id.
   It is now a 404 for everyone except the person who sent it.
 - Uploaded photos could not be attached to a report on Linux servers (a path starting with `/` was

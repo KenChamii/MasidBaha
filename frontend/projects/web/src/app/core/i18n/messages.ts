@@ -112,6 +112,16 @@ export const WEB_MESSAGES: Dictionaries = {
     // ---- offline banner ----
     'offline.none': '📶 No internet connection.',
     'offline.cached': 'Showing the last data fetched{when}.',
+    'offline.queued.one': '📤 1 report is waiting to be sent.',
+    'offline.queued.many': '📤 {n} reports are waiting to be sent.',
+
+    // ---- reports saved for later ----
+    'queue.saved': 'No connection. Your report is saved on this device and will be sent when you are back online.',
+    'queue.sent': 'Your saved report was sent.',
+    'queue.rejected': 'A saved report could not be sent, so it was removed.',
+    'queue.full': 'Too many reports are waiting to be sent. Please wait until you are back online.',
+    'queue.popupTitle': 'Waiting to be sent',
+    'queue.popupBody': 'Saved on this device. It is sent when you are back online.',
 
     // ---- alerts (push) ----
     'push.turnOff': 'Turn off flood alerts',
@@ -325,6 +335,16 @@ export const WEB_MESSAGES: Dictionaries = {
     // ---- offline banner ----
     'offline.none': '📶 Walang internet connection.',
     'offline.cached': 'Ipinapakita ang huling na-fetch na data{when}.',
+    'offline.queued.one': '📤 1 ulat ang naghihintay na maipadala.',
+    'offline.queued.many': '📤 {n} na ulat ang naghihintay na maipadala.',
+
+    // ---- reports saved for later ----
+    'queue.saved': 'Walang koneksyon. Naka-save sa device mo ang ulat at ipapadala ito pag may internet na ulit.',
+    'queue.sent': 'Naipadala na ang naka-save mong ulat.',
+    'queue.rejected': 'Hindi maipadala ang isang naka-save na ulat kaya inalis ito.',
+    'queue.full': 'Masyadong maraming ulat ang naghihintay na maipadala. Hintayin munang magka-internet ulit.',
+    'queue.popupTitle': 'Naghihintay na maipadala',
+    'queue.popupBody': 'Naka-save sa device mo. Ipapadala ito pag may internet na ulit.',
 
     // ---- alerts (push) ----
     'push.turnOff': 'I-off ang mga abiso ng baha',

@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { API_BASE_URL } from './api-config';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { SKIP_ERROR_TOAST } from '../core/error-toast.interceptor';
 import {
   FloodReport,
   CreateFloodReportRequest,
@@ -36,8 +37,10 @@ export class FloodReportService {
     return this.http.get<FloodReport[]>(`${this.baseUrl}/top`, { params });
   }
 
-  create(request: CreateFloodReportRequest): Observable<FloodReport> {
-    return this.http.post<FloodReport>(this.baseUrl, request);
+  // quiet: the caller reports a failure itself (no error toast from the interceptor)
+  create(request: CreateFloodReportRequest, options: { quiet?: boolean } = {}): Observable<FloodReport> {
+    const context = options.quiet ? new HttpContext().set(SKIP_ERROR_TOAST, true) : undefined;
+    return this.http.post<FloodReport>(this.baseUrl, request, { context });
   }
 
   // The voter is identified by the server's session cookie, not by anything sent here

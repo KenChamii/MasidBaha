@@ -38,20 +38,25 @@ export function buildClusterIcon(count: number, severity: Severity): L.DivIcon {
   });
 }
 
-export function buildFloodIcon(severity: Severity, hasPhoto: boolean): L.DivIcon {
+// pending: a report saved on this device that has not reached the server yet
+export function buildFloodIcon(severity: Severity, hasPhoto: boolean, pending = false): L.DivIcon {
   const meta = SEVERITY_META[severity];
   const pulse = PULSE_BY_SEVERITY[severity];
-  const photoBadge = hasPhoto ? '<span class="flood-marker__photo-badge">📷</span>' : '';
+  const badge = pending
+    ? '<span class="flood-marker__photo-badge">⏳</span>'
+    : hasPhoto
+      ? '<span class="flood-marker__photo-badge">📷</span>'
+      : '';
 
   return L.divIcon({
-    className: 'flood-marker',
+    className: pending ? 'flood-marker flood-marker--pending' : 'flood-marker',
     html: `
       <div class="flood-marker__badge" style="background:${meta.color}; --pulse-duration:${pulse.duration}s; --pulse-scale:${pulse.scale};">
         <svg class="flood-marker__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M3 9.5c1.6 1.4 3.2 1.4 4.8 0s3.2-1.4 4.8 0 3.2 1.4 4.8 0 3.2-1.4 4.8 0" stroke="#0B1F33" stroke-width="2" stroke-linecap="round"/>
           <path d="M3 15c1.6 1.4 3.2 1.4 4.8 0s3.2-1.4 4.8 0 3.2 1.4 4.8 0 3.2-1.4 4.8 0" stroke="#0B1F33" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
         </svg>
-        ${photoBadge}
+        ${badge}
       </div>
     `,
     iconSize: [34, 34],
@@ -75,6 +80,16 @@ export function buildPopupHtml(confidenceScore: number, hasPhoto: boolean, t: Tr
         <button type="button" data-action="deny">${t('popup.deny')}</button>
       </div>
       <button type="button" class="flood-popup__share-btn" data-action="share">${t('popup.share')}</button>
+    </div>
+  `;
+}
+
+// The popup of a report that is still waiting to be sent
+export function buildPendingPopupHtml(t: Translate = english): string {
+  return `
+    <div class="flood-popup">
+      <p class="flood-popup__confidence"><strong>${t('queue.popupTitle')}</strong></p>
+      <p class="flood-popup__pending">${t('queue.popupBody')}</p>
     </div>
   `;
 }

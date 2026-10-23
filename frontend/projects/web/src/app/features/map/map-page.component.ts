@@ -4,6 +4,7 @@ import {
   ElementRef,
   OnDestroy,
   OnInit,
+  computed,
   effect,
   inject,
   signal,
@@ -15,7 +16,15 @@ import { Subscription, fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
 import { FloodReportsStore } from './state/flood-reports.store';
-import { buildClusterIcon, buildPopupHtml, createClusterGroup, floodMarker, worstSeverity } from './map-markers';
+import {
+  buildClusterIcon,
+  buildFloodIcon,
+  buildPendingPopupHtml,
+  buildPopupHtml,
+  createClusterGroup,
+  floodMarker,
+  worstSeverity
+} from './map-markers';
 import { OfflineBannerComponent } from './components/offline-banner/offline-banner.component';
 import { PushToggleComponent } from './components/push-toggle/push-toggle.component';
 import { ReportFormComponent } from './components/report-form/report-form.component';
@@ -28,6 +37,7 @@ import { TopReportsPanelComponent } from './components/top-reports-panel/top-rep
 import { SignalRService } from '../../core/services/signalr.service';
 import { GeolocationService } from '../../core/services/geolocation.service';
 import { OfflineCacheService } from '../../core/services/offline-cache.service';
+import { ReportQueueService } from '../../core/services/report-queue.service';
 import { WatchAreaService } from '../../core/services/watch-area.service';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -77,12 +87,15 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   private readonly weatherStore = inject(WeatherLayersStore);
   private readonly toast = inject(ToastService);
   private readonly i18n = inject(I18nService);
+  private readonly queue = inject(ReportQueueService);
   readonly store = inject(FloodReportsStore);
 
   private map!: L.Map;
   private markers = new Map<string, L.Marker>();
   // Reports close together are drawn as one numbered badge until the map is zoomed in
   private cluster!: L.MarkerClusterGroup;
+  // Reports made without a connection, shown where they will appear once they are sent
+  private pendingLayer?: L.LayerGroup;
   // The places this visitor watches, drawn as circles so the alert area is visible
   private watchLayer?: L.LayerGroup;
   // Rain radar, satellite rainfall and typhoons, switched from the weather panel
@@ -103,6 +116,8 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     lng: 121.774
   });
 
+  protected readonly queuedCount = computed(() => this.queue.pending().length);
+
   protected readonly pinDropMode = signal(false);
   protected readonly pendingPin = signal<{ lat: number; lng: number } | null>(null);
   // the list covers most of a phone screen, so start it collapsed there
@@ -117,6 +132,12 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   constructor() {
     // Redraw the watched places whenever the list changes (the map exists once the view is ready)
     effect(() => this.drawWatchAreas(this.watchAreaService.areas()));
+
+    // Reports waiting to be sent are drawn on the map (and again when the language changes)
+    effect(() => {
+      this.i18n.lang();
+      this.drawPendingReports(this.queue.pending());
+    });
 
     // Words already on the map (marker popups, storm popups) follow the language switch
     effect(() => {
@@ -175,6 +196,9 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
         buildClusterIcon(cluster.getChildCount(), worstSeverity(cluster.getAllChildMarkers()))
     }).addTo(this.map);
 
+    this.pendingLayer = L.layerGroup().addTo(this.map);
+    this.drawPendingReports(this.queue.pending());
+
     this.watchLayer = L.layerGroup().addTo(this.map);
 
     this.weatherOverlays = new WeatherOverlays(this.map, (key, params) => this.i18n.t(key, params));
@@ -189,6 +213,14 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   ngOnInit(): void {
     // Toasts sit above the report button, not on top of it
     document.documentElement.style.setProperty('--mb-toast-bottom', '92px');
+
+    // A queued report reached the server: show it for real
+    this.subscriptions.push(
+      this.queue.sent$.subscribe(() => {
+        this.store.refresh();
+        this.reloadAtCenter();
+      })
+    );
 
     // Connect before subscribing, so the socket is already opening while we attach listeners.
     this.signalRService.connect();
@@ -249,6 +281,19 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
 
   protected zoomToStorm(id: number): void {
     this.weatherOverlays?.zoomTo(id);
+  }
+
+  // ---- reports waiting to be sent ----
+
+  private drawPendingReports(reports: { lat: number; lng: number; severity: FloodReport['severity'] }[]): void {
+    if (!this.pendingLayer) return;
+
+    this.pendingLayer.clearLayers();
+    for (const report of reports) {
+      L.marker([report.lat, report.lng], { icon: buildFloodIcon(report.severity, false, true) })
+        .bindPopup(buildPendingPopupHtml((key, params) => this.i18n.t(key, params)))
+        .addTo(this.pendingLayer);
+    }
   }
 
   // ---- watch areas ----

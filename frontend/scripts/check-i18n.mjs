@@ -42,7 +42,7 @@ for (const file of [...walk(web), ...walk(shared)]) {
 }
 
 // Looked up by name at run time: 'severity.' + number, 'analytics.range.' + range, the shared theme/time texts
-const dynamic = [/^severity\.\d$/, /^analytics\.range\.\w+$/, /^theme\./, /^time\./];
+const dynamic = [/^severity\.\d$/, /^analytics\.range\.\w+$/, /^offline\.queued\./, /^theme\./, /^time\./];
 
 const missing = [...used].filter(([key]) => !known.has(key));
 for (const [key, file] of missing) console.error(`missing text: '${key}' (used in ${file})`);

@@ -76,6 +76,21 @@
   cursor: pointer;
 }
 
+// A report saved on this device and not sent yet: faded, with a dashed edge
+.flood-marker--pending .flood-marker__badge {
+  opacity: 0.7;
+  border-style: dashed;
+}
+
+.flood-marker--pending .flood-marker__badge::before {
+  animation: none;
+}
+
+.flood-popup__pending {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
 .flood-popup {
   font-family: var(--mb-font-body);
   min-width: 160px;

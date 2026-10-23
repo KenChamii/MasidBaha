@@ -15,3 +15,8 @@
   padding: max(0.4rem, env(safe-area-inset-top)) 1rem 0.4rem;
   pointer-events: none;
 }
+
+// several messages in one banner: a gap between them
+.map-page__offline-banner span + span {
+  margin-left: 0.9rem;
+}
