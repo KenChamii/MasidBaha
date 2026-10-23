@@ -29,7 +29,11 @@
                 "input": "projects/web/public"
               }
             ],
-            "styles": ["node_modules/leaflet/dist/leaflet.css", "projects/web/src/styles.scss"],
+            "styles": [
+              "node_modules/leaflet/dist/leaflet.css",
+              "node_modules/leaflet.markercluster/dist/MarkerCluster.css",
+              "projects/web/src/styles.scss"
+            ],
             "scripts": [],
             "stylePreprocessorOptions": {
               "includePaths": ["projects/shared/src/styles"]

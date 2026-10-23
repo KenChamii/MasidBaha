@@ -11,11 +11,12 @@ import {
   viewChild
 } from '@angular/core';
 import * as L from 'leaflet';
+import 'leaflet.markercluster';
 import { Subscription, fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
 import { FloodReportsStore } from './state/flood-reports.store';
-import { buildFloodIcon, buildPopupHtml } from './map-markers';
+import { buildClusterIcon, buildPopupHtml, createClusterGroup, floodMarker, worstSeverity } from './map-markers';
 import { OfflineBannerComponent } from './components/offline-banner/offline-banner.component';
 import { PushToggleComponent } from './components/push-toggle/push-toggle.component';
 import { ReportFormComponent } from './components/report-form/report-form.component';
@@ -81,6 +82,8 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
 
   private map!: L.Map;
   private markers = new Map<string, L.Marker>();
+  // Reports close together are drawn as one numbered badge until the map is zoomed in
+  private cluster!: L.MarkerClusterGroup;
   // The places this visitor watches, drawn as circles so the alert area is visible
   private watchLayer?: L.LayerGroup;
   // Rain radar, satellite rainfall and typhoons, switched from the weather panel
@@ -161,6 +164,17 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
       const { lat, lng } = this.map.getCenter();
       this.mapCenter.set({ lat, lng });
     });
+
+    this.cluster = createClusterGroup({
+      maxClusterRadius: 48,
+      showCoverageOnHover: false,
+      // many reports on one street: fan them out at the deepest zoom instead of stacking them
+      spiderfyOnMaxZoom: true,
+      disableClusteringAtZoom: 17,
+      chunkedLoading: true,
+      iconCreateFunction: cluster =>
+        buildClusterIcon(cluster.getChildCount(), worstSeverity(cluster.getAllChildMarkers()))
+    }).addTo(this.map);
 
     this.watchLayer = L.layerGroup().addTo(this.map);
 
@@ -326,9 +340,10 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    const marker = L.marker([report.lat, report.lng], { icon: buildFloodIcon(report.severity, !!report.photoUrl) })
-      .addTo(this.map)
-      .bindPopup(this.popupHtml(report.confidenceScore, !!report.photoUrl));
+    const marker = floodMarker([report.lat, report.lng], report.severity, !!report.photoUrl).bindPopup(
+      this.popupHtml(report.confidenceScore, !!report.photoUrl)
+    );
+    this.cluster.addLayer(marker);
 
     marker.on('popupopen', (e: L.PopupEvent) => {
       const popupEl = e.popup.getElement();
@@ -351,6 +366,11 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     }
   }
 
+  // A marker inside a cluster is not on the map yet: zoom (or fan the cluster out) until it is, then open it
+  private revealMarker(marker: L.Marker): void {
+    this.cluster.zoomToShowLayer(marker, () => marker.openPopup());
+  }
+
   private popupHtml(confidenceScore: number, hasPhoto: boolean): string {
     return buildPopupHtml(confidenceScore, hasPhoto, (key, params) => this.i18n.t(key, params));
   }
@@ -358,7 +378,7 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   private removeMarker(id: string): void {
     const marker = this.markers.get(id);
     if (marker) {
-      this.map.removeLayer(marker);
+      this.cluster.removeLayer(marker);
       this.markers.delete(id);
     }
   }
@@ -429,7 +449,7 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
 
     const existingMarker = this.markers.get(report.id);
     if (existingMarker) {
-      existingMarker.openPopup();
+      this.revealMarker(existingMarker);
       return;
     }
 
@@ -438,7 +458,8 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
     // open the popup once it exists.
     this.floodReportService.getNearby(report.lat, report.lng, DEFAULT_RADIUS_METERS).subscribe(reports => {
       reports.forEach(r => this.upsertMarker(r));
-      this.markers.get(report.id)?.openPopup();
+      const marker = this.markers.get(report.id);
+      if (marker) this.revealMarker(marker);
     });
   }
 

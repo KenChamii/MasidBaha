@@ -2,6 +2,41 @@ import * as L from 'leaflet';
 import { PULSE_BY_SEVERITY, SEVERITY_META, Severity } from '@masidbaha/shared';
 import { Translate, english } from '../../core/i18n/english';
 
+// The plugin adds markerClusterGroup to the global L, not to the module namespace that
+// `import * as L` gives under esbuild (the same reason analytics reads heatLayer from window.L)
+export function createClusterGroup(options: L.MarkerClusterGroupOptions): L.MarkerClusterGroup {
+  return (window as unknown as { L: typeof L }).L.markerClusterGroup(options);
+}
+
+// A marker that remembers how bad its flood is, so a cluster can show the worst one inside it
+export interface FloodMarkerOptions extends L.MarkerOptions {
+  severity: Severity;
+}
+
+export function floodMarker(latLng: L.LatLngExpression, severity: Severity, hasPhoto: boolean): L.Marker {
+  return L.marker(latLng, { icon: buildFloodIcon(severity, hasPhoto), severity } as FloodMarkerOptions);
+}
+
+// The worst severity among a group of markers (they all carry one; 1 is the mildest)
+export function worstSeverity(markers: L.Marker[]): Severity {
+  return markers.reduce<Severity>(
+    (worst, marker) => Math.max(worst, (marker.options as Partial<FloodMarkerOptions>).severity ?? 1) as Severity,
+    1
+  );
+}
+
+// Several reports close together: one badge with the count. Bigger groups get a bigger badge.
+export function buildClusterIcon(count: number, severity: Severity): L.DivIcon {
+  const size = count < 10 ? 38 : count < 50 ? 46 : 54;
+  const label = count > 99 ? '99+' : String(count);
+
+  return L.divIcon({
+    className: 'flood-cluster',
+    html: `<div class="flood-cluster__badge" style="background:${SEVERITY_META[severity].color}"><span>${label}</span></div>`,
+    iconSize: [size, size]
+  });
+}
+
 export function buildFloodIcon(severity: Severity, hasPhoto: boolean): L.DivIcon {
   const meta = SEVERITY_META[severity];
   const pulse = PULSE_BY_SEVERITY[severity];
