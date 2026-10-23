@@ -1,6 +1,9 @@
 ﻿using Asp.Versioning;
+using MasidBaha.Application.Admin.Bans;
+using MasidBaha.Application.Common.Exceptions;
 using MasidBaha.Application.Common.Storage;
 using MasidBaha.Application.Photos.UploadPhoto;
+using MasidBaha.WebAPI.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -13,9 +16,20 @@ public class PhotosController : ControllerBase
 {
     private readonly IUploadPhotoService _uploadPhotoService;
     private readonly IPhotoUrlPolicy _photoUrls;
+    private readonly IBanService _bans;
+    private readonly ISessionIdentity _session;
+    private readonly IIpHasher _ipHasher;
 
-    public PhotosController(IUploadPhotoService uploadPhotoService, IPhotoUrlPolicy photoUrls)
+    public PhotosController(
+        IUploadPhotoService uploadPhotoService,
+        IPhotoUrlPolicy photoUrls,
+        IBanService bans,
+        ISessionIdentity session,
+        IIpHasher ipHasher)
     {
+        _bans = bans;
+        _session = session;
+        _ipHasher = ipHasher;
         _uploadPhotoService = uploadPhotoService;
         _photoUrls = photoUrls;
     }
@@ -33,6 +47,11 @@ public class PhotosController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<PhotoDto>> Upload(IFormFile file, CancellationToken cancellationToken)
     {
+        // Blocked sources can't upload either (a shadow ban only affects what others see)
+        var verdict = await _bans.CheckAsync(_session.GetOrCreate(HttpContext), _ipHasher.Hash(HttpContext), cancellationToken);
+        if (verdict == BanVerdict.Block)
+            throw new ForbiddenException("Uploading is not available from this device.");
+
         if (file is null || file.Length == 0)
             return Problem(detail: "Walang natanggap na file.", statusCode: StatusCodes.Status400BadRequest);
 

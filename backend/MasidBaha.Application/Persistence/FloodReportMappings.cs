@@ -40,6 +40,8 @@ public static class FloodReportMappings
         ConfidenceScore = r.ConfidenceScore,
         Status = r.Status,
         ReporterSessionId = r.ReporterSessionId,
+        ReporterIpFingerprint = r.ReporterIpHash is null ? null : r.ReporterIpHash[..Math.Min(10, r.ReporterIpHash.Length)],
+        IsHidden = r.IsHidden,
         Region = r.Region,
         Province = r.Province,
         City = r.City

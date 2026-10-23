@@ -1,5 +1,12 @@
 using FluentValidation;
 using MasidBaha.Application.Admin;
+using MasidBaha.Application.Admin.Audit;
+using MasidBaha.Application.Admin.Bans;
+using MasidBaha.Application.Admin.Broadcasts;
+using MasidBaha.Application.Admin.Dashboard;
+using MasidBaha.Application.Admin.Moderation;
+using MasidBaha.Application.Admin.Settings;
+using MasidBaha.Application.Admin.Users;
 using MasidBaha.Application.Common.Geocoding;
 using MasidBaha.Application.Common.Options;
 using MasidBaha.Application.Common.Storage;
@@ -77,6 +84,15 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IExpireReportsService, ExpireReportsService>();
         services.AddScoped<IAdminReportsService, AdminReportsService>();
         services.AddScoped<ISessionTrustService, SessionTrustService>();
+
+        // Back-office
+        services.AddScoped<IAuditLog, AuditLog>();
+        services.AddSingleton<IRuntimeSettings, RuntimeSettings>();
+        services.AddScoped<IBanService, BanService>();
+        services.AddScoped<IModerationService, ModerationService>();
+        services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IAdminUsersService, AdminUsersService>();
+        services.AddScoped<IBroadcastService, BroadcastService>();
         services.AddScoped<IPushSubscriptionService, PushSubscriptionService>();
         services.AddScoped<IPushNotificationService, PushNotificationService>();
         services.AddScoped<IUploadPhotoService, UploadPhotoService>();
@@ -87,6 +103,7 @@ public static class ServiceCollectionExtensions
 
         services.AddHostedService<FloodExpiryService>();
         services.AddHostedService<PushDispatchService>();
+        services.AddHostedService<SettingsRefreshService>();
         return services;
     }
 

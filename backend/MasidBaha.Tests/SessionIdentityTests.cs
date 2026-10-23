@@ -1,3 +1,4 @@
+using MasidBaha.WebAPI.Security;
 using MasidBaha.Application.Common.Options;
 using MasidBaha.WebAPI.Security;
 using Microsoft.AspNetCore.Http;
@@ -22,8 +23,10 @@ public class SessionIdentityTests
 
     private static SessionIdentity Create(string? key = "k-this-is-a-test-signing-key-32-chars!", string environment = "Development") =>
         new(Options.Create(new SecurityOptions { SessionSigningKey = key }),
-            new FakeEnvironment { EnvironmentName = environment },
-            NullLogger<SessionIdentity>.Instance);
+            new SigningKey(
+                Options.Create(new SecurityOptions { SessionSigningKey = key }),
+                new FakeEnvironment { EnvironmentName = environment },
+                NullLogger<SigningKey>.Instance));
 
     // Reads the cookie value the server put in Set-Cookie
     private static string? IssuedCookie(HttpContext context)

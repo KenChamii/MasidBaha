@@ -1,7 +1,9 @@
+using System.Security.Claims;
 using MasidBaha.Application.Admin;
 using MasidBaha.Application.Common.Options;
 using MasidBaha.Application.Persistence;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
@@ -17,7 +19,12 @@ public static class AuthExtensions
         services.AddIdentityCore<AdminUser>()
             .AddRoles<IdentityRole<Guid>>()
             .AddEntityFrameworkStores<MasidBahaDbContext>()
-            .AddSignInManager();
+            .AddSignInManager()
+            .AddDefaultTokenProviders(); // the authenticator-app (TOTP) provider used for two-factor sign-in
+
+        // Replaces the default factory so the cookie carries the "must change password" flag
+        services.AddScoped<IUserClaimsPrincipalFactory<AdminUser>, AdminClaimsPrincipalFactory>();
+        services.AddSingleton<IAuthorizationHandler, PasswordChangedHandler>();
 
         services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
 
@@ -38,6 +45,7 @@ public static class AuthExtensions
             identity.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(settings.LockoutMinutes);
 
             identity.User.RequireUniqueEmail = true;
+            identity.Tokens.AuthenticatorIssuer = "MasidBaha";
         });
 
         services.AddOptions<CookieAuthenticationOptions>(IdentityConstants.ApplicationScheme)
@@ -68,10 +76,49 @@ public static class AuthExtensions
             options.ValidationInterval = TimeSpan.FromSeconds(admin.Value.SecurityCheckSeconds));
 
         services.AddAuthorizationBuilder()
-            .AddPolicy(AdminPolicies.CanView, policy => policy.RequireRole(AdminRoles.All))
-            .AddPolicy(AdminPolicies.CanModerate, policy => policy.RequireRole(AdminRoles.Moderator, AdminRoles.SuperAdmin))
-            .AddPolicy(AdminPolicies.ManageUsers, policy => policy.RequireRole(AdminRoles.SuperAdmin));
+            .AddPolicy(AdminPolicies.CanView, policy => policy.RequireRole(AdminRoles.All).AddRequirements(new PasswordChangedRequirement()))
+            .AddPolicy(AdminPolicies.CanModerate, policy => policy.RequireRole(AdminRoles.Moderator, AdminRoles.SuperAdmin).AddRequirements(new PasswordChangedRequirement()))
+            .AddPolicy(AdminPolicies.ManageUsers, policy => policy.RequireRole(AdminRoles.SuperAdmin).AddRequirements(new PasswordChangedRequirement()));
 
         return services;
+    }
+}
+
+public static class AdminClaims
+{
+    public const string MustChangePassword = "mb:must_change_password";
+}
+
+// Adds the "must change password" flag to the sign-in cookie
+public class AdminClaimsPrincipalFactory : UserClaimsPrincipalFactory<AdminUser, IdentityRole<Guid>>
+{
+    public AdminClaimsPrincipalFactory(
+        UserManager<AdminUser> users, RoleManager<IdentityRole<Guid>> roles, IOptions<IdentityOptions> options)
+        : base(users, roles, options)
+    {
+    }
+
+    protected override async Task<ClaimsIdentity> GenerateClaimsAsync(AdminUser user)
+    {
+        var identity = await base.GenerateClaimsAsync(user);
+        if (user.MustChangePassword)
+            identity.AddClaim(new Claim(AdminClaims.MustChangePassword, "true"));
+        return identity;
+    }
+}
+
+// A temporary password only opens the change-password screen: every admin policy
+// refuses until it has been replaced, so the rule holds even for direct API calls
+public class PasswordChangedRequirement : IAuthorizationRequirement
+{
+}
+
+public class PasswordChangedHandler : AuthorizationHandler<PasswordChangedRequirement>
+{
+    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PasswordChangedRequirement requirement)
+    {
+        if (!context.User.HasClaim(AdminClaims.MustChangePassword, "true"))
+            context.Succeed(requirement);
+        return Task.CompletedTask;
     }
 }

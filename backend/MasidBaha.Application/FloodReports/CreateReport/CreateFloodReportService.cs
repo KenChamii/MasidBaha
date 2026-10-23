@@ -1,7 +1,6 @@
-using Microsoft.Extensions.Options;
-﻿using MasidBaha.Application.Common.Enums;
+﻿using MasidBaha.Application.Admin.Settings;
+using MasidBaha.Application.Common.Enums;
 using MasidBaha.Application.Common.Geocoding;
-using MasidBaha.Application.Common.Options;
 using MasidBaha.Application.Persistence;
 
 namespace MasidBaha.Application.FloodReports.CreateReport;
@@ -15,13 +14,13 @@ public class CreateFloodReportService : ICreateFloodReportService
 {
     private readonly MasidBahaDbContext _db;
     private readonly IGeocodingService _geocodingService;
-    private readonly ReportOptions _options;
+    private readonly IRuntimeSettings _settings;
 
-    public CreateFloodReportService(MasidBahaDbContext db, IGeocodingService geocodingService, IOptions<ReportOptions> options)
+    public CreateFloodReportService(MasidBahaDbContext db, IGeocodingService geocodingService, IRuntimeSettings settings)
     {
         _db = db;
         _geocodingService = geocodingService;
-        _options = options.Value;
+        _settings = settings;
     }
 
     public async Task<FloodReportDto> CreateAsync(CreateFloodReportRequest request)
@@ -39,10 +38,12 @@ public class CreateFloodReportService : ICreateFloodReportService
             Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
             PhotoUrl = request.PhotoUrl,
             ReportedAt = now,
-            ExpiresAt = now + _options.Lifetime,
+            ExpiresAt = now + _settings.Current.ReportLifetime,
             ConfidenceScore = 1,
             Status = ReportStatus.Active,
             ReporterSessionId = request.ReporterSessionId,
+            ReporterIpHash = request.ReporterIpHash,
+            IsHidden = request.IsHidden,
             Region = address.Region,
             Province = address.Province,
             City = address.City

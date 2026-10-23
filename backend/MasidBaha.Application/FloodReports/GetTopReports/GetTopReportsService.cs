@@ -30,7 +30,7 @@ public class GetTopReportsService : IGetTopReportsService
 
         var reports = await _db.FloodReports
             .AsNoTracking()
-            .Where(r => r.Status == ReportStatus.Active && r.ExpiresAt > now)
+            .Where(r => r.Status == ReportStatus.Active && !r.IsHidden && r.ExpiresAt > now)
             .Where(r => query.Region == null || r.Region == query.Region)
             .Where(r => query.Province == null || r.Province == query.Province)
             .Where(r => query.City == null || r.City == query.City)

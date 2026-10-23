@@ -9,6 +9,14 @@ public class AdminUser : IdentityUser<Guid>
     public string DisplayName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastLoginAt { get; set; }
+
+    // New and reset accounts start with a temporary password that must be replaced at first sign-in
+    public bool MustChangePassword { get; set; }
+
+    // Set when a super admin deactivates the account; it can no longer sign in
+    public DateTime? DeactivatedAt { get; set; }
+
+    public bool IsActive => DeactivatedAt is null;
 }
 
 public static class AdminRoles

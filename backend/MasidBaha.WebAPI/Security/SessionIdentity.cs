@@ -21,25 +21,11 @@ public class SessionIdentity : ISessionIdentity
     private readonly SecurityOptions _options;
     private readonly byte[] _key;
 
-    public SessionIdentity(IOptions<SecurityOptions> options, IHostEnvironment environment, ILogger<SessionIdentity> logger)
+    public SessionIdentity(IOptions<SecurityOptions> options, ISigningKey signingKey)
     {
         _options = options.Value;
-
-        if (!string.IsNullOrWhiteSpace(_options.SessionSigningKey))
-        {
-            _key = Encoding.UTF8.GetBytes(_options.SessionSigningKey);
-        }
-        else if (environment.IsDevelopment() || environment.IsEnvironment("Testing"))
-        {
-            // Throwaway key: sessions reset whenever the API restarts
-            _key = RandomNumberGenerator.GetBytes(32);
-            logger.LogWarning("Security:SessionSigningKey is not set; using a temporary key. Sessions will reset on restart.");
-        }
-        else
-        {
-            throw new InvalidOperationException(
-                "Security:SessionSigningKey is not set. Set it (32+ characters) via user-secrets or the Security__SessionSigningKey environment variable.");
-        }
+        // The raw key, unchanged from before, so visitors keep their existing sessions
+        _key = signingKey.Bytes;
     }
 
     public string GetOrCreate(HttpContext context)

@@ -267,7 +267,7 @@ public class AuthTests : IAsyncLifetime
 
         var changed = await client.PostAsJsonAsync($"{Api}/auth/change-password",
             new { currentPassword = ApiFactory.StaffPassword, newPassword });
-        Assert.Equal(HttpStatusCode.NoContent, changed.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, changed.StatusCode);
 
         // this session survives, the old password doesn't, the new one does
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"{Api}/auth/me")).StatusCode);

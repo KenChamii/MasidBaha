@@ -1,3 +1,4 @@
+using MasidBaha.Application.Admin.Settings;
 using MasidBaha.Application.Admin;
 using MasidBaha.Application.Common.Options;
 using MasidBaha.Application.Persistence;
@@ -39,6 +40,9 @@ using (var scope = app.Services.CreateScope())
 
     // Roles always; the first SuperAdmin only if configured and none exists yet
     await AdminSeeder.SeedAsync(scope.ServiceProvider);
+
+    // Staff-made setting overrides take effect from the first request
+    await app.Services.GetRequiredService<IRuntimeSettings>().ReloadAsync();
 
     if (app.Configuration.GetValue("Database:SeedDemoData", false))
         await DemoDataSeeder.SeedAsync(db, scope.ServiceProvider.GetRequiredService<IOptions<ReportOptions>>().Value.Lifetime);

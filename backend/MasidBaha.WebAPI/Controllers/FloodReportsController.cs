@@ -1,6 +1,8 @@
 ﻿using Asp.Versioning;
+using MasidBaha.Application.Admin.Bans;
+using MasidBaha.Application.Admin.Settings;
 using MasidBaha.Application.Common.Enums;
-using MasidBaha.Application.Common.Options;
+using MasidBaha.Application.Common.Exceptions;
 using MasidBaha.Application.Common.Storage;
 using MasidBaha.Application.FloodReports.CreateReport;
 using MasidBaha.Application.FloodReports.GetHeatmapData;
@@ -15,7 +17,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Options;
 
 namespace MasidBaha.WebAPI.Controllers;
 
@@ -36,7 +37,9 @@ public class FloodReportsController : ControllerBase
     private readonly ISessionIdentity _session;
     private readonly IPhotoUrlPolicy _photoUrls;
     private readonly IPushQueue _pushQueue;
-    private readonly PushOptions _pushOptions;
+    private readonly IRuntimeSettings _settings;
+    private readonly IBanService _bans;
+    private readonly IIpHasher _ipHasher;
     private readonly IOutputCacheStore _cache;
     private readonly IHubContext<FloodHub> _hubContext;
 
@@ -50,7 +53,9 @@ public class FloodReportsController : ControllerBase
         ISessionIdentity session,
         IPhotoUrlPolicy photoUrls,
         IPushQueue pushQueue,
-        IOptions<PushOptions> pushOptions,
+        IRuntimeSettings settings,
+        IBanService bans,
+        IIpHasher ipHasher,
         IOutputCacheStore cache,
         IHubContext<FloodHub> hubContext)
     {
@@ -63,7 +68,9 @@ public class FloodReportsController : ControllerBase
         _session = session;
         _photoUrls = photoUrls;
         _pushQueue = pushQueue;
-        _pushOptions = pushOptions.Value;
+        _settings = settings;
+        _bans = bans;
+        _ipHasher = ipHasher;
         _cache = cache;
         _hubContext = hubContext;
     }
@@ -84,8 +91,22 @@ public class FloodReportsController : ControllerBase
 
         // The reporter is whoever holds the signed session cookie, never a client-supplied id
         request.ReporterSessionId = _session.GetOrCreate(HttpContext);
+        request.ReporterIpHash = _ipHasher.Hash(HttpContext);
+
+        var verdict = await _bans.CheckAsync(request.ReporterSessionId, request.ReporterIpHash, cancellationToken);
+        if (verdict == BanVerdict.Block)
+            throw new ForbiddenException("Reporting is not available from this device.");
+
+        // A shadow-banned source gets the same success response as anyone else, but
+        // the report is saved hidden and nothing is shown, broadcast or pushed
+        request.IsHidden = verdict == BanVerdict.Shadow;
 
         var report = await _createService.CreateAsync(request);
+
+        if (request.IsHidden)
+        {
+            return CreatedAtAction(nameof(GetById), new { id = report.Id, version = "1" }, report);
+        }
 
         await _cache.EvictByTagAsync(CacheTag, cancellationToken);
         await _hubContext.Clients.All.SendAsync("NewReport", report, cancellationToken);
@@ -93,7 +114,7 @@ public class FloodReportsController : ControllerBase
         // Notifications go through a background queue, so the reporter isn't
         // kept waiting while every subscriber is pushed to. A Passable report
         // still shows on the map; it just doesn't buzz everyone's phone.
-        if (report.Severity >= _pushOptions.MinimumSeverity)
+        if (report.Severity >= _settings.Current.PushMinimumSeverity)
         {
             var locationLabel = report.City ?? report.Province ?? "malapit sa iyo";
             await _pushQueue.EnqueueAsync(new PushPayload
@@ -163,7 +184,15 @@ public class FloodReportsController : ControllerBase
     {
         request.VoterSessionId = _session.GetOrCreate(HttpContext);
 
-        var result = await _voteService.VoteAsync(id, request);
+        var verdict = await _bans.CheckAsync(request.VoterSessionId, _ipHasher.Hash(HttpContext), cancellationToken);
+        if (verdict == BanVerdict.Block)
+            throw new ForbiddenException("Voting is not available from this device.");
+
+        // A shadow-banned voter sees a normal answer, but nothing is recorded or broadcast
+        var shadow = verdict == BanVerdict.Shadow;
+        var result = await _voteService.VoteAsync(id, request, shadow);
+        if (shadow)
+            return Ok(result);
 
         await _cache.EvictByTagAsync(CacheTag, cancellationToken);
         await _hubContext.Clients.All.SendAsync("ReportUpdated", result, cancellationToken);
