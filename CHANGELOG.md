@@ -6,6 +6,7 @@ commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### Added
+- **The staff side on the landing page.** A "For moderators" section with an example moderation queue and audit log, and what staff can do: bans and shadow bans, announcements, settings, search and CSV export, roles and optional two-factor. The README shows the real admin screens.
 - **A landing page that explains the app.** A mock of the report form, the path a report takes from phone to map, how the confidence score moves, the features, an architecture and spec section, privacy and an honest list of limits. In English and Filipino. The app is now described as a flood monitoring app, page titles and share cards use that wording, and the share image was redrawn to match.
 - **Works on every screen.** The whole site was checked from 320 px phones to wide desktops, upright and
   sideways. The map toolbar no longer runs off the screen, panels become bottom sheets on phones, the report
@@ -48,6 +49,7 @@ commit messages follow [Conventional Commits](https://www.conventionalcommits.or
   limits and bans, only when it presents the shared secret.
 
 ### Fixed
+- The button that says a flood has gone down now reads "Cleared" ("Humupa na" in Filipino) instead of "Gone now", and the staff screens use the same word.
 - **Photo uploads (security).** The upload endpoint decoded whatever format the bytes really were, so a GIF
   or TIFF sent with an image label reached those decoders and their known bugs. Only JPEG, PNG and WebP are
   decoded now, metadata is not parsed, and ImageSharp moves to 3.1.12. The remaining advisories are fixed only

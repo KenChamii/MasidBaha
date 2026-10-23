@@ -530,6 +530,119 @@ table {
   border: var(--mb-border);
 }
 
+// ============ for moderators ============
+
+.staff {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 28px;
+  align-items: start;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.staff__mocks {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+.nowrap {
+  @media (min-width: 641px) {
+    white-space: nowrap;
+  }
+}
+
+// the example buttons are only decoration: on a phone the columns that matter get the room
+.col-actions {
+  @media (max-width: 640px) {
+    display: none;
+  }
+}
+
+// the buttons in the queue mock: they look like the real ones, but do nothing
+.acts {
+  display: inline-flex;
+  gap: 6px;
+
+  i {
+    font-style: normal;
+    @include m.mono-label;
+    padding: 3px 8px;
+    border: var(--mb-border);
+    background: var(--mb-surface);
+    white-space: nowrap;
+  }
+}
+
+.tag {
+  @include m.mono-label;
+  display: inline-block;
+  padding: 1px 8px;
+  background: var(--mb-mist);
+  border: 1px solid var(--mb-ink);
+  white-space: nowrap;
+}
+
+// on a phone the example tables read as short wrapped rows instead of columns
+@media (max-width: 640px) {
+  .staff__mocks {
+    thead {
+      display: none;
+    }
+
+    tbody tr {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 2px 12px;
+      padding: 10px 14px;
+      border-bottom: var(--mb-hair);
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    td {
+      padding: 0;
+      border: 0;
+      font-size: 0.85rem;
+    }
+
+    td:first-child {
+      font-weight: 600;
+    }
+  }
+}
+
+.staff__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 18px;
+
+  li {
+    padding-left: 16px;
+    border-left: 4px solid var(--mb-water);
+  }
+
+  h3 {
+    margin: 0 0 4px;
+    font-size: 0.95rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--mb-muted);
+  }
+}
+
 // ============ under the hood ============
 
 .route {

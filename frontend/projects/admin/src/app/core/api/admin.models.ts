@@ -105,7 +105,7 @@ export interface AdminReportDetail {
 
 export const FLAG_LABEL: Record<string, string> = {
   low_trust_reporter: 'Low-trust reporter',
-  many_denies: 'Many "it\'s gone" votes',
+  many_denies: 'Many "cleared" votes',
   reporter_flooding: 'Reporter flooding',
   hidden: 'Shadow-banned source'
 };

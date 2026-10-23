@@ -225,6 +225,100 @@
     </div>
   </section>
 
+  <!-- ============ FOR MODERATORS ============ -->
+  <section class="block" id="moderators">
+    <div class="wrap">
+      <header class="block__head">
+        <div>
+          <span class="eyebrow eyebrow--muted">{{ 'home.admin.eyebrow' | t }}</span>
+          <h2>{{ 'home.admin.title' | t }}</h2>
+        </div>
+        <p class="block__body">{{ 'home.admin.body' | t }}</p>
+      </header>
+
+      <div class="staff">
+        <div class="staff__mocks">
+          <div class="tablewrap">
+            <table>
+              <caption>
+                {{
+                  'home.admin.queue.caption' | t
+                }}
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">{{ 'home.admin.col.place' | t }}</th>
+                  <th scope="col">{{ 'home.admin.col.severity' | t }}</th>
+                  <th scope="col">{{ 'home.admin.col.flag' | t }}</th>
+                  <th scope="col">{{ 'home.admin.col.votes' | t }}</th>
+                  <th scope="col" class="col-actions">
+                    <span class="sr-only">{{ 'home.admin.col.actions' | t }}</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of queue; track row.place) {
+                  <tr>
+                    <td>{{ row.place }}</td>
+                    <td class="nowrap">{{ 'severity.' + row.depth | t }}</td>
+                    <td>{{ row.flag | t }}</td>
+                    <td class="nowrap">{{ 'home.admin.votes' | t: { up: row.up, down: row.down } }}</td>
+                    <td class="col-actions">
+                      <span class="acts" aria-hidden="true">
+                        @for (action of queueActions; track action) {
+                          <i>{{ action | t }}</i>
+                        }
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="tablewrap">
+            <table>
+              <caption>
+                {{
+                  'home.admin.audit.caption' | t
+                }}
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">{{ 'home.admin.col.when' | t }}</th>
+                  <th scope="col">{{ 'home.admin.col.who' | t }}</th>
+                  <th scope="col">{{ 'home.admin.col.action' | t }}</th>
+                  <th scope="col">{{ 'home.admin.col.target' | t }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of audit; track row.time) {
+                  <tr>
+                    <td class="mono">{{ row.time }}</td>
+                    <td>{{ row.who | t }}</td>
+                    <td>
+                      <span class="tag">{{ row.action }}</span>
+                    </td>
+                    <td>{{ row.target | t }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <ul class="staff__list">
+          @for (item of adminItems; track item.title) {
+            <li>
+              <h3>{{ item.title | t }}</h3>
+              <p>{{ item.text | t }}</p>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ UNDER THE HOOD ============ -->
   <section class="block block--tint" id="stack">
     <div class="wrap">
