@@ -22,7 +22,6 @@ export interface CreateFloodReportRequest {
   severity: Severity;
   notes?: string;
   photoUrl?: string;
-  reporterSessionId: string;
 }
 
 export type ReportScope = 'national' | 'region' | 'province' | 'city';

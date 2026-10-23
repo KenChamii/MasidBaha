@@ -3,10 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { SwPush } from '@angular/service-worker';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { SessionService } from './session.service';
 
 export interface PushSubscriptionRequest {
-  sessionId: string;
   endpoint: string;
   keys: { p256dh: string; auth: string };
 }
@@ -20,12 +18,11 @@ export interface PushSubscriptionRequest {
 // false during local dev with ng serve.
 @Injectable({ providedIn: 'root' })
 export class PushNotificationService {
-  private readonly baseUrl = `${environment.apiUrl}/api/push`;
+  private readonly baseUrl = `${environment.apiUrl}/api/v1/push`;
 
   constructor(
     private http: HttpClient,
-    private swPush: SwPush,
-    private sessionService: SessionService
+    private swPush: SwPush
   ) {}
 
   get isSupported(): boolean {
@@ -58,7 +55,6 @@ export class PushNotificationService {
     const json = subscription.toJSON();
 
     await firstValueFrom(this.http.post(`${this.baseUrl}/subscribe`, {
-      sessionId: this.sessionService.sessionId,
       endpoint: json.endpoint ?? subscription.endpoint,
       keys: {
         p256dh: json.keys?.['p256dh'] ?? '',

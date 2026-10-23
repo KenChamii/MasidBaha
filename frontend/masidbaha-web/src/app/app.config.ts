@@ -1,13 +1,14 @@
 import { ApplicationConfig, isDevMode } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideServiceWorker } from '@angular/service-worker';
 import { routes } from './app.routes';
+import { apiCredentialsInterceptor } from './core/interceptors/api-credentials.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'top' })),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([apiCredentialsInterceptor])),
     // registerWhenStable:30000 registers the SW after the app is stable (or
     // after 30s, whichever comes first) so it never competes with initial
     // page load. isDevMode() guard means `ng serve` never installs it —

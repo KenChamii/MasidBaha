@@ -14,7 +14,6 @@ import { ModalComponent } from '../../shared/ui/modal/modal.component';
 import { ThemeToggleComponent } from '../../shared/ui/theme-toggle/theme-toggle.component';
 import { SignalRService } from '../../core/services/signalr.service';
 import { GeolocationService } from '../../core/services/geolocation.service';
-import { SessionService } from '../../core/services/session.service';
 import { OfflineCacheService } from '../../core/services/offline-cache.service';
 import { FloodReport } from '../../shared/models/flood-report.model';
 
@@ -44,7 +43,6 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   private readonly floodReportService = inject(FloodReportService);
   private readonly signalRService = inject(SignalRService);
   private readonly geolocationService = inject(GeolocationService);
-  private readonly sessionService = inject(SessionService);
   private readonly offlineCacheService = inject(OfflineCacheService);
   readonly store = inject(FloodReportsStore);
 
@@ -260,7 +258,7 @@ export class MapPageComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   private vote(reportId: string, voteType: 1 | -1): void {
-    this.floodReportService.vote(reportId, voteType, this.sessionService.sessionId)
+    this.floodReportService.vote(reportId, voteType)
       .subscribe(() => this.map.closePopup());
   }
 
