@@ -21,6 +21,7 @@ builder.Services
     .AddMasidBahaFeatures()
     .AddMasidBahaStorage(builder.Configuration, builder.Environment)
     .AddMasidBahaGeocoding(builder.Configuration)
+    .AddMasidBahaWeather(builder.Configuration)
     .AddMasidBahaWebApi(builder.Configuration)
     .AddMasidBahaTelemetry(builder.Configuration);
 

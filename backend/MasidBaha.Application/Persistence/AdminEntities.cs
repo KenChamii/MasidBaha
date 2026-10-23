@@ -64,6 +64,15 @@ public class Broadcast
     public int? AreaRadiusMeters { get; set; }
 }
 
+// The last good copy of something fetched from an outside service (the typhoon data), kept so a restart
+// can serve it at once instead of waiting for a slow download
+public class CachedDocument
+{
+    public string Key { get; set; } = string.Empty;
+    public string Json { get; set; } = string.Empty;
+    public DateTime FetchedAt { get; set; }
+}
+
 // A runtime override of a configured default (see RuntimeSettings)
 public class AppSetting
 {

@@ -20,6 +20,7 @@ using MasidBaha.Application.FloodReports.VoteOnReport;
 using MasidBaha.Application.Persistence;
 using MasidBaha.Application.Photos.UploadPhoto;
 using MasidBaha.Application.PushNotifications;
+using MasidBaha.Application.Weather;
 using MasidBaha.Application.PushNotifications.WatchAreas;
 using MasidBaha.Application.Trust;
 using MasidBaha.WebAPI.BackgroundServices;
@@ -50,6 +51,7 @@ public static class ServiceCollectionExtensions
         services.AddValidatedOptions<PhotoOptions>(configuration, PhotoOptions.Section);
         services.AddValidatedOptions<RateLimitOptions>(configuration, RateLimitOptions.Section);
         services.AddValidatedOptions<GeocodingOptions>(configuration, GeocodingOptions.Section);
+        services.AddValidatedOptions<WeatherOptions>(configuration, WeatherOptions.Section);
         services.AddValidatedOptions<StorageOptions>(configuration, StorageOptions.Section);
         services.AddValidatedOptions<SecurityOptions>(configuration, SecurityOptions.Section);
         services.AddValidatedOptions<AdminAuthOptions>(configuration, AdminAuthOptions.Section);
@@ -135,6 +137,32 @@ public static class ServiceCollectionExtensions
     // Reverse geocoding (OpenStreetMap Nominatim) tags each report with
     // Region/Province/City. Cached, rate-gated, and wrapped in a resilience
     // pipeline (retry, circuit breaker, timeouts) because it's a free external service.
+    // Typhoon tracks from GDACS: one cached copy shared by every visitor, with the same kind of
+    // resilience pipeline as the geocoder because it is also a free outside service
+    public static IServiceCollection AddMasidBahaWeather(this IServiceCollection services, IConfiguration configuration)
+    {
+        var weather = configuration.GetSection(WeatherOptions.Section).Get<WeatherOptions>() ?? new WeatherOptions();
+
+        services.AddHttpClient<ITyphoonSource, GdacsTyphoonSource>(client =>
+            {
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("MasidBaha/1.0 (community flood reporting)");
+            })
+            .AddStandardResilienceHandler(options =>
+            {
+                var attempt = TimeSpan.FromSeconds(weather.TimeoutSeconds);
+                options.AttemptTimeout.Timeout = attempt;
+                options.TotalRequestTimeout.Timeout = attempt * 3;
+                options.Retry.MaxRetryAttempts = 1;
+                options.CircuitBreaker.SamplingDuration = attempt * 3; // at least twice the attempt timeout
+            });
+        services.AddSingleton(TimeProvider.System);
+        services.AddScoped<ITyphoonStore, DbTyphoonStore>();
+        services.AddSingleton<ITyphoonService, TyphoonService>();
+        services.AddHostedService<TyphoonRefreshService>();
+
+        return services;
+    }
+
     public static IServiceCollection AddMasidBahaGeocoding(this IServiceCollection services, IConfiguration configuration)
     {
         var geocoding = configuration.GetSection(GeocodingOptions.Section).Get<GeocodingOptions>() ?? new GeocodingOptions();

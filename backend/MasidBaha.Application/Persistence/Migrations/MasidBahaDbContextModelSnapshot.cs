@@ -283,6 +283,28 @@ namespace MasidBaha.Application.Persistence.Migrations
                     b.ToTable("broadcasts", (string)null);
                 });
 
+            modelBuilder.Entity("MasidBaha.Application.Persistence.CachedDocument", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("key");
+
+                    b.Property<DateTime>("FetchedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fetched_at");
+
+                    b.Property<string>("Json")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("json");
+
+                    b.HasKey("Key")
+                        .HasName("pk_cached_documents");
+
+                    b.ToTable("cached_documents", (string)null);
+                });
+
             modelBuilder.Entity("MasidBaha.Application.Persistence.FloodReport", b =>
                 {
                     b.Property<Guid>("Id")

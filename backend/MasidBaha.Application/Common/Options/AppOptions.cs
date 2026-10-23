@@ -98,6 +98,31 @@ public class GeocodingOptions
     [Range(1, 10080)] public int CacheMinutes { get; set; } = 1440;
 }
 
+public class WeatherOptions
+{
+    public const string Section = "Weather";
+
+    // GDACS's current tropical cyclones (positions, tracks, forecast cones), republished from JTWC
+    [Required, Url]
+    public string TyphoonSourceUrl { get; set; } = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP?eventtype=TC";
+
+    // GDACS needs about 30 seconds for its full list; only the background refresher waits for it
+    [Range(1, 300)] public int TimeoutSeconds { get; set; } = 90;
+
+    // How often the background refresher asks the source again
+    // (before: how long a fetched copy is served before asking the source again
+    [Range(1, 240)] public int CacheMinutes { get; set; } = 15;
+
+    // How long the last good copy may still be shown if the source stops answering
+    [Range(1, 2880)] public int StaleMinutes { get; set; } = 360;
+
+    // Storms whose centre is outside this box are left out: the western Pacific around the Philippines
+    public double MinLat { get; set; } = -5;
+    public double MaxLat { get; set; } = 40;
+    public double MinLng { get; set; } = 95;
+    public double MaxLng { get; set; } = 165;
+}
+
 public class StorageOptions
 {
     public const string Section = "Storage";

@@ -11,6 +11,7 @@
     <mb-theme-toggle />
     <app-push-toggle />
     <app-watch-areas [center]="mapCenter()" />
+    <app-weather-layers (zoomToStorm)="zoomToStorm($event)" />
     <button type="button" class="map-page__list-toggle" (click)="toggleList()">
       {{ showList() ? 'Itago ang listahan' : 'Ipakita ang listahan (' + store.topReports().length + ')' }}
     </button>

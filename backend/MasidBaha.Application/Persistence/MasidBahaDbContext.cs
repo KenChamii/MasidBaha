@@ -20,6 +20,7 @@ public class MasidBahaDbContext : IdentityDbContext<AdminUser, IdentityRole<Guid
     public DbSet<AuditEntry> AuditLog => Set<AuditEntry>();
     public DbSet<Broadcast> Broadcasts => Set<Broadcast>();
     public DbSet<WatchArea> WatchAreas => Set<WatchArea>();
+    public DbSet<CachedDocument> CachedDocuments => Set<CachedDocument>();
     public DbSet<AppSetting> AppSettings => Set<AppSetting>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -174,6 +175,14 @@ public class MasidBahaDbContext : IdentityDbContext<AdminUser, IdentityRole<Guid
             e.Property(x => x.SentByEmail).HasMaxLength(256).IsRequired();
             e.Property(x => x.SentAt).HasDefaultValueSql("now()");
             e.HasIndex(x => x.SentAt);
+        });
+
+        modelBuilder.Entity<CachedDocument>(e =>
+        {
+            e.ToTable("cached_documents");
+            e.HasKey(x => x.Key);
+            e.Property(x => x.Key).HasMaxLength(64);
+            e.Property(x => x.Json).IsRequired();
         });
 
         modelBuilder.Entity<AppSetting>(e =>

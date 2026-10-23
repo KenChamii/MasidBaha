@@ -9,6 +9,11 @@ commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 - **Watch areas.** Visitors choose up to five places (home, work, school) and are alerted only about new
   reports near them. Nobody signs up: the places belong to the anonymous session. Matching runs in
   PostGIS (`ST_DWithin` on a GiST index). People who never choose a place keep getting every alert.
+- **Weather on the map.** Switch on rain radar (RainViewer, with a 2-hour playback), satellite rainfall
+  (NASA IMERG) and typhoons: the storm's position, track, forecast cone and wind areas, from JTWC data
+  through GDACS. Every layer is clearly marked as not official, with links to PAGASA's bulletins, because
+  PAGASA publishes no map-data service. The typhoon data is refreshed by the API in the background (the
+  source is slow) and saved to the database, so a restart serves it at once.
 - **Shareable report links.** A "share" button on every report opens the phone's share sheet (or copies
   the link). The link, `/r/<id>`, shows a preview card on Facebook, Messenger, Viber and X with the
   report's severity, place and photo, then opens the map on that report. Served by a Cloudflare Pages
