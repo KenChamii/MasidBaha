@@ -1,0 +1,28 @@
+<header class="topbar">
+  <div class="topbar__left">
+    <mb-brand />
+    <span class="topbar__tag">Admin</span>
+
+    <nav class="topbar__nav" aria-label="Admin navigation">
+      <a routerLink="/reports" routerLinkActive="topbar__link--active" class="topbar__link">Reports</a>
+    </nav>
+  </div>
+
+  <div class="topbar__right">
+    <a class="topbar__link topbar__link--external" [href]="publicSiteUrl + '/map'">Live map</a>
+    <a class="topbar__link topbar__link--external" [href]="publicSiteUrl + '/analytics'">Analytics</a>
+
+    @if (auth.user(); as user) {
+      <span class="topbar__who" [title]="user.email"
+        >{{ user.displayName || user.email }} · {{ user.roles.join(', ') }}</span
+      >
+    }
+
+    <mb-theme-toggle />
+    <button type="button" class="topbar__signout" (click)="signOut()">Sign out</button>
+  </div>
+</header>
+
+<main class="content">
+  <router-outlet />
+</main>

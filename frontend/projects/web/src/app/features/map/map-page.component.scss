@@ -1,0 +1,86 @@
+@use 'mixins' as m;
+
+:host {
+  display: block;
+  height: 100vh;
+  position: relative;
+}
+
+.map-page {
+  height: 100%;
+  position: relative;
+}
+
+.map-page__map {
+  height: 100%;
+  width: 100%;
+}
+
+// floating controls (theme, push, list) share one top-right toolbar
+.map-page__toolbar {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.map-page__list-toggle {
+  @include m.press-button;
+  height: 36px;
+  padding: 0 16px;
+  font-size: 0.75rem;
+}
+
+.map-page__report-btn {
+  @include m.press-button(var(--mb-water), var(--mb-white));
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  padding: 14px 28px;
+  box-shadow: var(--mb-shadow);
+
+  // keep the centering translate while the shared hover lifts the button
+  &:hover:not(:disabled) {
+    transform: translate(calc(-50% - 2px), -2px);
+  }
+  &:active:not(:disabled) {
+    transform: translate(calc(-50% + 1px), 1px);
+  }
+
+  &--active {
+    background: var(--mb-alert);
+    color: var(--mb-ink);
+  }
+}
+
+.map-page__hint {
+  @include m.panel(var(--mb-shadow-sm));
+  @include m.mono-label;
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  padding: 8px 16px;
+  white-space: nowrap;
+
+  @media (max-width: 640px) {
+    white-space: normal;
+    width: calc(100vw - 32px);
+    text-align: center;
+  }
+}
+
+.map-page__photo {
+  display: block;
+  max-width: min(90vw, 900px);
+  max-height: 86vh;
+  border: 4px solid var(--mb-white);
+  box-shadow: 8px 8px 0 var(--mb-water);
+  object-fit: contain;
+}

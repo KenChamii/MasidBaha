@@ -1,0 +1,165 @@
+@use 'mixins' as m;
+
+:host {
+  display: block;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.reports {
+  padding: 1.5rem;
+  color: var(--mb-ink);
+  font-family: var(--mb-font-body);
+}
+
+.reports__toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.reports__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  button {
+    @include m.press-button;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.75rem;
+
+    &.active {
+      background: var(--mb-ink);
+      color: var(--mb-on-ink);
+    }
+  }
+}
+
+.reports__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  background: var(--mb-surface);
+  border: var(--mb-border);
+  box-shadow: var(--mb-shadow);
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.6rem 0.5rem;
+    border-bottom: var(--mb-hair);
+    vertical-align: top;
+  }
+
+  th {
+    @include m.mono-label;
+    background: var(--mb-ink);
+    color: var(--mb-on-ink);
+    font-weight: 500;
+  }
+
+  tbody tr:hover {
+    background: var(--mb-mist);
+  }
+}
+
+.reports__notes {
+  max-width: 220px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.reports__session {
+  font-family: var(--mb-font-mono);
+  font-size: 0.75rem;
+  max-width: 160px;
+}
+
+.reports__session-id {
+  color: var(--mb-muted);
+  display: block;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reports__trust-btn {
+  margin-left: 0.35rem;
+  padding: 0 0.2rem;
+  font-size: 0.8rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: 0.7;
+  vertical-align: middle;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.reports__trust-info {
+  margin: 0.35rem 0 0;
+  font-family: var(--mb-font-body);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+
+  strong {
+    color: var(--mb-water-text);
+  }
+
+  &--error {
+    color: var(--mb-danger);
+  }
+}
+
+.reports__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+
+  button {
+    @include m.press-button;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.68rem;
+    white-space: nowrap;
+  }
+
+  .reports__delete {
+    color: var(--mb-danger);
+    border-color: var(--mb-danger);
+    box-shadow: 2px 2px 0 var(--mb-danger);
+  }
+}
+
+.reports__empty {
+  text-align: center;
+  color: var(--mb-muted);
+  padding: 2rem !important;
+}
+
+.reports__row-error {
+  color: var(--mb-danger);
+  font-size: 0.75rem;
+  margin: 0.25rem 0 0;
+}
+
+.reports__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  @include m.mono-label;
+
+  button {
+    @include m.press-button;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.72rem;
+  }
+}

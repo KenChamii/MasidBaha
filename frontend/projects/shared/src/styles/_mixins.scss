@@ -1,0 +1,98 @@
+// Shared building blocks for the hard-edged UI
+
+@mixin panel($shadow: var(--mb-shadow)) {
+  background: var(--mb-surface);
+  border: var(--mb-border);
+  box-shadow: $shadow;
+}
+
+// Offset-shadow button that "presses" into its shadow on hover
+@mixin press-button($bg: var(--mb-surface), $fg: var(--mb-ink)) {
+  background: $bg;
+  color: $fg;
+  border: var(--mb-border);
+  box-shadow: var(--mb-shadow-sm);
+  cursor: pointer;
+  font-family: var(--mb-font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
+
+  &:hover:not(:disabled) {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--mb-shadow);
+  }
+
+  &:active:not(:disabled) {
+    transform: translate(1px, 1px);
+    box-shadow: 0 0 0 var(--mb-ink);
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--mb-cyan);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@mixin mono-label {
+  font-family: var(--mb-font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@mixin form-field {
+  background: var(--mb-surface);
+  border: var(--mb-border);
+  color: var(--mb-ink);
+  font-family: inherit;
+  padding: 8px;
+
+  &:focus {
+    outline: none;
+    box-shadow: var(--mb-shadow-water);
+  }
+}
+
+// Button variants used by landing, layouts and CTAs
+@mixin button-system {
+  .btn {
+    @include press-button(var(--mb-surface), var(--mb-ink));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    padding: 12px 22px;
+    text-decoration: none;
+
+    &--primary {
+      background: var(--mb-water);
+      color: var(--mb-white);
+    }
+    &--ghost {
+      background: transparent;
+    }
+    &--dark {
+      background: var(--mb-ink);
+      color: var(--mb-on-ink);
+    }
+
+    &--sm {
+      padding: 8px 16px;
+      font-size: 0.75rem;
+    }
+    &--lg {
+      padding: 16px 32px;
+      font-size: 1rem;
+    }
+  }
+}

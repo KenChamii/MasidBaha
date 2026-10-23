@@ -1,0 +1,75 @@
+// Design tokens shared by every app: hard-edged "weather station" look (fonts are loaded in each index.html)
+:root {
+  color-scheme: light;
+
+  // Palette
+  --mb-ink: #0b1f33; // text, borders, shadows
+  --mb-on-ink: #ffffff; // text placed on an ink background
+  --mb-paper: #f3f8fb; // page background
+  --mb-surface: #ffffff; // cards, panels, inputs
+  --mb-mist: #e1eef5; // subtle fills
+  --mb-white: #ffffff; // constant white (text on colour fills)
+  --mb-water: #0077b6; // brand fill
+  --mb-water-text: #0077b6; // brand colour used as text
+  --mb-cyan: #00b4d8;
+  --mb-alert: #ff6b2c;
+  --mb-warn: #ffc145;
+  --mb-danger: #d62839;
+  --mb-ok: #1b9e77;
+  --mb-muted: #5b7186;
+
+  // Borders & shadows
+  --mb-border: 2px solid var(--mb-ink);
+  --mb-hair: 1px solid color-mix(in srgb, var(--mb-ink) 14%, transparent);
+  --mb-shadow: 4px 4px 0 var(--mb-ink);
+  --mb-shadow-sm: 2px 2px 0 var(--mb-ink);
+  --mb-shadow-water: 4px 4px 0 var(--mb-water);
+
+  // Type
+  --mb-font-display: 'Space Grotesk', sans-serif;
+  --mb-font-body: 'Inter', sans-serif;
+  --mb-font-mono: 'IBM Plex Mono', monospace;
+}
+
+// Dark theme: ink flips to a light tone so borders and text stay readable
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --mb-ink: #d4e6f2;
+  --mb-on-ink: #08131f;
+  --mb-paper: #08131f;
+  --mb-surface: #0f2336;
+  --mb-mist: #143049;
+  --mb-water: #0a74b0;
+  --mb-water-text: #4cc3f0;
+  --mb-muted: #8fa6b8;
+  --mb-danger: #e5484d;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--mb-paper);
+  color: var(--mb-ink);
+  font-family: var(--mb-font-body);
+}
+
+::selection {
+  background: var(--mb-water);
+  color: var(--mb-white);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

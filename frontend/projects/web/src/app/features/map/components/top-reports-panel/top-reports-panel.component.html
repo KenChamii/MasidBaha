@@ -1,0 +1,115 @@
+<aside class="reports-panel">
+  <div class="reports-panel__header">
+    <h3 class="reports-panel__title">Pinaka-kumpirmadong ulat</h3>
+    <span class="reports-panel__count">{{ store.topReports().length }}</span>
+    <a routerLink="/analytics" class="reports-panel__analytics-link" title="Historical heatmap">📊</a>
+  </div>
+
+  <div class="reports-panel__scope-tabs">
+    @for (scope of scopes; track scope.value) {
+      <button
+        type="button"
+        class="reports-panel__scope-tab"
+        [class.reports-panel__scope-tab--active]="store.scope() === scope.value"
+        (click)="store.setScope(scope.value)"
+      >
+        {{ scope.label }}
+      </button>
+    }
+  </div>
+
+  @if (store.scope() !== 'national') {
+    <div class="reports-panel__scope-filters">
+      <select
+        class="reports-panel__scope-select"
+        aria-label="Rehiyon"
+        [ngModel]="store.selectedRegion()"
+        (ngModelChange)="store.setRegion($event)"
+        [ngModelOptions]="{ standalone: true }"
+      >
+        <option [ngValue]="null">Piliin ang rehiyon…</option>
+        @for (region of store.availableRegions(); track region) {
+          <option [ngValue]="region">{{ region }}</option>
+        }
+      </select>
+
+      @if ((store.scope() === 'province' || store.scope() === 'city') && store.selectedRegion()) {
+        <select
+          class="reports-panel__scope-select"
+          aria-label="Probinsya"
+          [ngModel]="store.selectedProvince()"
+          (ngModelChange)="store.setProvince($event)"
+          [ngModelOptions]="{ standalone: true }"
+        >
+          <option [ngValue]="null">Piliin ang probinsya…</option>
+          @for (province of store.availableProvinces(); track province) {
+            <option [ngValue]="province">{{ province }}</option>
+          }
+        </select>
+      }
+
+      @if (store.scope() === 'city' && store.selectedProvince()) {
+        <select
+          class="reports-panel__scope-select"
+          aria-label="Lungsod"
+          [ngModel]="store.selectedCity()"
+          (ngModelChange)="store.setCity($event)"
+          [ngModelOptions]="{ standalone: true }"
+        >
+          <option [ngValue]="null">Piliin ang lungsod…</option>
+          @for (city of store.availableCities(); track city) {
+            <option [ngValue]="city">{{ city }}</option>
+          }
+        </select>
+      }
+    </div>
+  }
+
+  @if (store.isLoading()) {
+    <div class="reports-panel__loading">Naglo-load…</div>
+  } @else if (store.topReports().length === 0) {
+    <div class="reports-panel__empty">Walang ulat sa napiling lugar.</div>
+  } @else {
+    <ul class="reports-panel__items">
+      @for (report of store.topReports(); track report.id; let i = $index) {
+        <li
+          class="reports-panel__item"
+          tabindex="0"
+          (click)="reportFocused.emit(report)"
+          (keydown.enter)="reportFocused.emit(report)"
+        >
+          <span
+            class="reports-panel__rank"
+            [class.reports-panel__rank--gold]="i === 0"
+            [class.reports-panel__rank--silver]="i === 1"
+            [class.reports-panel__rank--bronze]="i === 2"
+            >{{ i + 1 }}</span
+          >
+          <span class="reports-panel__dot" [style.background]="severityColor(report.severity)"></span>
+          <div class="reports-panel__info">
+            <div class="reports-panel__row">
+              <span class="reports-panel__severity">{{ severityLabel(report.severity) }}</span>
+              <span class="reports-panel__confidence">👍 {{ report.confidenceScore }}</span>
+            </div>
+            @if (locationLabel(report); as location) {
+              <span class="reports-panel__location">{{ location }}</span>
+            }
+            @if (report.notes) {
+              <p class="reports-panel__notes">{{ report.notes }}</p>
+            }
+            <span class="reports-panel__time">{{ timeAgo(report.reportedAt) }}</span>
+          </div>
+          @if (report.photoUrl) {
+            <button
+              type="button"
+              class="reports-panel__photo-btn"
+              [style.backgroundImage]="'url(' + report.photoUrl + ')'"
+              (click)="openPhoto(report.photoUrl, $event)"
+              aria-label="Tingnan ang larawan ng ulat"
+            ></button>
+          }
+        </li>
+      }
+    </ul>
+  }
+</aside>
