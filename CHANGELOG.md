@@ -6,6 +6,7 @@ commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### Added
+- **A landing page that explains the app.** A mock of the report form, the path a report takes from phone to map, how the confidence score moves, the features, an architecture and spec section, privacy and an honest list of limits. In English and Filipino. The app is now described as a flood monitoring app, page titles and share cards use that wording, and the share image was redrawn to match.
 - **Works on every screen.** The whole site was checked from 320 px phones to wide desktops, upright and
   sideways. The map toolbar no longer runs off the screen, panels become bottom sheets on phones, the report
   form and list never cover each other, analytics stacks its filters above the map, and the admin tables

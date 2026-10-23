@@ -1,7 +1,7 @@
 {
-  "name": "MasidBaha — Real-time Flood Reporting",
+  "name": "MasidBaha Flood Monitoring",
   "short_name": "MasidBaha",
-  "description": "Community-powered flood reporting and map para sa Pilipinas.",
+  "description": "A community flood monitoring app for the Philippines. Report flooded roads, confirm what neighbours report, and see the map update live.",
   "theme_color": "#0B1F33",
   "background_color": "#0B1F33",
   "display": "standalone",

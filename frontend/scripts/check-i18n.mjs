@@ -36,9 +36,8 @@ const patterns = [
 for (const file of [...walk(web), ...walk(shared)]) {
   const text = readFileSync(file, 'utf8');
   for (const pattern of patterns) for (const match of text.matchAll(pattern)) used.set(match[1], file);
-  // keys held in data and looked up later: title: 'feature.report.title', photoError.set('form.err.type'), label: 'scope.city'
-  for (const match of text.matchAll(/'((?:feature|gallery|scope|form\.err|push|map|weather)\.[\w.]+)'/g))
-    used.set(match[1], file);
+  // keys held in data and looked up later: title: 'home.flow.api.title', photoError.set('form.err.type'), label: 'scope.city'
+  for (const match of text.matchAll(/'((?:home|scope|form\.err|push|map|weather)\.[\w.]+)'/g)) used.set(match[1], file);
 }
 
 // Looked up by name at run time: 'severity.' + number, 'analytics.range.' + range, the shared theme/time texts

@@ -9,19 +9,19 @@ export const routes: Routes = [
       {
         path: '',
         loadComponent: () => import('./features/landing/landing.component').then(m => m.LandingComponent),
-        title: 'MasidBaha — Real-time flood map'
+        title: 'MasidBaha Flood Monitoring App'
       }
     ]
   },
   {
     path: 'map',
     loadComponent: () => import('./features/map/map-page.component').then(m => m.MapPageComponent),
-    title: 'MasidBaha — Mapa'
+    title: 'MasidBaha Map'
   },
   {
     path: 'analytics',
     loadComponent: () => import('./features/analytics/analytics-page.component').then(m => m.AnalyticsPageComponent),
-    title: 'MasidBaha — Analytics'
+    title: 'MasidBaha Flood Analytics'
   },
   { path: '**', redirectTo: '' }
 ];

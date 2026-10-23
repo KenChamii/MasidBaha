@@ -39,7 +39,9 @@ function when(report) {
 }
 
 function clip(text, max) {
-  const clean = String(text ?? '').replace(/\s+/g, ' ').trim();
+  const clean = String(text ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
   return clean.length > max ? clean.slice(0, max - 1).trimEnd() + '…' : clean;
 }
 
@@ -50,7 +52,10 @@ export function describeReport(report, origin) {
 
   const title = `${state ? state + ': ' : ''}${severity} flooding in ${place(report)}`;
 
-  const parts = [`Reported ${when(report)} (PHT)`, `${report.confidenceScore} confirmation${report.confidenceScore === 1 ? '' : 's'}`];
+  const parts = [
+    `Reported ${when(report)} (PHT)`,
+    `${report.confidenceScore} confirmation${report.confidenceScore === 1 ? '' : 's'}`
+  ];
   const notes = clip(report.notes, 140);
   const description = (notes ? `“${notes}” · ` : '') + parts.join(' · ') + '. See it live on the MasidBaha flood map.';
 
@@ -59,8 +64,9 @@ export function describeReport(report, origin) {
 }
 
 export const GENERIC = {
-  title: 'MasidBaha: real-time flood map of the Philippines',
-  description: 'Know before you go. Community flood reports, confirmed by neighbours, on a live map.'
+  title: 'MasidBaha Flood Monitoring App',
+  description:
+    'A community flood monitoring app for the Philippines. People report flooded roads and neighbours confirm them.'
 };
 
 // `report` is null when the id is unknown, hidden, or the API could not be reached: the link still
