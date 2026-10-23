@@ -21,6 +21,10 @@ export async function onRequest({ request, env }) {
   // so whatever a visitor sent in those headers is overwritten.
   headers.set('X-Proxy-Secret', env.PROXY_SECRET);
   headers.set('X-Client-IP', request.headers.get('CF-Connecting-IP') ?? '');
+  // The address the visitor actually used, so the API builds links (uploaded photos) on this site
+  // rather than on its own onrender.com host
+  headers.set('X-Forwarded-Host', incoming.host);
+  headers.set('X-Forwarded-Proto', incoming.protocol.replace(':', ''));
 
   // Passing the original request along keeps streaming bodies and WebSocket upgrades (SignalR) intact
   return fetch(new Request(target, new Request(request, { headers, redirect: 'manual' })));
