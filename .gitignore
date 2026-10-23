@@ -364,3 +364,5 @@ FodyWeavers.xsd
 
 # User-uploaded report photos (local disk storage provider)
 backend/MasidBaha.WebAPI/wwwroot/uploads/
+# Local overrides for docker-compose (secrets)
+.env

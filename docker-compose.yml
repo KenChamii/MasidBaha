@@ -1,9 +1,19 @@
-# Local development database: PostgreSQL with the PostGIS extension.
-#   docker compose up -d db
-# Connection string for scripts/init-dev-secrets.ps1:
+# MasidBaha with Docker.
+#
+# Local development database only (what `docker compose up -d` starts):
+#   docker compose up -d
+#   Connection string for scripts/init-dev-secrets.ps1:
 #   Host=localhost;Port=5433;Database=masidbaha;Username=masidbaha;Password=masidbaha_dev
-# The password below is a throwaway for this local container only (bound to
-# 127.0.0.1); override it with MASIDBAHA_DB_PASSWORD. Never reuse it elsewhere.
+#
+# The whole app (database + API + public site + admin panel) in one command:
+#   docker compose --profile app up --build
+#   Public site  http://localhost:8080   (change with MASIDBAHA_WEB_PORT)
+#   Admin panel  http://localhost:8081   (MASIDBAHA_ADMIN_PORT; admin account below)
+#
+# Every secret below is a throwaway default for running locally. For anything
+# reachable from the internet, put real values in a .env file next to this one
+# (it is git-ignored) or in the host's environment: MASIDBAHA_DB_PASSWORD,
+# MASIDBAHA_SIGNING_KEY, MASIDBAHA_ADMIN_EMAIL and MASIDBAHA_ADMIN_PASSWORD.
 services:
   db:
     image: postgis/postgis:17-3.5
@@ -23,5 +33,49 @@ services:
       timeout: 3s
       retries: 10
 
+  # Applies database migrations on start, and loads demo reports for a first look
+  api:
+    profiles: ["app"]
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__MasidBahaDb: Host=db;Port=5432;Database=masidbaha;Username=masidbaha;Password=${MASIDBAHA_DB_PASSWORD:-masidbaha_dev};GSS Encryption Mode=Disable
+      Database__SeedDemoData: ${MASIDBAHA_SEED_DEMO_DATA:-true}
+      Security__SessionSigningKey: ${MASIDBAHA_SIGNING_KEY:-local-demo-only-signing-key-change-me-0123456789}
+      # nginx in front of the API terminates the connection, so trust what it forwards
+      Security__TrustForwardedHeaders: "true"
+      AdminAuth__InitialAdmin__Email: ${MASIDBAHA_ADMIN_EMAIL:-admin@masidbaha.local}
+      AdminAuth__InitialAdmin__Password: ${MASIDBAHA_ADMIN_PASSWORD:-local-demo-admin-password}
+    volumes:
+      - masidbaha-uploads:/app/wwwroot/uploads
+
+  web:
+    profiles: ["app"]
+    build:
+      context: ./frontend
+      args:
+        PROJECT: web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${MASIDBAHA_WEB_PORT:-8080}:8080"
+
+  admin:
+    profiles: ["app"]
+    build:
+      context: ./frontend
+      args:
+        PROJECT: admin
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${MASIDBAHA_ADMIN_PORT:-8081}:8080"
+
 volumes:
   masidbaha-db-data:
+  masidbaha-uploads:
