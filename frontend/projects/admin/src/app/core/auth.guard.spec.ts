@@ -1,10 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
-import { AdminAuthService, AdminRole, AdminUser } from '@masidbaha/shared';
+import { AdminAuthService } from './api/admin-auth.service';
+import { AdminRole, AdminUser } from './api/admin.models';
 import { Observable, of } from 'rxjs';
 import { authGuard, guestGuard, roleGuard } from './auth.guard';
 
-const user = (...roles: AdminRole[]): AdminUser => ({ id: '1', email: 'a@test.local', displayName: 'A', roles });
+const user = (...roles: AdminRole[]): AdminUser => ({
+  id: '1',
+  email: 'a@test.local',
+  displayName: 'A',
+  roles,
+  mustChangePassword: false,
+  twoFactorEnabled: false
+});
 
 // A stand-in for the real service: the guards only need these members
 class FakeAuth {
@@ -46,6 +54,16 @@ describe('route guards', () => {
 
       expect(result).toBeInstanceOf(UrlTree);
       expect(router.serializeUrl(result as UrlTree)).toBe('/login?returnUrl=%2Freports%3Fpage%3D2');
+    });
+  });
+
+  describe('authGuard with a temporary password', () => {
+    it('only lets the account page through', () => {
+      auth.current = { ...user('Moderator'), mustChangePassword: true };
+
+      expect(run(() => authGuard(route, state('/account')))).toBe(true);
+      const result = run(() => authGuard(route, state('/reports')));
+      expect(router.serializeUrl(result as UrlTree)).toBe('/account');
     });
   });
 

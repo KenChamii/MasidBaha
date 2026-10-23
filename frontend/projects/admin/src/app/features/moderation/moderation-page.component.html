@@ -1,0 +1,91 @@
+<div class="page">
+  <div class="page__head">
+    <div>
+      <h1>Moderation queue</h1>
+      <p class="page__lead">Active reports that look suspicious, with the reason each one was flagged.</p>
+    </div>
+  </div>
+
+  @if (auth.canModerate()) {
+    <div class="toolbar" role="group" aria-label="Actions for the selected reports">
+      <span class="muted">{{ selected().size }} selected</span>
+      <button type="button" class="btn btn--sm" [disabled]="selected().size === 0" (click)="apply(2, 'Expire')">
+        Expire
+      </button>
+      <button type="button" class="btn btn--sm" [disabled]="selected().size === 0" (click)="apply(1, 'Resolve')">
+        Resolve
+      </button>
+      <button type="button" class="btn btn--sm" [disabled]="selected().size === 0" (click)="apply(5, 'Hide')">
+        Hide
+      </button>
+      <button
+        type="button"
+        class="btn btn--sm btn--danger"
+        [disabled]="selected().size === 0"
+        (click)="apply(4, 'Delete', true)"
+      >
+        Delete
+      </button>
+    </div>
+  }
+
+  <div class="table-wrap" [attr.aria-busy]="isLoading()">
+    <table class="table">
+      <thead>
+        <tr>
+          @if (auth.canModerate()) {
+            <th>
+              <input type="checkbox" aria-label="Select all" [checked]="allSelected()" (change)="toggleAll()" />
+            </th>
+          }
+          <th>Place</th>
+          <th>Severity</th>
+          <th>Why flagged</th>
+          <th>Votes</th>
+          <th>Reported</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.report.id) {
+          <tr>
+            @if (auth.canModerate()) {
+              <td>
+                <input
+                  type="checkbox"
+                  [attr.aria-label]="'Select report in ' + locationOf(item.report)"
+                  [checked]="selected().has(item.report.id)"
+                  (change)="toggle(item.report.id)"
+                />
+              </td>
+            }
+            <td>
+              <a [routerLink]="['/reports', item.report.id]">{{ locationOf(item.report) }}</a>
+              <div class="muted">{{ item.report.notes || '' }}</div>
+            </td>
+            <td>
+              <span class="dot" [style.background]="severityColor[item.report.severity]"></span
+              >{{ severityName[item.report.severity] }}
+            </td>
+            <td>
+              @for (flag of item.flags; track flag) {
+                <span class="badge badge--warn">{{ flagLabel[flag] ?? flag }}</span>
+              }
+            </td>
+            <td class="num">{{ item.confirmVotes }} confirm · {{ item.denyVotes }} cleared</td>
+            <td>{{ timeAgo(item.report.reportedAt) }}</td>
+            <td><a class="btn btn--sm" [routerLink]="['/reports', item.report.id]">Review</a></td>
+          </tr>
+        } @empty {
+          <tr>
+            <td [attr.colspan]="auth.canModerate() ? 7 : 6" class="table__empty">
+              {{ isLoading() ? 'Loading…' : 'Nothing to review right now.' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pager [page]="page()" [pageSize]="pageSize" [totalCount]="totalCount()" (pageChange)="goToPage($event)" />
+</div>

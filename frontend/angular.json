@@ -20,9 +20,7 @@
             "outputPath": "dist/web",
             "index": "projects/web/src/index.html",
             "browser": "projects/web/src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": ["zone.js"],
             "tsConfig": "projects/web/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -31,15 +29,10 @@
                 "input": "projects/web/public"
               }
             ],
-            "styles": [
-              "node_modules/leaflet/dist/leaflet.css",
-              "projects/web/src/styles.scss"
-            ],
+            "styles": ["node_modules/leaflet/dist/leaflet.css", "projects/web/src/styles.scss"],
             "scripts": [],
             "stylePreprocessorOptions": {
-              "includePaths": [
-                "projects/shared/src/styles"
-              ]
+              "includePaths": ["projects/shared/src/styles"]
             }
           },
           "configurations": {
@@ -95,10 +88,7 @@
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
-            "lintFilePatterns": [
-              "projects/web/**/*.ts",
-              "projects/web/**/*.html"
-            ]
+            "lintFilePatterns": ["projects/web/**/*.ts", "projects/web/**/*.html"]
           }
         }
       }
@@ -130,10 +120,7 @@
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
-            "lintFilePatterns": [
-              "projects/shared/**/*.ts",
-              "projects/shared/**/*.html"
-            ]
+            "lintFilePatterns": ["projects/shared/**/*.ts", "projects/shared/**/*.html"]
           }
         }
       }
@@ -183,18 +170,12 @@
                 "input": "projects/admin/public"
               }
             ],
-            "styles": [
-              "projects/admin/src/styles.scss"
-            ],
+            "styles": ["node_modules/leaflet/dist/leaflet.css", "projects/admin/src/styles.scss"],
             "outputPath": "dist/admin",
             "index": "projects/admin/src/index.html",
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": ["zone.js"],
             "stylePreprocessorOptions": {
-              "includePaths": [
-                "projects/shared/src/styles"
-              ]
+              "includePaths": ["projects/shared/src/styles"]
             }
           },
           "configurations": {
@@ -252,10 +233,7 @@
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
-            "lintFilePatterns": [
-              "projects/admin/**/*.ts",
-              "projects/admin/**/*.html"
-            ]
+            "lintFilePatterns": ["projects/admin/**/*.ts", "projects/admin/**/*.html"]
           }
         }
       }

@@ -1,0 +1,127 @@
+<div class="page">
+  <div class="page__head">
+    <div>
+      <h1>Settings</h1>
+      <p class="page__lead">
+        Tune how the app behaves without a redeploy. Changes apply within a minute on every server; the value under each
+        field is the configured default.
+      </p>
+    </div>
+  </div>
+
+  @if (form(); as f) {
+    @let d = view()!.defaults;
+
+    <form class="form" (ngSubmit)="save()">
+      <label class="field">
+        Report lifetime (hours)
+        @if (isOverridden('reports.lifetimeHours')) {
+          <span class="badge badge--info">Changed</span>
+        }
+        <input
+          type="number"
+          name="lifetime"
+          min="1"
+          max="72"
+          [ngModel]="f.reportLifetimeHours"
+          (ngModelChange)="set('reportLifetimeHours', $event)"
+        />
+        <small>How long a new report stays on the map. Default {{ d.reportLifetimeHours }}.</small>
+      </label>
+
+      <label class="field">
+        Push alerts from severity
+        @if (isOverridden('push.minimumSeverity')) {
+          <span class="badge badge--info">Changed</span>
+        }
+        <select
+          name="pushSeverity"
+          [ngModel]="f.pushMinimumSeverity"
+          (ngModelChange)="set('pushMinimumSeverity', $event)"
+        >
+          @for (s of severities; track s) {
+            <option [ngValue]="s">{{ severityName[s] }} and worse</option>
+          }
+        </select>
+        <small>Default: {{ severityName[d.pushMinimumSeverity] }}.</small>
+      </label>
+
+      <label class="field">
+        "It's gone" votes before a report is flagged
+        @if (isOverridden('moderation.denyFlagThreshold')) {
+          <span class="badge badge--info">Changed</span>
+        }
+        <input
+          type="number"
+          name="deny"
+          min="1"
+          max="20"
+          [ngModel]="f.denyFlagThreshold"
+          (ngModelChange)="set('denyFlagThreshold', $event)"
+        />
+        <small>Default {{ d.denyFlagThreshold }}.</small>
+      </label>
+
+      <label class="field">
+        Reports per hour before a reporter is flagged
+        @if (isOverridden('moderation.floodingReportsPerHour')) {
+          <span class="badge badge--info">Changed</span>
+        }
+        <input
+          type="number"
+          name="flooding"
+          min="2"
+          max="100"
+          [ngModel]="f.floodingReportsPerHour"
+          (ngModelChange)="set('floodingReportsPerHour', $event)"
+        />
+        <small>Default {{ d.floodingReportsPerHour }}.</small>
+      </label>
+
+      <label class="field">
+        New reports allowed per minute (per address)
+        @if (isOverridden('rateLimits.reportWritesPerMinute')) {
+          <span class="badge badge--info">Changed</span>
+        }
+        <input
+          type="number"
+          name="reportRate"
+          min="1"
+          max="1000"
+          [ngModel]="f.reportWritesPerMinute"
+          (ngModelChange)="set('reportWritesPerMinute', $event)"
+        />
+        <small>Default {{ d.reportWritesPerMinute }}.</small>
+      </label>
+
+      <label class="field">
+        Votes allowed per minute (per address)
+        @if (isOverridden('rateLimits.voteWritesPerMinute')) {
+          <span class="badge badge--info">Changed</span>
+        }
+        <input
+          type="number"
+          name="voteRate"
+          min="1"
+          max="1000"
+          [ngModel]="f.voteWritesPerMinute"
+          (ngModelChange)="set('voteWritesPerMinute', $event)"
+        />
+        <small>Default {{ d.voteWritesPerMinute }}.</small>
+      </label>
+
+      @if (error(); as message) {
+        <p class="notice notice--error" role="alert">{{ message }}</p>
+      }
+
+      <div class="table__actions">
+        <button type="submit" class="btn btn--primary btn--sm" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </button>
+        <button type="button" class="btn btn--ghost btn--sm" (click)="reset()">Reset to defaults</button>
+      </div>
+    </form>
+  } @else {
+    <p class="muted">Loading…</p>
+  }
+</div>

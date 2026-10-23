@@ -1,11 +1,26 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { API_BASE_URL } from './api-config';
-import { AdminAuthService, AdminUser } from './admin-auth.service';
+import { API_BASE_URL } from '@masidbaha/shared';
+import { AdminAuthService } from './admin-auth.service';
+import { AdminUser } from './admin.models';
 
-const moderator: AdminUser = { id: '1', email: 'm@test.local', displayName: 'Mod', roles: ['Moderator'] };
-const viewer: AdminUser = { id: '2', email: 'v@test.local', displayName: 'View', roles: ['Viewer'] };
+const moderator: AdminUser = {
+  id: '1',
+  email: 'm@test.local',
+  displayName: 'Mod',
+  roles: ['Moderator'],
+  mustChangePassword: false,
+  twoFactorEnabled: false
+};
+const viewer: AdminUser = {
+  id: '2',
+  email: 'v@test.local',
+  displayName: 'View',
+  roles: ['Viewer'],
+  mustChangePassword: false,
+  twoFactorEnabled: false
+};
 
 describe('AdminAuthService', () => {
   let service: AdminAuthService;
@@ -62,13 +77,55 @@ describe('AdminAuthService', () => {
   });
 
   it('signs in and remembers the user', () => {
-    service.login('m@test.local', 'secret-passphrase').subscribe();
+    let outcome: string | undefined;
+    service.login('m@test.local', 'secret-passphrase').subscribe(o => (outcome = o));
 
     const req = backend.expectOne('https://api.test/api/v1/auth/login');
     expect(req.request.body).toEqual({ email: 'm@test.local', password: 'secret-passphrase' });
     req.flush(moderator);
 
+    expect(outcome).toBe('signed-in');
     expect(service.user()).toEqual(moderator);
+  });
+
+  it('asks for a code, without signing in, when the account has two-factor on', () => {
+    let outcome: string | undefined;
+    service.login('m@test.local', 'secret-passphrase').subscribe(o => (outcome = o));
+
+    backend
+      .expectOne('https://api.test/api/v1/auth/login')
+      .flush({ requiresTwoFactor: true }, { status: 202, statusText: 'Accepted' });
+
+    expect(outcome).toBe('two-factor');
+    expect(service.isSignedIn()).toBe(false);
+  });
+
+  it('finishes a two-factor sign-in with the code', () => {
+    service.loginWithCode('123456').subscribe();
+
+    const req = backend.expectOne('https://api.test/api/v1/auth/login/2fa');
+    expect(req.request.body).toEqual({ code: '123456' });
+    req.flush(moderator);
+
+    expect(service.user()).toEqual(moderator);
+  });
+
+  it('sends a recovery code on its own field', () => {
+    service.loginWithRecoveryCode('ABCDE-12345').subscribe();
+
+    expect(backend.expectOne('https://api.test/api/v1/auth/login/2fa').request.body).toEqual({
+      recoveryCode: 'ABCDE-12345'
+    });
+  });
+
+  it('clears the temporary-password flag once the password is changed', () => {
+    service.user.set({ ...moderator, mustChangePassword: true });
+    expect(service.mustChangePassword()).toBe(true);
+
+    service.changePassword('old', 'a-new-long-passphrase').subscribe();
+    backend.expectOne('https://api.test/api/v1/auth/change-password').flush(moderator);
+
+    expect(service.mustChangePassword()).toBe(false);
   });
 
   it('does not touch the session when sign-in fails', () => {

@@ -1,0 +1,71 @@
+<div class="page">
+  <div class="page__head">
+    <div>
+      <h1>Dashboard</h1>
+      @if (data(); as d) {
+        <p class="page__lead">Updated {{ d.generatedAt | date: 'shortTime' }}. Hidden reports are not counted.</p>
+      }
+    </div>
+  </div>
+
+  @if (failed()) {
+    <p class="notice notice--error" role="alert">The dashboard could not be loaded.</p>
+  } @else if (data()) {
+    <div class="kpi">
+      @for (kpi of kpis(); track kpi.label) {
+        <section class="card">
+          <p class="kpi__label">{{ kpi.label }}</p>
+          <p class="kpi__value">
+            @if (kpi.link) {
+              <a [routerLink]="kpi.link">{{ kpi.value }}</a>
+            } @else {
+              {{ kpi.value }}
+            }
+          </p>
+          @if (kpi.delta) {
+            <p class="kpi__delta">{{ kpi.delta }}</p>
+          }
+        </section>
+      }
+    </div>
+
+    <section class="card">
+      <h2>Reports per day, last 30 days</h2>
+      <app-line-chart [points]="daily()" unit="reports" ariaLabel="Reports per day over the last 30 days" />
+      <details>
+        <summary class="muted">View as a table</summary>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Day</th>
+                <th class="num">Reports</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (point of daily(); track point.label) {
+                <tr>
+                  <td>{{ point.label }}</td>
+                  <td class="num">{{ point.value }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    <div class="grid grid--2" style="margin-top: 1rem">
+      <section class="card">
+        <h2>By severity, last 30 days</h2>
+        <app-bar-list [items]="severities()" />
+      </section>
+      <section class="card">
+        <h2>Busiest places, last 30 days</h2>
+        <app-bar-list [items]="cities()" />
+      </section>
+    </div>
+  } @else {
+    <p class="muted">Loading…</p>
+  }
+</div>

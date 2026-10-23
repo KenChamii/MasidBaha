@@ -2,7 +2,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AdminAuthService, BrandComponent, ThemeToggleComponent } from '@masidbaha/shared';
+import { BrandComponent, ThemeToggleComponent } from '@masidbaha/shared';
+import { Observable } from 'rxjs';
+import { AdminAuthService, LoginOutcome } from '../../core/api/admin-auth.service';
 
 @Component({
   selector: 'app-login-page',
@@ -17,19 +19,61 @@ export class LoginPageComponent {
 
   protected readonly email = signal('');
   protected readonly password = signal('');
+  protected readonly code = signal('');
   protected readonly isSigningIn = signal(false);
   protected readonly error = signal<string | null>(null);
 
+  // After the password: the code from the authenticator app (or a one-time recovery code)
+  protected readonly needsCode = signal(false);
+  protected readonly useRecoveryCode = signal(false);
+
   protected signIn(): void {
-    if (!this.email().trim() || !this.password() || this.isSigningIn()) return;
+    if (this.needsCode()) {
+      this.submitCode();
+      return;
+    }
+
+    if (!this.email().trim() || !this.password()) return;
+    this.run(this.auth.login(this.email().trim(), this.password()));
+  }
+
+  protected toggleRecovery(): void {
+    this.useRecoveryCode.update(value => !value);
+    this.code.set('');
+    this.error.set(null);
+  }
+
+  protected startOver(): void {
+    this.needsCode.set(false);
+    this.useRecoveryCode.set(false);
+    this.code.set('');
+    this.password.set('');
+    this.error.set(null);
+  }
+
+  private submitCode(): void {
+    const code = this.code().trim();
+    if (!code) return;
+
+    this.run(this.useRecoveryCode() ? this.auth.loginWithRecoveryCode(code) : this.auth.loginWithCode(code));
+  }
+
+  private run(attempt: Observable<LoginOutcome>): void {
+    if (this.isSigningIn()) return;
 
     this.isSigningIn.set(true);
     this.error.set(null);
 
-    this.auth.login(this.email().trim(), this.password()).subscribe({
-      next: () => {
+    attempt.subscribe({
+      next: outcome => {
         this.isSigningIn.set(false);
         this.password.set('');
+        this.code.set('');
+
+        if (outcome === 'two-factor') {
+          this.needsCode.set(true);
+          return;
+        }
         void this.router.navigateByUrl(this.returnUrl());
       },
       error: (err: HttpErrorResponse) => {

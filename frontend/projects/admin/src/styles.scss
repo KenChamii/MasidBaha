@@ -1,2 +1,359 @@
 // Design tokens and base styles shared with the public site
 @use 'tokens';
+@use 'mixins' as m;
+
+// Leaflet's OSM tiles are light-only, so tone them down in dark mode
+:root[data-theme='dark'] .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9);
+}
+
+// ---- building blocks used by every admin page ----
+
+@include m.button-system;
+
+.btn {
+  &--danger {
+    background: var(--mb-danger);
+    color: var(--mb-white);
+  }
+}
+
+.page {
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: var(--mb-font-body);
+  color: var(--mb-ink);
+
+  @media (max-width: 760px) {
+    padding: 1rem;
+  }
+
+  h1 {
+    font-family: var(--mb-font-display);
+    font-size: 1.5rem;
+    margin: 0;
+  }
+
+  h2 {
+    font-family: var(--mb-font-display);
+    font-size: 1.05rem;
+    margin: 0 0 0.75rem;
+  }
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 1.25rem;
+  }
+
+  &__lead {
+    margin: 0.25rem 0 0;
+    color: var(--mb-muted);
+    font-size: 0.9rem;
+  }
+}
+
+.card {
+  @include m.panel;
+  padding: 1rem 1.25rem;
+
+  &--flat {
+    box-shadow: none;
+  }
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+
+  &--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  &--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 900px) {
+    &--2,
+    &--3 {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+  margin-bottom: 1rem;
+
+  &__spacer {
+    flex: 1;
+  }
+}
+
+// Labelled form control
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  @include m.mono-label;
+
+  input,
+  select,
+  textarea {
+    @include m.form-field;
+    font-family: var(--mb-font-body);
+    font-size: 0.9rem;
+    text-transform: none;
+    letter-spacing: normal;
+    min-width: 0;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 90px;
+  }
+
+  small {
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--mb-muted);
+    font-family: var(--mb-font-body);
+    font-size: 0.78rem;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 520px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  @include m.panel;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: var(--mb-hair);
+    vertical-align: top;
+  }
+
+  th {
+    @include m.mono-label;
+    background: var(--mb-mist);
+    white-space: nowrap;
+  }
+
+  th button {
+    all: unset;
+    cursor: pointer;
+    text-transform: inherit;
+    letter-spacing: inherit;
+
+    &:focus-visible {
+      outline: 2px solid var(--mb-cyan);
+    }
+  }
+
+  tbody tr:hover {
+    background: color-mix(in srgb, var(--mb-mist) 45%, transparent);
+  }
+
+  &__empty {
+    text-align: center;
+    color: var(--mb-muted);
+    padding: 2rem 1rem;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.badge {
+  @include m.mono-label;
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--mb-ink);
+  background: var(--mb-surface);
+  white-space: nowrap;
+
+  &--ok {
+    background: var(--mb-ok);
+    border-color: var(--mb-ok);
+    color: var(--mb-white);
+  }
+  &--warn {
+    background: var(--mb-warn);
+    border-color: var(--mb-warn);
+    color: #0b1f33;
+  }
+  &--danger {
+    background: var(--mb-danger);
+    border-color: var(--mb-danger);
+    color: var(--mb-white);
+  }
+  &--info {
+    background: var(--mb-water);
+    border-color: var(--mb-water);
+    color: var(--mb-white);
+  }
+  &--muted {
+    background: var(--mb-mist);
+    border-color: transparent;
+    color: var(--mb-muted);
+  }
+}
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--mb-ink);
+  margin-right: 6px;
+}
+
+.notice {
+  padding: 10px 14px;
+  border: var(--mb-border);
+  background: var(--mb-mist);
+  font-size: 0.9rem;
+
+  &--error {
+    border-color: var(--mb-danger);
+    color: var(--mb-danger);
+    background: transparent;
+  }
+  &--warn {
+    border-color: var(--mb-alert);
+    background: color-mix(in srgb, var(--mb-warn) 25%, transparent);
+  }
+}
+
+.muted {
+  color: var(--mb-muted);
+}
+
+.mono {
+  font-family: var(--mb-font-mono);
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 1rem;
+
+  &__info {
+    @include m.mono-label;
+    color: var(--mb-muted);
+  }
+}
+
+// Confirmation dialog (see ConfirmDialogComponent)
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, #08131f 60%, transparent);
+}
+
+.dialog {
+  max-width: 440px;
+  width: 100%;
+
+  h2 {
+    margin: 0 0 0.5rem;
+  }
+
+  p {
+    margin: 0 0 1rem;
+    line-height: 1.5;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+}
+
+// Small layout helpers used by several pages
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+
+  dt {
+    @include m.mono-label;
+    color: var(--mb-muted);
+  }
+
+  dd {
+    margin: 0;
+    word-break: break-word;
+  }
+}
+
+.photo {
+  max-width: 100%;
+  max-height: 260px;
+  border: var(--mb-border);
+}
+
+.recovery {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.sent {
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: var(--mb-hair);
+
+  p {
+    margin: 0.25rem 0 0;
+  }
+}
