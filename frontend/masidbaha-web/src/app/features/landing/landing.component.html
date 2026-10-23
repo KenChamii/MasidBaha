@@ -13,14 +13,14 @@
         <span class="nav__name">MasidBaha</span>
       </a>
 
-      <nav class="nav__links" aria-label="Pangunahing nabigasyon">
-        <a href="#paano">Paano gumagana</a>
-        <a href="#mga-ulat">Mga ulat</a>
-        <a href="#tungkol">Tungkol</a>
+      <nav class="nav__links" aria-label="Main navigation">
+        <a href="#how-it-works">How it works</a>
+        <a href="#communities">For communities</a>
+        <a href="#examples">Examples</a>
       </nav>
 
       <button class="btn btn--primary btn--sm" (click)="goToMap()">
-        Buksan ang Mapa
+        Open the Map
       </button>
     </div>
   </header>
@@ -30,40 +30,40 @@
     <div class="hero__text">
       <span class="eyebrow">
         <app-pulse-pin tone="water" size="sm"></app-pulse-pin>
-        Live ngayon sa buong Pilipinas
+        Live flood reports across the Philippines
       </span>
 
       <h1 class="hero__heading">
-        Malaman bago<br />
-        pa man umalis.
+        Know before<br />
+        you go.
       </h1>
 
       <p class="hero__sub">
-        Real-time na mapa ng baha, mula sa totoong mga tao sa totoong oras.
-        Walang account ,mag-ulat o mag-check sa isang tingin lang.
+        A real-time flood map powered by people on the ground.
+        No account needed. Report conditions or check your route at a glance.
       </p>
 
       <div class="hero__actions">
         <button class="btn btn--primary" (click)="goToMap()">
-          Buksan ang Mapa
+          Open the Map
         </button>
-        <a class="btn btn--ghost" href="#paano">
-          Paano ito gumagana
+        <a class="btn btn--ghost" href="#how-it-works">
+          How it works
         </a>
       </div>
 
       <dl class="hero__stats">
         <div class="stat">
-          <dt>6 oras</dt>
-          <dd>bago mag-expire ang isang ulat</dd>
+          <dt>6 hrs</dt>
+          <dd>until a report expires</dd>
         </div>
         <div class="stat">
           <dt>0</dt>
-          <dd>account na kailangan gawin</dd>
+          <dd>accounts required</dd>
         </div>
         <div class="stat">
           <dt>Live</dt>
-          <dd>walang kailangang i-refresh</dd>
+          <dd>no refresh needed</dd>
         </div>
       </dl>
     </div>
@@ -74,10 +74,10 @@
   </section>
 
   <!-- ============ FEATURE GRID ============ -->
-  <section class="features" id="paano">
+  <section class="features" id="how-it-works">
     <div class="features__header">
-      <span class="eyebrow eyebrow--muted">Bakit MasidBaha</span>
-      <h2>Apat na bagay lang ang kailangan mong malaman</h2>
+      <span class="eyebrow eyebrow--muted">Why MasidBaha</span>
+      <h2>Flood awareness, made simple</h2>
     </div>
 
     <div class="features__grid">
@@ -105,38 +105,38 @@
   </section>
 
   <!-- ============ SPLIT / AUDIENCE SECTION ============ -->
-  <section class="split" id="mga-ulat">
+  <section class="split" id="communities">
     <div class="split__cards">
       <article class="audience-card audience-card--light">
-        <span class="audience-card__eyebrow">Para sa residente</span>
-        <h3>Alamin kung ligtas dumaan.</h3>
-        <p>Buksan lang ang mapa bago ka umalas ng bahay — makikita mo agad kung saan may baha sa ruta mo.</p>
-        <button class="btn btn--dark btn--sm" (click)="goToMap()">Tingnan ang mapa</button>
+        <span class="audience-card__eyebrow">For residents</span>
+        <h3>Check your route before you leave.</h3>
+        <p>Open the map before heading out to see where flooding has been reported along your way.</p>
+        <button class="btn btn--dark btn--sm" (click)="goToMap()">View the map</button>
       </article>
 
       <article class="audience-card audience-card--dark">
-        <span class="audience-card__eyebrow">Para sa barangay at LGU</span>
-        <h3>Datos mula sa totoong komunidad.</h3>
-        <p>Gamitin ang crowd-sourced na data bilang karagdagang mata sa mga lugar na madalas bahain.</p>
-        <button class="btn btn--primary btn--sm" (click)="goToMap()">Tingnan ang mapa</button>
+        <span class="audience-card__eyebrow">For barangays and LGUs</span>
+        <h3>Ground-level data from your community.</h3>
+        <p>Use crowd-sourced reports as an additional source of situational awareness in flood-prone areas.</p>
+        <button class="btn btn--primary btn--sm" (click)="goToMap()">View the map</button>
       </article>
     </div>
 
     <div class="split__thumbs">
       <div class="thumb thumb--map" aria-hidden="true">
-        <span class="thumb__label">Live na mapa</span>
+        <span class="thumb__label">Live map</span>
       </div>
       <div class="thumb thumb--form" aria-hidden="true">
-        <span class="thumb__label">Mabilis na pag-ulat</span>
+        <span class="thumb__label">Quick reporting</span>
       </div>
     </div>
   </section>
 
   <!-- ============ GALLERY ============ -->
-  <section class="gallery" id="tungkol">
+  <section class="gallery" id="examples">
     <div class="gallery__header">
-      <span class="eyebrow eyebrow--muted">Kamakailang mga ulat</span>
-      <h2>Nangyayari na ngayon sa buong bansa</h2>
+      <span class="eyebrow eyebrow--muted">Example reports</span>
+      <h2>What reports look like</h2>
     </div>
 
     <div class="gallery__grid">
@@ -155,15 +155,15 @@
 
   <!-- ============ FOOTER CTA ============ -->
   <section class="cta">
-    <h2>Handa ka na bang malaman bago pa man umalis?</h2>
-    <p>Libre, walang account, at live 24/7.</p>
+    <h2>Ready to know before you go?</h2>
+    <p>Free to use, no account required, live 24/7.</p>
     <button class="btn btn--primary btn--lg" (click)="goToMap()">
-      Buksan ang Mapa
+      Open the Map
     </button>
   </section>
 
   <footer class="footer">
-    <span>© {{ currentYear }} MasidBaha — Built to help Filipinos know before they go.</span>
+    <span>© {{ currentYear }} MasidBaha. Community flood reporting for the Philippines.</span>
   </footer>
 
 </div>

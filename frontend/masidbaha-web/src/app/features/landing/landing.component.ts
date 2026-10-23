@@ -34,26 +34,26 @@ export class LandingComponent {
     {
       icon: 'pin',
       tone: 'water',
-      title: 'Mag-ulat sa isang tap',
-      description: 'I-drop ang pin sa mapa, piliin ang lalim ng baha, tapos na — walang account na kailangan gawin.'
+      title: 'Report in one tap',
+      description: 'Drop a pin on the map and select the flood depth. No account or sign-up is required.'
     },
     {
       icon: 'check',
       tone: 'alert',
-      title: 'I-verify ng komunidad',
-      description: 'Kumpirmahin o markahang tapos na ang isang ulat. Ang confidence score ay galing sa totoong mga tao sa lugar.'
+      title: 'Community verified',
+      description: 'Residents confirm or clear each report, and the confidence score reflects what people nearby are seeing.'
     },
     {
       icon: 'clock',
       tone: 'violet',
-      title: 'Awtomatikong nawawala',
-      description: 'Nawawala sa mapa ang mga lumang ulat pagkalipas ng ilang oras, kaya laging updated ang nakikita mo.'
+      title: 'Self-clearing reports',
+      description: 'Reports expire automatically after a few hours, so the map only shows current conditions.'
     },
     {
       icon: 'shield',
       tone: 'teal',
-      title: 'Walang delay, walang paperwork',
-      description: 'Direktang broadcast sa lahat ng nakabukas ng mapa — makikita agad ang bagong ulat, live.'
+      title: 'Real-time updates',
+      description: 'New reports appear instantly for everyone with the map open, with no refresh needed.'
     }
   ];
 
@@ -61,26 +61,26 @@ export class LandingComponent {
     {
       variant: 'dark',
       eyebrow: 'Marikina, Metro Manila',
-      title: 'Baha sa Marcos Highway, waist-level',
-      description: '48 kumpirmasyon mula sa komunidad sa loob ng 20 minuto.'
+      title: 'Waist-deep flooding on Marcos Highway',
+      description: '48 community confirmations within 20 minutes.'
     },
     {
       variant: 'light',
       eyebrow: 'Cainta, Rizal',
-      title: 'Flash flood malapit sa Sto. Niño',
-      description: 'Na-expire na — walang bagong ulat sa nakalipas na 6 na oras.'
+      title: 'Flash flood near Sto. Niño',
+      description: 'Expired after no new reports in 6 hours.'
     },
     {
       variant: 'dark',
       eyebrow: 'Iloilo City',
-      title: 'Baha sa Diversion Road, knee-level',
-      description: 'Aktibong sinusubaybayan ngayon ng 120+ residente.'
+      title: 'Knee-deep flooding on Diversion Road',
+      description: 'Currently being tracked by more than 120 residents.'
     },
     {
       variant: 'light',
       eyebrow: 'Davao City',
-      title: 'Malubhang pagbaha sa Bankerohan',
-      description: 'Na-resolve na matapos ang 3 magkakasunod na "wala na" na boto.'
+      title: 'Severe flooding in Bankerohan',
+      description: 'Resolved after 3 consecutive "cleared" votes.'
     }
   ];
 
