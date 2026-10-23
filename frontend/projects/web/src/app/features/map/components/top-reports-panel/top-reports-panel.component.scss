@@ -153,6 +153,34 @@
   }
 }
 
+// the list while it loads: the same rows, in grey
+.reports-panel__item--skeleton {
+  cursor: default;
+  pointer-events: none;
+
+  // the rank box and the dot are plain grey blocks, without their usual borders
+  .reports-panel__rank,
+  .reports-panel__dot {
+    border-color: transparent;
+    background: var(--mb-mist);
+  }
+
+  .skeleton--line {
+    height: 12px;
+    margin-bottom: 8px;
+    width: 85%;
+  }
+
+  .skeleton--short {
+    width: 55%;
+  }
+
+  .skeleton--tiny {
+    width: 30%;
+    margin-bottom: 0;
+  }
+}
+
 .reports-panel__rank {
   flex-shrink: 0;
   width: 22px;

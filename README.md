@@ -19,7 +19,9 @@ passable right now. Nobody has to sign up, because nobody signs up during a floo
   PAGASA for official warnings.
 - **Easy to share.** Every report has a share link with a proper preview card on Facebook, Messenger and Viber.
 - **History.** A heatmap and analytics of where and how often it floods.
-- **Works as an app.** An installable PWA that keeps working on a weak connection.
+- **Works as an app.** An installable PWA that keeps working on a weak connection: reports made without
+  signal are kept on the phone and sent when it returns.
+- **For everyone.** English and Filipino, and a layout checked from small phones to wide desktops.
 - **Admin portal.** Moderators review flagged reports, ban sources, send announcements and tune settings;
   everything staff do is in an audit log. Staff sign in with a password and optional two-factor.
 
@@ -119,7 +121,6 @@ The step-by-step guide is in [docs/deploy.md](docs/deploy.md).
 ## Roadmap
 
 - Route check: "can I get from A to B?" against active reports.
-- Offline report queue with background sync.
-- Filipino / English language toggle.
+- Background sync, so a queued report is sent even when the app is closed.
 
 See [CHANGELOG.md](CHANGELOG.md) for what has shipped.

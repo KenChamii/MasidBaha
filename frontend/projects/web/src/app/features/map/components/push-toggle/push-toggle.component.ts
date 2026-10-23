@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { I18nService, TranslatePipe } from '@masidbaha/shared';
 import { PushNotificationService } from '../../../../core/services/push-notification.service';
 
 @Component({
   selector: 'app-push-toggle',
+  imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (supported) {
@@ -13,7 +15,7 @@ import { PushNotificationService } from '../../../../core/services/push-notifica
         [class.map-page__push-toggle--active]="enabled()"
         [disabled]="isToggling()"
         (click)="toggle()"
-        [title]="enabled() ? 'I-off ang mga abiso ng baha' : 'Abisuhan ako ng mga bagong ulat ng baha'"
+        [title]="(enabled() ? 'push.turnOff' : 'push.turnOn') | t"
         [attr.aria-pressed]="enabled()"
       >
         {{ enabled() ? '🔔' : '🔕' }}
@@ -22,7 +24,7 @@ import { PushNotificationService } from '../../../../core/services/push-notifica
       @if (error()) {
         <div class="map-page__push-error" role="alert">
           {{ error() }}
-          <button type="button" (click)="error.set(null)" aria-label="Dismiss">✕</button>
+          <button type="button" (click)="error.set(null)" [attr.aria-label]="'common.dismiss' | t">✕</button>
         </div>
       }
     }
@@ -31,6 +33,7 @@ import { PushNotificationService } from '../../../../core/services/push-notifica
 })
 export class PushToggleComponent {
   private readonly push = inject(PushNotificationService);
+  private readonly i18n = inject(I18nService);
 
   // Needs a browser and build that support push (production build, HTTPS or localhost)
   readonly supported = this.push.isSupported;
@@ -62,7 +65,7 @@ export class PushToggleComponent {
       // enabled updates through the subscription$ listener above
     } catch (err) {
       // Usually means the person blocked the browser's permission prompt
-      this.error.set(err instanceof Error ? err.message : 'Hindi ma-enable ang push notifications. Subukan ulit.');
+      this.error.set(err instanceof Error ? err.message : this.i18n.t('push.failed'));
     } finally {
       this.isToggling.set(false);
     }

@@ -2,7 +2,10 @@ using MasidBaha.Application.Common.Options;
 using Microsoft.Extensions.Options;
 using MasidBaha.Application.Common.Storage;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
 
 namespace MasidBaha.Application.Photos.UploadPhoto;
@@ -25,6 +28,15 @@ public class UploadPhotoService : IUploadPhotoService
         "image/jpeg",
         "image/png",
         "image/webp"
+    };
+
+    // Decode only the three formats we accept. GIF, TIFF, BMP and the rest are never read, whatever the upload
+    // claims to be, which keeps their decoders (and their known bugs) out of reach of a public endpoint.
+    // The metadata is thrown away below anyway, so it is not parsed either: that is where the ICC and EXIF bugs live.
+    private static readonly DecoderOptions SafeDecoding = new()
+    {
+        Configuration = new Configuration(new JpegConfigurationModule(), new PngConfigurationModule(), new WebpConfigurationModule()),
+        SkipMetadata = true
     };
 
     private readonly IPhotoStorageService _storageService;
@@ -53,9 +65,10 @@ public class UploadPhotoService : IUploadPhotoService
             // Decoding is also our real content-type check — a renamed .exe with a
             // "image/jpeg" header on it will fail here regardless of what the
             // browser claimed the content-type was.
-            image = await Image.LoadAsync(content, cancellationToken);
+            image = await Image.LoadAsync(SafeDecoding, content, cancellationToken);
         }
-        catch (UnknownImageFormatException)
+        // not an image, or an image that is cut off or damaged: either way it is the sender's file, not our fault
+        catch (ImageFormatException)
         {
             throw new ArgumentException("Hindi wastong larawan ang na-upload na file.");
         }

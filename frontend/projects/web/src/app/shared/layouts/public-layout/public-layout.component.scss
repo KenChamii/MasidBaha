@@ -77,9 +77,17 @@
   }
 }
 
+// the long and the short label of the map button: the short one on narrow phones
+.nav__short {
+  display: none;
+}
+
 @media (max-width: 400px) {
-  .nav__optional {
+  .nav__long {
     display: none;
+  }
+  .nav__short {
+    display: inline;
   }
 }
 

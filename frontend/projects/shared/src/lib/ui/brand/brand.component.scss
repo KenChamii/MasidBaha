@@ -38,3 +38,9 @@
     font-size: 0.95rem;
   }
 }
+
+@media (max-width: 340px) {
+  .brand__name {
+    display: none;
+  }
+}

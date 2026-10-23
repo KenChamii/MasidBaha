@@ -28,6 +28,10 @@ public class CreateFloodReportRequest
     public string? Notes { get; set; }
     public string? PhotoUrl { get; set; }
 
+    // Made up by the app for each report. Sending the same report again (after a dropped connection, say)
+    // gives back the first one instead of making a second.
+    public Guid? ClientRequestId { get; set; }
+
     // Set by the server from the signed session cookie. Anything a client
     // sends here is ignored, because a client-chosen id is trivially reset.
     public string ReporterSessionId { get; set; } = string.Empty;

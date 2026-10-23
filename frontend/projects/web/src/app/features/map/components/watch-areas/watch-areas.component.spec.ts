@@ -1,7 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideI18n } from '@masidbaha/shared';
 import { of } from 'rxjs';
+import { WEB_MESSAGES } from '../../../../core/i18n/messages';
 import { PushNotificationService } from '../../../../core/services/push-notification.service';
 import { WatchArea, WatchAreaService } from '../../../../core/services/watch-area.service';
 import { WatchAreasComponent } from './watch-areas.component';
@@ -18,6 +20,7 @@ describe('WatchAreasComponent', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        provideI18n(WEB_MESSAGES),
         {
           provide: PushNotificationService,
           useValue: { isSupported: supported, subscription$: of(subscribed ? {} : null) }

@@ -1,4 +1,5 @@
-import { SEVERITY_META } from '@masidbaha/shared';
+import { SEVERITY_META, translate } from '@masidbaha/shared';
+import { WEB_MESSAGES } from '../../core/i18n/messages';
 import { buildFloodIcon, buildPopupHtml } from './map-markers';
 
 describe('map markers', () => {
@@ -17,6 +18,14 @@ describe('map markers', () => {
       expect(severe).toContain('--pulse-duration:1.4s');
     });
 
+    it('marks a report that is still waiting to be sent', () => {
+      const pending = buildFloodIcon(2, false, true);
+
+      expect(pending.options.className).toContain('flood-marker--pending');
+      expect(String(pending.options.html)).toContain('⏳');
+      expect(buildFloodIcon(2, false).options.className).not.toContain('pending');
+    });
+
     it('adds the camera badge only when there is a photo', () => {
       expect(String(buildFloodIcon(2, true).options.html)).toContain('flood-marker__photo-badge');
       expect(String(buildFloodIcon(2, false).options.html)).not.toContain('flood-marker__photo-badge');
@@ -30,6 +39,14 @@ describe('map markers', () => {
       expect(html).toContain('Confidence: 7');
       expect(html).toContain('data-action="confirm"');
       expect(html).toContain('data-action="deny"');
+    });
+
+    it('speaks Filipino when asked to', () => {
+      const html = buildPopupHtml(7, true, (key, params) => translate(WEB_MESSAGES, 'fil', key, params));
+
+      expect(html).toContain('Tiwala: 7');
+      expect(html).toContain('Kumpirmahin');
+      expect(html).toContain('Tingnan ang larawan');
     });
 
     it('lets people share the report', () => {

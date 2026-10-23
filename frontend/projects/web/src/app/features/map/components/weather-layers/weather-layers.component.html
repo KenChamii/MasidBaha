@@ -3,8 +3,8 @@
   class="weather-btn"
   [class.weather-btn--active]="store.anyOn()"
   (click)="openPanel()"
-  title="Rain and typhoon layers"
-  aria-label="Weather layers"
+  [title]="'weather.btn.title' | t"
+  [attr.aria-label]="'weather.btn.aria' | t"
 >
   🌧
 </button>
@@ -12,30 +12,30 @@
 @if (open()) {
   <mb-modal [sheet]="true" (closed)="open.set(false)">
     <section class="weather" aria-labelledby="weather-title">
-      <h2 id="weather-title">Weather on the map</h2>
+      <h2 id="weather-title">{{ 'weather.title' | t }}</h2>
 
       <!-- rain radar -->
       <div class="weather__row">
         <label class="weather__switch">
           <input type="checkbox" [checked]="store.radarOn()" (change)="store.toggleRadar()" />
-          <span>Rain radar</span>
+          <span>{{ 'weather.radar' | t }}</span>
         </label>
         <p class="weather__hint">
           @switch (store.radarStatus()) {
             @case ('loading') {
-              Loading…
+              {{ 'weather.radar.loading' | t }}
             }
             @case ('unavailable') {
-              Radar is not available right now.
+              {{ 'weather.radar.unavailable' | t }}
             }
             @default {
-              Where it is raining now{{ frameTime() ? ' · ' + frameTime() : '' }}.
+              {{ 'weather.radar.ready' | t: { time: frameTime() ? ' · ' + frameTime() : '' } }}
             }
           }
         </p>
         @if (store.radarOn() && store.radarStatus() === 'ready') {
           <button type="button" class="weather__small" (click)="store.togglePlaying()">
-            {{ store.playing() ? '⏸ Pause' : '▶ Play last 2 hours' }}
+            {{ store.playing() ? ('weather.pause' | t) : ('weather.play' | t) }}
           </button>
         }
       </div>
@@ -44,10 +44,10 @@
       <div class="weather__row">
         <label class="weather__switch">
           <input type="checkbox" [checked]="store.satelliteOn()" (change)="store.toggleSatellite()" />
-          <span>Satellite rainfall</span>
+          <span>{{ 'weather.satellite' | t }}</span>
         </label>
         <p class="weather__hint">
-          Estimated rain rate (NASA). Coarser, and a few hours behind, but it also covers the sea.
+          {{ 'weather.satellite.hint' | t }}
         </p>
       </div>
 
@@ -55,25 +55,21 @@
       <div class="weather__row">
         <label class="weather__switch">
           <input type="checkbox" [checked]="store.typhoonsOn()" (change)="store.toggleTyphoons()" />
-          <span>Typhoons</span>
+          <span>{{ 'weather.typhoons' | t }}</span>
         </label>
         <p class="weather__hint">
           @switch (store.typhoonStatus()) {
             @case ('loading') {
-              Loading typhoon data…
+              {{ 'weather.typhoons.loading' | t }}
             }
             @case ('unavailable') {
-              Typhoon data is loading on the server. Try again in a minute.
-              <button type="button" class="weather__link" (click)="store.loadTyphoons()">Retry</button>
+              {{ 'weather.typhoons.unavailable' | t }}
+              <button type="button" class="weather__link" (click)="store.loadTyphoons()">
+                {{ 'weather.retry' | t }}
+              </button>
             }
             @case ('ready') {
-              @if (store.typhoons()?.storms?.length) {
-                {{ store.typhoons()!.storms.length }} near the Philippines{{
-                  updatedAt() ? ' · updated ' + updatedAt() : ''
-                }}{{ store.typhoons()!.stale ? ' (older data)' : '' }}.
-              } @else {
-                No active typhoon near the Philippines right now.
-              }
+              {{ typhoonSummary() }}
             }
           }
         </p>
@@ -82,31 +78,47 @@
           <div class="weather__storm">
             <span class="weather__dot" [style.background]="alertColor[storm.alertLevel] ?? alertColor['Green']"></span>
             <strong>{{ storm.name }}</strong>
-            <span class="weather__hint">{{ storm.alertLevel }} alert</span>
+            <span class="weather__hint">{{ 'weather.alert' | t: { level: storm.alertLevel } }}</span>
             <button type="button" class="weather__small" (click)="zoom(storm.id)" [disabled]="!store.typhoonsOn()">
-              Show on map
+              {{ 'weather.show' | t }}
             </button>
           </div>
         }
 
         @if (store.typhoonsOn() && store.typhoons()?.storms?.length) {
-          <ul class="weather__legend" aria-label="Typhoon legend">
-            <li><span class="weather__swatch" [style.background]="categoryColor['TD']"></span>Depression</li>
-            <li><span class="weather__swatch" [style.background]="categoryColor['TS']"></span>Tropical storm</li>
-            <li><span class="weather__swatch" [style.background]="categoryColor['HU']"></span>Typhoon strength</li>
-            <li><span class="weather__swatch weather__swatch--dashed"></span>Where the centre may go</li>
-            <li><span class="weather__swatch" [style.background]="windColor[60]"></span>60 km/h winds</li>
-            <li><span class="weather__swatch" [style.background]="windColor[90]"></span>90 km/h</li>
-            <li><span class="weather__swatch" [style.background]="windColor[120]"></span>120 km/h</li>
+          <ul class="weather__legend" [attr.aria-label]="'weather.legend.aria' | t">
+            <li>
+              <span class="weather__swatch" [style.background]="categoryColor['TD']"></span
+              >{{ 'weather.legend.depression' | t }}
+            </li>
+            <li>
+              <span class="weather__swatch" [style.background]="categoryColor['TS']"></span
+              >{{ 'weather.legend.storm' | t }}
+            </li>
+            <li>
+              <span class="weather__swatch" [style.background]="categoryColor['HU']"></span
+              >{{ 'weather.legend.typhoon' | t }}
+            </li>
+            <li><span class="weather__swatch weather__swatch--dashed"></span>{{ 'weather.legend.path' | t }}</li>
+            <li>
+              <span class="weather__swatch" [style.background]="windColor[60]"></span>{{ 'weather.legend.wind60' | t }}
+            </li>
+            <li>
+              <span class="weather__swatch" [style.background]="windColor[90]"></span>{{ 'weather.legend.wind90' | t }}
+            </li>
+            <li>
+              <span class="weather__swatch" [style.background]="windColor[120]"></span
+              >{{ 'weather.legend.wind120' | t }}
+            </li>
           </ul>
         }
       </div>
 
       <p class="weather__source">
-        This is for awareness, not warnings. Radar: RainViewer. Rainfall: NASA. Typhoon tracks: JTWC, through GDACS. For
-        official warnings, follow PAGASA:
-        <a [href]="links.cycloneBulletin" target="_blank" rel="noopener noreferrer">cyclone bulletin ↗</a> ·
-        <a [href]="links.weather" target="_blank" rel="noopener noreferrer">weather ↗</a>
+        {{ 'weather.source' | t }}
+        <a [href]="links.cycloneBulletin" target="_blank" rel="noopener noreferrer">{{ 'weather.link.cyclone' | t }}</a>
+        ·
+        <a [href]="links.weather" target="_blank" rel="noopener noreferrer">{{ 'weather.link.weather' | t }}</a>
       </p>
     </section>
   </mb-modal>

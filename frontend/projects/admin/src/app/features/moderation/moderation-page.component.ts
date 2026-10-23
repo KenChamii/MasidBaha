@@ -7,13 +7,17 @@ import { BulkAction, FLAG_LABEL, ModerationQueueItem } from '../../core/api/admi
 import { SEVERITY_COLOR, SEVERITY_NAME, locationOf, problemMessage } from '../../core/util';
 import { ConfirmService } from '../../ui/confirm.service';
 import { PagerComponent } from '../../ui/pager.component';
+import { SkeletonRowComponent } from '../../ui/skeleton-row.component';
 
 @Component({
   selector: 'app-moderation-page',
-  imports: [RouterLink, PagerComponent],
+  imports: [RouterLink, PagerComponent, SkeletonRowComponent],
   templateUrl: './moderation-page.component.html'
 })
 export class ModerationPageComponent implements OnInit {
+  // placeholder rows while the table loads
+  protected readonly skeletonRows = [1, 2, 3, 4, 5];
+
   private readonly api = inject(AdminApiService);
   private readonly toast = inject(ToastService);
   private readonly confirm = inject(ConfirmService);

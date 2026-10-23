@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
 import { ThemeService } from '../../core/theme.service';
 
 @Component({
@@ -9,8 +10,8 @@ import { ThemeService } from '../../core/theme.service';
       type="button"
       class="theme-toggle"
       (click)="themeService.toggle()"
-      [attr.aria-label]="themeService.theme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
-      [title]="themeService.theme() === 'dark' ? 'Light mode' : 'Dark mode'"
+      [attr.aria-label]="i18n.t(themeService.theme() === 'dark' ? 'theme.toLight' : 'theme.toDark')"
+      [title]="i18n.t(themeService.theme() === 'dark' ? 'theme.light' : 'theme.dark')"
     >
       @if (themeService.theme() === 'dark') {
         <svg
@@ -48,4 +49,5 @@ import { ThemeService } from '../../core/theme.service';
 })
 export class ThemeToggleComponent {
   readonly themeService = inject(ThemeService);
+  readonly i18n = inject(I18nService);
 }

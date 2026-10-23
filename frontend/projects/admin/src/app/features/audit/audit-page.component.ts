@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { AdminApiService } from '../../core/api/admin-api.service';
 import { AuditEntry } from '../../core/api/admin.models';
 import { PagerComponent } from '../../ui/pager.component';
+import { SkeletonRowComponent } from '../../ui/skeleton-row.component';
 
 // Action groups offered in the filter (the API matches by prefix)
 const ACTION_GROUPS = [
@@ -19,10 +20,13 @@ const ACTION_GROUPS = [
 
 @Component({
   selector: 'app-audit-page',
-  imports: [FormsModule, DatePipe, JsonPipe, RouterLink, PagerComponent],
+  imports: [FormsModule, DatePipe, JsonPipe, RouterLink, PagerComponent, SkeletonRowComponent],
   templateUrl: './audit-page.component.html'
 })
 export class AuditPageComponent implements OnInit {
+  // placeholder rows while the table loads
+  protected readonly skeletonRows = [1, 2, 3, 4, 5];
+
   private readonly api = inject(AdminApiService);
 
   protected readonly groups = ACTION_GROUPS;

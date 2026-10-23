@@ -110,6 +110,11 @@
     color: var(--mb-muted);
   }
 
+  &__skeleton {
+    width: 9rem;
+    height: 0.8rem;
+  }
+
   &__map {
     flex: 1 1 auto;
     min-width: 0;

@@ -75,6 +75,14 @@ public class MasidBahaDbContext : IdentityDbContext<AdminUser, IdentityRole<Guid
             e.HasIndex(x => new { x.Status, x.ExpiresAt });
             e.HasIndex(x => new { x.Region, x.Province, x.City });
             e.HasIndex(x => x.ReportedAt);
+
+            // One report per request id. The id is a random UUID made by the app, so it is safe to key on it alone: a
+            // visitor whose first answer was lost never received a session cookie, and the retry has to match anyway.
+            // (Reports made without an id are not limited.)
+            e.HasIndex(x => x.ClientRequestId)
+                .IsUnique()
+                .HasFilter("client_request_id IS NOT NULL")
+                .HasDatabaseName("ux_flood_reports_client_request");
             e.HasIndex(x => x.ReporterSessionId);
             e.Property(x => x.ReporterIpHash).HasMaxLength(64);
             e.HasIndex(x => x.ReporterIpHash);

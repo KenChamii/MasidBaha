@@ -60,6 +60,37 @@
   }
 }
 
+// Reports close together, drawn as one badge with a count (colour: the worst flood inside)
+.flood-cluster__badge {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--mb-ink);
+  border-radius: 50%;
+  box-shadow: 2px 2px 0 var(--mb-ink);
+  color: #0b1f33;
+  font-family: var(--mb-font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+// A report saved on this device and not sent yet: faded, with a dashed edge
+.flood-marker--pending .flood-marker__badge {
+  opacity: 0.7;
+  border-style: dashed;
+}
+
+.flood-marker--pending .flood-marker__badge::before {
+  animation: none;
+}
+
+.flood-popup__pending {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
 .flood-popup {
   font-family: var(--mb-font-body);
   min-width: 160px;

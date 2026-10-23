@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
 import { ToastService } from './toast.service';
 
 // Render once at the root of an app: <mb-toast-container />
@@ -14,7 +15,12 @@ import { ToastService } from './toast.service';
           [attr.role]="toast.kind === 'error' ? 'alert' : 'status'"
         >
           <span class="toast__message">{{ toast.message }}</span>
-          <button type="button" class="toast__close" aria-label="Dismiss" (click)="toastService.dismiss(toast.id)">
+          <button
+            type="button"
+            class="toast__close"
+            [attr.aria-label]="i18n.t('common.dismiss')"
+            (click)="toastService.dismiss(toast.id)"
+          >
             ✕
           </button>
         </div>
@@ -25,4 +31,5 @@ import { ToastService } from './toast.service';
 })
 export class ToastContainerComponent {
   readonly toastService = inject(ToastService);
+  readonly i18n = inject(I18nService);
 }

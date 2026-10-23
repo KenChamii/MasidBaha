@@ -4,36 +4,35 @@
     <div class="hero__text">
       <span class="eyebrow">
         <app-pulse-pin tone="water" size="sm"></app-pulse-pin>
-        Live flood reports across the Philippines
+        {{ 'landing.eyebrow' | t }}
       </span>
 
       <h1 class="hero__heading">
-        Know before<br />
-        you go.
+        {{ 'landing.heading1' | t }}<br />
+        {{ 'landing.heading2' | t }}
       </h1>
 
       <p class="hero__sub">
-        A real-time flood map powered by people on the ground. No account needed. Report conditions or check your route
-        at a glance.
+        {{ 'landing.sub' | t }}
       </p>
 
       <div class="hero__actions">
-        <button class="btn btn--primary" (click)="goToMap()">Open the Map</button>
-        <a class="btn btn--ghost" routerLink="/" fragment="how-it-works"> How it works </a>
+        <button class="btn btn--primary" (click)="goToMap()">{{ 'landing.openMap' | t }}</button>
+        <a class="btn btn--ghost" routerLink="/" fragment="how-it-works"> {{ 'landing.how' | t }} </a>
       </div>
 
       <dl class="hero__stats">
         <div class="stat">
-          <dt>6 hrs</dt>
-          <dd>until a report expires</dd>
+          <dt>{{ 'landing.stat1.value' | t }}</dt>
+          <dd>{{ 'landing.stat1.label' | t }}</dd>
         </div>
         <div class="stat">
-          <dt>0</dt>
-          <dd>accounts required</dd>
+          <dt>{{ 'landing.stat2.value' | t }}</dt>
+          <dd>{{ 'landing.stat2.label' | t }}</dd>
         </div>
         <div class="stat">
-          <dt>Live</dt>
-          <dd>no refresh needed</dd>
+          <dt>{{ 'landing.stat3.value' | t }}</dt>
+          <dd>{{ 'landing.stat3.label' | t }}</dd>
         </div>
       </dl>
     </div>
@@ -46,8 +45,8 @@
   <!-- ============ FEATURE GRID ============ -->
   <section class="features" id="how-it-works">
     <div class="features__header">
-      <span class="eyebrow eyebrow--muted">Why MasidBaha</span>
-      <h2>Flood awareness, made simple</h2>
+      <span class="eyebrow eyebrow--muted">{{ 'landing.why' | t }}</span>
+      <h2>{{ 'landing.featuresTitle' | t }}</h2>
     </div>
 
     <div class="features__grid">
@@ -92,8 +91,8 @@
               </svg>
             }
           </span>
-          <h3>{{ feature.title }}</h3>
-          <p>{{ feature.description }}</p>
+          <h3>{{ feature.title | t }}</h3>
+          <p>{{ feature.description | t }}</p>
         </article>
       }
     </div>
@@ -103,26 +102,26 @@
   <section class="split" id="communities">
     <div class="split__cards">
       <article class="audience-card audience-card--light">
-        <span class="audience-card__eyebrow">For residents</span>
-        <h3>Check your route before you leave.</h3>
-        <p>Open the map before heading out to see where flooding has been reported along your way.</p>
-        <button class="btn btn--dark btn--sm" (click)="goToMap()">View the map</button>
+        <span class="audience-card__eyebrow">{{ 'audience.residents.eyebrow' | t }}</span>
+        <h3>{{ 'audience.residents.title' | t }}</h3>
+        <p>{{ 'audience.residents.desc' | t }}</p>
+        <button class="btn btn--dark btn--sm" (click)="goToMap()">{{ 'audience.viewMap' | t }}</button>
       </article>
 
       <article class="audience-card audience-card--dark">
-        <span class="audience-card__eyebrow">For barangays and LGUs</span>
-        <h3>Ground-level data from your community.</h3>
-        <p>Use crowd-sourced reports as an additional source of situational awareness in flood-prone areas.</p>
-        <button class="btn btn--primary btn--sm" (click)="goToMap()">View the map</button>
+        <span class="audience-card__eyebrow">{{ 'audience.lgu.eyebrow' | t }}</span>
+        <h3>{{ 'audience.lgu.title' | t }}</h3>
+        <p>{{ 'audience.lgu.desc' | t }}</p>
+        <button class="btn btn--primary btn--sm" (click)="goToMap()">{{ 'audience.viewMap' | t }}</button>
       </article>
     </div>
 
     <div class="split__thumbs">
       <div class="thumb thumb--map" aria-hidden="true">
-        <span class="thumb__label">Live map</span>
+        <span class="thumb__label">{{ 'thumb.map' | t }}</span>
       </div>
       <div class="thumb thumb--form" aria-hidden="true">
-        <span class="thumb__label">Quick reporting</span>
+        <span class="thumb__label">{{ 'thumb.form' | t }}</span>
       </div>
     </div>
   </section>
@@ -130,8 +129,8 @@
   <!-- ============ GALLERY ============ -->
   <section class="gallery" id="examples">
     <div class="gallery__header">
-      <span class="eyebrow eyebrow--muted">Example reports</span>
-      <h2>What reports look like</h2>
+      <span class="eyebrow eyebrow--muted">{{ 'gallery.eyebrow' | t }}</span>
+      <h2>{{ 'gallery.title' | t }}</h2>
     </div>
 
     <div class="gallery__grid">
@@ -139,8 +138,8 @@
         <article class="gallery-card" [class.gallery-card--light]="card.variant === 'light'">
           <div class="gallery-card__media" aria-hidden="true"></div>
           <span class="gallery-card__eyebrow">{{ card.eyebrow }}</span>
-          <h3>{{ card.title }}</h3>
-          <p>{{ card.description }}</p>
+          <h3>{{ card.title | t }}</h3>
+          <p>{{ card.description | t }}</p>
         </article>
       }
     </div>
@@ -148,8 +147,8 @@
 
   <!-- ============ FOOTER CTA ============ -->
   <section class="cta">
-    <h2>Ready to know before you go?</h2>
-    <p>Free to use, no account required, live 24/7.</p>
-    <button class="btn btn--primary btn--lg" (click)="goToMap()">Open the Map</button>
+    <h2>{{ 'cta.title' | t }}</h2>
+    <p>{{ 'cta.sub' | t }}</p>
+    <button class="btn btn--primary btn--lg" (click)="goToMap()">{{ 'landing.openMap' | t }}</button>
   </section>
 </div>

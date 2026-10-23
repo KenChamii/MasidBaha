@@ -1,11 +1,11 @@
-<div class="device" role="img" aria-label="Preview ng MasidBaha map screen">
+<div class="device" role="img" [attr.aria-label]="'mockup.aria' | t">
   <div class="device__frame">
     <div class="device__notch"></div>
 
     <div class="device__screen">
       <div class="screen__statusbar">
         <span class="screen__brand">MasidBaha</span>
-        <span class="screen__badge">Live</span>
+        <span class="screen__badge">{{ 'mockup.live' | t }}</span>
       </div>
 
       <div class="screen__map">
@@ -35,8 +35,8 @@
           </div>
         </div>
         <div class="card__actions">
-          <span class="card__btn card__btn--primary">Kumpirmahin</span>
-          <span class="card__btn">Wala na</span>
+          <span class="card__btn card__btn--primary">{{ 'popup.confirm' | t }}</span>
+          <span class="card__btn">{{ 'popup.deny' | t }}</span>
         </div>
       </div>
     </div>

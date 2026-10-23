@@ -12,13 +12,15 @@ export interface ShareTarget {
   id: string;
   // e.g. "Marikina": what the message says the report is about
   place?: string | null;
+  // The message that goes with the link, in the visitor's language. Plain English if left out.
+  text?: string;
 }
 
 // Uses the phone's own share sheet where there is one (Messenger, Viber, Facebook, SMS...),
 // and copies the link everywhere else.
 export async function shareReport(target: ShareTarget, origin: string): Promise<ShareResult> {
   const url = reportShareUrl(origin, target.id);
-  const text = target.place ? `Flood report in ${target.place}` : 'Flood report';
+  const text = target.text ?? (target.place ? `Flood report in ${target.place}` : 'Flood report');
 
   if (typeof navigator.share === 'function') {
     try {

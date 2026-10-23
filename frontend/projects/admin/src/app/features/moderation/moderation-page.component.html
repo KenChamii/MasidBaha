@@ -77,11 +77,15 @@
             <td><a class="btn btn--sm" [routerLink]="['/reports', item.report.id]">Review</a></td>
           </tr>
         } @empty {
-          <tr>
-            <td [attr.colspan]="auth.canModerate() ? 7 : 6" class="table__empty">
-              {{ isLoading() ? 'Loading…' : 'Nothing to review right now.' }}
-            </td>
-          </tr>
+          @if (isLoading()) {
+            @for (row of skeletonRows; track row) {
+              <tr appSkeletonRow [columns]="auth.canModerate() ? 7 : 6"></tr>
+            }
+          } @else {
+            <tr>
+              <td [attr.colspan]="auth.canModerate() ? 7 : 6" class="table__empty">Nothing to review right now.</td>
+            </tr>
+          }
         }
       </tbody>
     </table>

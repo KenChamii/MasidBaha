@@ -73,6 +73,9 @@ jobs:
           npx ng test web --watch=false
           npx ng test admin --watch=false
 
+      - name: Translations complete
+        run: npm run check:i18n
+
       - name: Cloudflare Functions tests
         run: npm run test:functions
 

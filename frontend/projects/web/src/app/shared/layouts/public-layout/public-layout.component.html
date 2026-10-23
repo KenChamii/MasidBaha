@@ -2,15 +2,19 @@
   <div class="nav__inner">
     <mb-brand />
 
-    <nav class="nav__links" aria-label="Main navigation">
-      <a routerLink="/" fragment="how-it-works">How it works</a>
-      <a routerLink="/" fragment="communities">For communities</a>
-      <a routerLink="/" fragment="examples">Examples</a>
+    <nav class="nav__links" [attr.aria-label]="'nav.aria' | t">
+      <a routerLink="/" fragment="how-it-works">{{ 'nav.how' | t }}</a>
+      <a routerLink="/" fragment="communities">{{ 'nav.communities' | t }}</a>
+      <a routerLink="/" fragment="examples">{{ 'nav.examples' | t }}</a>
     </nav>
 
     <div class="nav__actions">
+      <mb-lang-toggle />
       <mb-theme-toggle />
-      <a class="btn btn--primary btn--sm" routerLink="/map">Open<span class="nav__optional"> the</span> Map</a>
+      <a class="btn btn--primary btn--sm" routerLink="/map"
+        ><span class="nav__long">{{ 'nav.openMap' | t }}</span
+        ><span class="nav__short">{{ 'nav.openMapShort' | t }}</span></a
+      >
     </div>
   </div>
 </header>
@@ -20,5 +24,5 @@
 </main>
 
 <footer class="footer">
-  <span>© {{ currentYear }} MasidBaha. Community flood reporting for the Philippines.</span>
+  <span>{{ i18n.t('footer.text', { year: currentYear }) }}</span>
 </footer>
