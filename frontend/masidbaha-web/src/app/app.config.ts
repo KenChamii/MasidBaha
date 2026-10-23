@@ -1,4 +1,4 @@
-import { ApplicationConfig, isDevMode } from '@angular/core';
+import { ApplicationConfig, isDevMode, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideServiceWorker } from '@angular/service-worker';
@@ -7,6 +7,9 @@ import { apiCredentialsInterceptor } from './core/interceptors/api-credentials.i
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    // Zone-based change detection is declared explicitly: since Angular 21 an app
+    // without this provider is zoneless, and much of this UI relies on zones
+    provideZoneChangeDetection(),
     provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'top' })),
     provideHttpClient(withInterceptors([apiCredentialsInterceptor])),
     // registerWhenStable:30000 registers the SW after the app is stable (or
