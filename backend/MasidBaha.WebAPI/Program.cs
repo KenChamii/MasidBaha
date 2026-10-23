@@ -53,6 +53,9 @@ var security = app.Services.GetRequiredService<IOptions<SecurityOptions>>().Valu
 if (security.TrustForwardedHeaders)
     app.UseForwardedHeaders();
 
+if (!string.IsNullOrEmpty(security.TrustedProxySecret))
+    app.UseMiddleware<TrustedProxyMiddleware>();
+
 app.UseExceptionHandler();
 app.UseStatusCodePages(); // bodyless 404/405/etc. also come back as problem details
 

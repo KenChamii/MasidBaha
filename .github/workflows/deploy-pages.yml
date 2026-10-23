@@ -1,0 +1,58 @@
+name: Deploy sites to Cloudflare Pages
+
+# Publishes the public site and the admin panel when master changes (after a merge).
+# The API is deployed by Render itself (render.yaml, autoDeployTrigger: checksPass).
+on:
+  push:
+    branches: [master]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-pages.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-pages
+  cancel-in-progress: false # never cut a deploy off half-way
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [web, admin]
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      HUSKY: "0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci --ignore-scripts
+
+      # The admin panel's "Live map" link should lead to the public site, not back to the admin site
+      - name: Point the admin's "Live map" link at the public site
+        if: matrix.app == 'admin' && vars.PUBLIC_SITE_URL != ''
+        run: sed -i "s#publicSiteUrl: '/'#publicSiteUrl: '${{ vars.PUBLIC_SITE_URL }}'#" projects/admin/src/environments/environment.prod.ts
+
+      - run: npx ng build ${{ matrix.app }} --configuration production
+
+      # Runs from frontend/ so wrangler finds functions/ (the API proxy) next to the build output
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: frontend
+          command: pages deploy dist/${{ matrix.app }}/browser --project-name=${{ matrix.app == 'web' && (vars.CF_PAGES_WEB || 'masidbaha') || (vars.CF_PAGES_ADMIN || 'masidbaha-admin') }} --branch=main
