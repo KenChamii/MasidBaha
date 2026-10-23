@@ -1,4 +1,6 @@
 export const environment = {
-  production: false,
-  apiUrl: 'https://localhost:7100'
+  production: true,
+  // Same-origin: the API is expected behind the same host/reverse proxy as the
+  // site. Set an absolute URL here if the API is deployed separately.
+  apiUrl: ''
 };

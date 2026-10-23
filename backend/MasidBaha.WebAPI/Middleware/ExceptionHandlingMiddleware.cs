@@ -1,4 +1,6 @@
-﻿namespace MasidBaha.WebAPI.Middleware;
+using MasidBaha.Application.Common.Exceptions;
+
+namespace MasidBaha.WebAPI.Middleware;
 
 public class ExceptionHandlingMiddleware
 {
@@ -17,12 +19,25 @@ public class ExceptionHandlingMiddleware
         {
             await _next(context);
         }
+        catch (NotFoundException ex)
+        {
+            await WriteErrorAsync(context, StatusCodes.Status404NotFound, ex.Message);
+        }
+        catch (ConflictException ex)
+        {
+            await WriteErrorAsync(context, StatusCodes.Status409Conflict, ex.Message);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception");
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            context.Response.ContentType = "application/json";
-            await context.Response.WriteAsJsonAsync(new { error = "Something went wrong. Please try again." });
+            await WriteErrorAsync(context, StatusCodes.Status500InternalServerError, "Something went wrong. Please try again.");
         }
+    }
+
+    private static async Task WriteErrorAsync(HttpContext context, int statusCode, string message)
+    {
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new { error = message });
     }
 }

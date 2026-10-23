@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>masidbaha-webapi-7c1f2a9e-4b3d-4e58-9a61-2f0d5b8c3e14</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

@@ -55,7 +55,7 @@ BEGIN
         Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         FloodReportId UNIQUEIDENTIFIER NOT NULL REFERENCES FloodReports(Id),
         VoterSessionId NVARCHAR(100) NOT NULL,
-        VoteType TINYINT NOT NULL, -- 1=Confirm, -1=Deny
+        VoteType SMALLINT NOT NULL CONSTRAINT CK_ReportVotes_VoteType CHECK (VoteType IN (-1, 1)), -- 1=Confirm, -1=Deny (signed on purpose)
         VotedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
         CONSTRAINT UQ_OneVotePerSessionPerReport UNIQUE (FloodReportId, VoterSessionId)
     );
