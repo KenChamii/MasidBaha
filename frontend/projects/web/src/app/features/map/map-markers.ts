@@ -1,4 +1,5 @@
 import * as L from 'leaflet';
+import 'leaflet.markercluster';
 import { PULSE_BY_SEVERITY, SEVERITY_META, Severity } from '@masidbaha/shared';
 import { Translate, english } from '../../core/i18n/english';
 

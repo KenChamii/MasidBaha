@@ -61,7 +61,10 @@
     }
 
     @if (isLoading()) {
-      <p class="analytics-page__count">{{ 'analytics.loading' | t }}</p>
+      <p class="analytics-page__count" aria-busy="true">
+        <span class="sr-only">{{ 'analytics.loading' | t }}</span>
+        <span class="skeleton analytics-page__skeleton" aria-hidden="true"></span>
+      </p>
     } @else {
       <p class="analytics-page__count">{{ 'analytics.count' | t: { n: points().length } }}</p>
     }

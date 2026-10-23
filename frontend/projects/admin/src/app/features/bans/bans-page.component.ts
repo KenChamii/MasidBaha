@@ -8,13 +8,17 @@ import { Ban } from '../../core/api/admin.models';
 import { problemMessage } from '../../core/util';
 import { ConfirmService } from '../../ui/confirm.service';
 import { PagerComponent } from '../../ui/pager.component';
+import { SkeletonRowComponent } from '../../ui/skeleton-row.component';
 
 @Component({
   selector: 'app-bans-page',
-  imports: [FormsModule, DatePipe, PagerComponent],
+  imports: [FormsModule, DatePipe, PagerComponent, SkeletonRowComponent],
   templateUrl: './bans-page.component.html'
 })
 export class BansPageComponent implements OnInit {
+  // placeholder rows while the table loads
+  protected readonly skeletonRows = [1, 2, 3, 4, 5];
+
   private readonly api = inject(AdminApiService);
   private readonly toast = inject(ToastService);
   private readonly confirm = inject(ConfirmService);

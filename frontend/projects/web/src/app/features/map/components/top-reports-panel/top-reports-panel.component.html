@@ -66,7 +66,20 @@
   }
 
   @if (store.isLoading()) {
-    <div class="reports-panel__loading">{{ 'panel.loading' | t }}</div>
+    <ul class="reports-panel__items" aria-busy="true">
+      <li class="sr-only">{{ 'panel.loading' | t }}</li>
+      @for (row of skeletonRows; track row) {
+        <li class="reports-panel__item reports-panel__item--skeleton" aria-hidden="true">
+          <span class="skeleton reports-panel__rank"></span>
+          <span class="skeleton reports-panel__dot"></span>
+          <div class="reports-panel__info">
+            <span class="skeleton skeleton--line"></span>
+            <span class="skeleton skeleton--line skeleton--short"></span>
+            <span class="skeleton skeleton--line skeleton--tiny"></span>
+          </div>
+        </li>
+      }
+    </ul>
   } @else if (store.topReports().length === 0) {
     <div class="reports-panel__empty">{{ 'panel.empty' | t }}</div>
   } @else {

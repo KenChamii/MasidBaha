@@ -43,6 +43,15 @@ export function describeChange(now: number, before: number, period: string): str
     .kpi__value a {
       color: var(--mb-water-text);
     }
+    .skeleton-label {
+      height: 12px;
+      width: 60%;
+      margin-bottom: 14px;
+    }
+    .skeleton-value {
+      height: 30px;
+      width: 40%;
+    }
     .kpi__label {
       margin: 0;
       font-family: var(--mb-font-mono);
@@ -59,6 +68,9 @@ export function describeChange(now: number, before: number, period: string): str
   `
 })
 export class DashboardPageComponent implements OnInit {
+  // placeholder cards while the numbers load
+  protected readonly skeletonCards = [1, 2, 3, 4, 5, 6];
+
   private readonly api = inject(AdminApiService);
 
   protected readonly data = signal<Dashboard | null>(null);

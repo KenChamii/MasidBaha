@@ -11,7 +11,6 @@ import {
   viewChild
 } from '@angular/core';
 import * as L from 'leaflet';
-import 'leaflet.markercluster';
 import { Subscription, fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 

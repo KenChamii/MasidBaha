@@ -95,9 +95,15 @@
             </td>
           </tr>
         } @empty {
-          <tr>
-            <td colspan="6" class="table__empty">{{ isLoading() ? 'Loading…' : 'No bans.' }}</td>
-          </tr>
+          @if (isLoading()) {
+            @for (row of skeletonRows; track row) {
+              <tr appSkeletonRow [columns]="6"></tr>
+            }
+          } @else {
+            <tr>
+              <td colspan="6" class="table__empty">No bans.</td>
+            </tr>
+          }
         }
       </tbody>
     </table>

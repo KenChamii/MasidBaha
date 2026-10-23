@@ -66,6 +66,14 @@
       </section>
     </div>
   } @else {
-    <p class="muted">Loading…</p>
+    <div class="kpi" aria-busy="true">
+      <span class="sr-only">Loading…</span>
+      @for (card of skeletonCards; track card) {
+        <section class="card" aria-hidden="true">
+          <span class="skeleton skeleton-label"></span>
+          <span class="skeleton skeleton-value"></span>
+        </section>
+      }
+    </div>
   }
 </div>

@@ -27,6 +27,9 @@ export class TopReportsPanelComponent {
 
   readonly severityColor = severityColor;
 
+  // placeholders shown while the list loads
+  protected readonly skeletonRows = [1, 2, 3, 4];
+
   locationLabel(report: FloodReport): string | null {
     return report.city ?? report.province ?? report.region ?? null;
   }

@@ -59,9 +59,15 @@
             <td class="mono">{{ entry.details ? (entry.details | json) : '' }}</td>
           </tr>
         } @empty {
-          <tr>
-            <td colspan="5" class="table__empty">{{ isLoading() ? 'Loading…' : 'No entries match.' }}</td>
-          </tr>
+          @if (isLoading()) {
+            @for (row of skeletonRows; track row) {
+              <tr appSkeletonRow [columns]="5"></tr>
+            }
+          } @else {
+            <tr>
+              <td colspan="5" class="table__empty">No entries match.</td>
+            </tr>
+          }
         }
       </tbody>
     </table>
