@@ -40,7 +40,7 @@ public class FloodReportFlowTests : IAsyncLifetime
     private async Task<FloodReportDto> CreateAsync(double lat, double lng, Severity severity = Severity.KneeLevel, string session = "reporter-1")
     {
         await using var db = _postgis.CreateDbContext();
-        return await new CreateFloodReportService(db, new FakeGeocoder(), Options.Create(new ReportOptions())).CreateAsync(new CreateFloodReportRequest
+        return await new CreateFloodReportService(db, new FakeGeocoder(), TestServices.Settings()).CreateAsync(new CreateFloodReportRequest
         {
             Lat = lat, Lng = lng, Severity = severity, ReporterSessionId = session
         });
@@ -308,13 +308,13 @@ public class FloodReportFlowTests : IAsyncLifetime
         await VoteAsync(report.Id, VoteType.Confirm, "voter-1");
 
         await using var db = _postgis.CreateDbContext();
-        var deleted = await new AdminReportsService(db).DeleteAsync(report.Id);
+        var deleted = await TestServices.AdminReports(db).DeleteAsync(report.Id);
 
         Assert.True(deleted);
         await using var verify = _postgis.CreateDbContext();
         Assert.Empty(verify.FloodReports);
         Assert.Empty(verify.ReportVotes);
-        Assert.False(await new AdminReportsService(verify).DeleteAsync(report.Id));
+        Assert.False(await TestServices.AdminReports(verify).DeleteAsync(report.Id));
     }
 
     [Fact]
@@ -325,7 +325,7 @@ public class FloodReportFlowTests : IAsyncLifetime
         await CreateAsync(MarikinaLat + 0.02, MarikinaLng);
 
         await using var db = _postgis.CreateDbContext();
-        var service = new AdminReportsService(db);
+        var service = TestServices.AdminReports(db);
         var result = await service.SetStatusAsync(first.Id, ReportStatus.Resolved);
         Assert.Equal(ReportStatus.Resolved, result.Status);
 
@@ -349,7 +349,7 @@ public class FloodReportFlowTests : IAsyncLifetime
         await CreateAsync(CebuLat, CebuLng, session: "someone-else");
         await using (var db = _postgis.CreateDbContext())
         {
-            await new AdminReportsService(db).SetStatusAsync(a.Id, ReportStatus.Resolved);
+            await TestServices.AdminReports(db).SetStatusAsync(a.Id, ReportStatus.Resolved);
         }
 
         await using var query = _postgis.CreateDbContext();

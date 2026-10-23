@@ -23,6 +23,13 @@ public class FloodReport
     public string? Province { get; set; }
     public string? City { get; set; }
 
+    // Keyed hash of the reporter's IP address (never the address itself), so staff can
+    // block a source without the system storing anyone's IP
+    public string? ReporterIpHash { get; set; }
+
+    // Reports from a shadow-banned source are saved but never shown publicly
+    public bool IsHidden { get; set; }
+
     public List<ReportVote> Votes { get; set; } = new();
 
     // A report only accepts votes and shows on the map while it is active and

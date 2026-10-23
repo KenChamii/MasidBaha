@@ -1,0 +1,71 @@
+<div class="page">
+  <div class="page__head">
+    <div>
+      <h1>Audit log</h1>
+      <p class="page__lead">Every sign-in and every change staff make, newest first. Entries cannot be edited.</p>
+    </div>
+  </div>
+
+  <form class="toolbar" (ngSubmit)="apply()">
+    <label class="field">
+      What
+      <select name="action" [ngModel]="action()" (ngModelChange)="action.set($event); apply()">
+        @for (g of groups; track g.value) {
+          <option [value]="g.value">{{ g.label }}</option>
+        }
+      </select>
+    </label>
+    <label class="field">
+      Who
+      <input type="search" name="actor" placeholder="Email" [ngModel]="actor()" (ngModelChange)="actor.set($event)" />
+    </label>
+    <label class="field">
+      From
+      <input type="date" name="from" [ngModel]="from()" (ngModelChange)="from.set($event)" />
+    </label>
+    <label class="field">
+      To
+      <input type="date" name="to" [ngModel]="to()" (ngModelChange)="to.set($event)" />
+    </label>
+    <button type="submit" class="btn btn--primary btn--sm">Apply</button>
+  </form>
+
+  <div class="table-wrap" [attr.aria-busy]="isLoading()">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Who</th>
+          <th>Action</th>
+          <th>Target</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (entry of entries(); track entry.id) {
+          <tr>
+            <td>{{ entry.at | date: 'medium' }}</td>
+            <td>{{ entry.actorEmail }}</td>
+            <td>
+              <span class="badge">{{ entry.action }}</span>
+            </td>
+            <td>
+              @if (entry.targetType === 'report' && entry.targetId) {
+                <a [routerLink]="['/reports', entry.targetId]">report</a>
+              } @else {
+                {{ entry.targetType }}
+              }
+            </td>
+            <td class="mono">{{ entry.details ? (entry.details | json) : '' }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="table__empty">{{ isLoading() ? 'Loading…' : 'No entries match.' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pager [page]="page()" [pageSize]="pageSize" [totalCount]="totalCount()" (pageChange)="goToPage($event)" />
+</div>

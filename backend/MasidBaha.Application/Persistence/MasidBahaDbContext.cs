@@ -16,6 +16,10 @@ public class MasidBahaDbContext : IdentityDbContext<AdminUser, IdentityRole<Guid
     public DbSet<FloodReport> FloodReports => Set<FloodReport>();
     public DbSet<ReportVote> ReportVotes => Set<ReportVote>();
     public DbSet<StoredPushSubscription> PushSubscriptions => Set<StoredPushSubscription>();
+    public DbSet<ReporterBan> ReporterBans => Set<ReporterBan>();
+    public DbSet<AuditEntry> AuditLog => Set<AuditEntry>();
+    public DbSet<Broadcast> Broadcasts => Set<Broadcast>();
+    public DbSet<AppSetting> AppSettings => Set<AppSetting>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,6 +33,7 @@ public class MasidBahaDbContext : IdentityDbContext<AdminUser, IdentityRole<Guid
             e.ToTable("admin_users");
             e.Property(x => x.DisplayName).HasMaxLength(100).IsRequired();
             e.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
+            e.Ignore(x => x.IsActive);
         });
         modelBuilder.Entity<IdentityRole<Guid>>().ToTable("admin_roles");
         modelBuilder.Entity<IdentityUserRole<Guid>>().ToTable("admin_user_roles");
@@ -69,6 +74,8 @@ public class MasidBahaDbContext : IdentityDbContext<AdminUser, IdentityRole<Guid
             e.HasIndex(x => new { x.Region, x.Province, x.City });
             e.HasIndex(x => x.ReportedAt);
             e.HasIndex(x => x.ReporterSessionId);
+            e.Property(x => x.ReporterIpHash).HasMaxLength(64);
+            e.HasIndex(x => x.ReporterIpHash);
         });
 
         modelBuilder.Entity<ReportVote>(e =>
@@ -105,6 +112,64 @@ public class MasidBahaDbContext : IdentityDbContext<AdminUser, IdentityRole<Guid
             e.Property(x => x.Auth).HasMaxLength(500).IsRequired();
             e.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
             e.HasIndex(x => x.Endpoint).IsUnique();
+        });
+
+        modelBuilder.Entity<ReporterBan>(e =>
+        {
+            e.ToTable("reporter_bans", t =>
+            {
+                t.HasCheckConstraint("ck_reporter_bans_kind", "kind IN (1, 2)");
+                t.HasCheckConstraint("ck_reporter_bans_mode", "mode IN (1, 2)");
+            });
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
+            e.Property(x => x.Kind).HasConversion<short>();
+            e.Property(x => x.Mode).HasConversion<short>();
+            e.Property(x => x.Value).HasMaxLength(128).IsRequired();
+            e.Property(x => x.Reason).HasMaxLength(300).IsRequired();
+            e.Property(x => x.CreatedByEmail).HasMaxLength(256).IsRequired();
+            e.Property(x => x.LiftedByEmail).HasMaxLength(256);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
+            e.HasIndex(x => new { x.Kind, x.Value });
+        });
+
+        modelBuilder.Entity<AuditEntry>(e =>
+        {
+            e.ToTable("admin_audit_log");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
+            e.Property(x => x.At).HasDefaultValueSql("now()");
+            e.Property(x => x.ActorEmail).HasMaxLength(256).IsRequired();
+            e.Property(x => x.Action).HasMaxLength(64).IsRequired();
+            e.Property(x => x.TargetType).HasMaxLength(32).IsRequired();
+            e.Property(x => x.TargetId).HasMaxLength(64);
+            e.Property(x => x.Details).HasColumnType("jsonb");
+            e.HasIndex(x => x.At);
+            e.HasIndex(x => new { x.TargetType, x.TargetId });
+            e.HasIndex(x => x.Action);
+        });
+
+        modelBuilder.Entity<Broadcast>(e =>
+        {
+            e.ToTable("broadcasts");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
+            e.Property(x => x.Title).HasMaxLength(80).IsRequired();
+            e.Property(x => x.Body).HasMaxLength(300).IsRequired();
+            e.Property(x => x.Url).HasMaxLength(200).IsRequired();
+            e.Property(x => x.SentByEmail).HasMaxLength(256).IsRequired();
+            e.Property(x => x.SentAt).HasDefaultValueSql("now()");
+            e.HasIndex(x => x.SentAt);
+        });
+
+        modelBuilder.Entity<AppSetting>(e =>
+        {
+            e.ToTable("app_settings");
+            e.HasKey(x => x.Key);
+            e.Property(x => x.Key).HasMaxLength(64);
+            e.Property(x => x.Value).HasMaxLength(200).IsRequired();
+            e.Property(x => x.UpdatedByEmail).HasMaxLength(256).IsRequired();
+            e.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
         });
     }
 }

@@ -1,110 +1,138 @@
-<div class="reports">
-  <div class="reports__toolbar">
-    <div class="reports__filters" role="group" aria-label="Filter by status">
-      <button type="button" [class.active]="filter() === 'all'" (click)="setFilter('all')">Lahat</button>
-      <button type="button" [class.active]="filter() === 1" (click)="setFilter(1)">Active</button>
-      <button type="button" [class.active]="filter() === 2" (click)="setFilter(2)">Resolved</button>
-      <button type="button" [class.active]="filter() === 3" (click)="setFilter(3)">Expired</button>
+<div class="page">
+  <div class="page__head">
+    <div>
+      <h1>Reports</h1>
+      <p class="page__lead">Search, filter and review every report, including expired and hidden ones.</p>
     </div>
+    <button type="button" class="btn btn--sm" [disabled]="isExporting()" (click)="exportCsv()">
+      {{ isExporting() ? 'Exporting…' : 'Export CSV' }}
+    </button>
   </div>
 
-  @if (isLoading()) {
-    <p>Naglo-load...</p>
-  } @else {
-    <table class="reports__table">
+  <form class="toolbar" (ngSubmit)="applyFilters()">
+    <label class="field">
+      Search
+      <input
+        type="search"
+        name="search"
+        placeholder="Notes or place"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+      />
+    </label>
+    <label class="field">
+      Status
+      <select name="status" [ngModel]="status()" (ngModelChange)="status.set($event); applyFilters()">
+        <option value="">Any</option>
+        <option [ngValue]="1">Active</option>
+        <option [ngValue]="2">Resolved</option>
+        <option [ngValue]="3">Expired</option>
+      </select>
+    </label>
+    <label class="field">
+      Severity
+      <select name="severity" [ngModel]="severity()" (ngModelChange)="severity.set($event); applyFilters()">
+        <option value="">Any</option>
+        @for (s of severities; track s) {
+          <option [ngValue]="s">{{ severityName[s] }}</option>
+        }
+      </select>
+    </label>
+    <label class="field">
+      City
+      <input type="text" name="city" [ngModel]="city()" (ngModelChange)="city.set($event)" />
+    </label>
+    <label class="field">
+      From
+      <input type="date" name="from" [ngModel]="from()" (ngModelChange)="from.set($event)" />
+    </label>
+    <label class="field">
+      To
+      <input type="date" name="to" [ngModel]="to()" (ngModelChange)="to.set($event)" />
+    </label>
+    <label class="field">
+      Visibility
+      <select name="hidden" [ngModel]="hidden()" (ngModelChange)="hidden.set($event); applyFilters()">
+        <option value="">All</option>
+        <option value="false">Public</option>
+        <option value="true">Hidden</option>
+      </select>
+    </label>
+    <button type="submit" class="btn btn--primary btn--sm">Apply</button>
+    <button type="button" class="btn btn--ghost btn--sm" (click)="clearFilters()">Clear</button>
+  </form>
+
+  <div class="table-wrap" [attr.aria-busy]="isLoading()">
+    <table class="table">
       <thead>
         <tr>
-          <th>Lokasyon</th>
-          <th>Severity</th>
+          <th>Place</th>
+          <th>
+            <button type="button" (click)="sort('severity')">Severity{{ sortMark('severity') }}</button>
+          </th>
           <th>Notes</th>
-          <th>Confidence</th>
-          <th>Status</th>
-          <th>Reporter Session</th>
-          <th>Reported</th>
-          @if (auth.canModerate()) {
-            <th>Actions</th>
-          }
+          <th>
+            <button type="button" (click)="sort('confidence')">Confidence{{ sortMark('confidence') }}</button>
+          </th>
+          <th>
+            <button type="button" (click)="sort('status')">Status{{ sortMark('status') }}</button>
+          </th>
+          <th>
+            <button type="button" (click)="sort('reportedAt')">Reported{{ sortMark('reportedAt') }}</button>
+          </th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
         @for (report of reports(); track report.id) {
           <tr>
-            <td>{{ locationOf(report) }}</td>
-            <td>{{ report.severity }}</td>
-            <td class="reports__notes">{{ report.notes || '—' }}</td>
-            <td>{{ report.confidenceScore }}</td>
-            <td>{{ statusLabel[report.status] }}</td>
-            <td class="reports__session">
-              <span class="reports__session-id" [title]="report.reporterSessionId">{{ report.reporterSessionId }}</span>
-              <button
-                type="button"
-                class="reports__trust-btn"
-                (click)="toggleTrust(report.reporterSessionId)"
-                title="Tingnan ang trust score ng session na ito"
-                aria-label="Show trust score for this session"
-              >
-                🛡️
-              </button>
-
-              @let state = trust()[report.reporterSessionId];
-              @if (state === 'loading') {
-                <p class="reports__trust-info">Naglo-load...</p>
-              } @else if (state === 'error') {
-                <p class="reports__trust-info reports__trust-info--error">Hindi na-load ang trust score.</p>
-              } @else if (isTrustData(state)) {
-                <div class="reports__trust-info">
-                  <strong>{{ state.trustScore === null ? 'Walang rating pa' : state.trustScore + '% trust' }}</strong>
-                  <span>{{ state.resolvedReports }}/{{ state.totalReports }} na-confirm</span>
-                </div>
+            <td>
+              <a [routerLink]="['/reports', report.id]">{{ locationOf(report) }}</a>
+              @if (report.isHidden) {
+                <span class="badge badge--warn">Hidden</span>
               }
             </td>
+            <td>
+              <span class="dot" [style.background]="severityColor[report.severity]"></span
+              >{{ severityName[report.severity] }}
+            </td>
+            <td>{{ report.notes || '—' }}</td>
+            <td class="num">{{ report.confidenceScore }}</td>
+            <td>
+              <span class="badge" [class]="'badge ' + badgeByStatus[report.status]">{{
+                statusLabel[report.status]
+              }}</span>
+            </td>
             <td>{{ timeAgo(report.reportedAt) }}</td>
-            @if (auth.canModerate()) {
-              <td class="reports__actions">
-                @if (report.status !== 2) {
-                  <button type="button" (click)="verify(report)" title="Mark as Resolved (verified legit and handled)">
-                    ✅ Verify
+            <td>
+              <div class="table__actions">
+                <a class="btn btn--sm" [routerLink]="['/reports', report.id]">Open</a>
+                @if (auth.canModerate()) {
+                  @if (report.status !== 2) {
+                    <button type="button" class="btn btn--sm" (click)="setStatus(report, 2)">Resolve</button>
+                  }
+                  @if (report.status !== 3) {
+                    <button type="button" class="btn btn--sm" (click)="setStatus(report, 3)">Expire</button>
+                  }
+                  @if (report.status !== 1) {
+                    <button type="button" class="btn btn--sm" (click)="setStatus(report, 1)">Reactivate</button>
+                  }
+                  <button type="button" class="btn btn--sm" (click)="toggleHidden(report)">
+                    {{ report.isHidden ? 'Unhide' : 'Hide' }}
                   </button>
+                  <button type="button" class="btn btn--sm btn--danger" (click)="remove(report)">Delete</button>
                 }
-                @if (report.status !== 3) {
-                  <button type="button" (click)="markExpired(report)" title="Mark as Expired (clear from active map)">
-                    🕑 Expire
-                  </button>
-                }
-                @if (report.status !== 1) {
-                  <button type="button" (click)="reactivate(report)" title="Reactivate">↩️ Reactivate</button>
-                }
-                <button
-                  type="button"
-                  class="reports__delete"
-                  (click)="deleteReport(report)"
-                  title="Delete permanently (spam/fake)"
-                >
-                  🗑️ Delete
-                </button>
-              </td>
-            }
+              </div>
+            </td>
           </tr>
         } @empty {
           <tr>
-            <td [attr.colspan]="auth.canModerate() ? 8 : 7" class="reports__empty">Walang report dito.</td>
+            <td colspan="7" class="table__empty">{{ isLoading() ? 'Loading…' : 'No reports match these filters.' }}</td>
           </tr>
         }
       </tbody>
     </table>
+  </div>
 
-    @for (report of reports(); track report.id) {
-      @if (actionErrors()[report.id]; as message) {
-        <p class="reports__row-error" role="alert">{{ message }}</p>
-      }
-    }
-
-    @if (totalCount() > 0) {
-      <div class="reports__pagination">
-        <button type="button" [disabled]="page() <= 1" (click)="goToPage(page() - 1)">← Prev</button>
-        <span>Page {{ page() }} of {{ totalPages() }} ({{ totalCount() }} total)</span>
-        <button type="button" [disabled]="page() >= totalPages()" (click)="goToPage(page() + 1)">Next →</button>
-      </div>
-    }
-  }
+  <app-pager [page]="page()" [pageSize]="pageSize" [totalCount]="totalCount()" (pageChange)="goToPage($event)" />
 </div>

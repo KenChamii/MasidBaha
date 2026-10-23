@@ -8,7 +8,8 @@ namespace MasidBaha.Application.FloodReports.VoteOnReport;
 
 public interface IVoteOnReportService
 {
-    Task<VoteResultDto> VoteAsync(Guid floodReportId, VoteRequest request);
+    // shadow: the voter is shadow-banned, so the vote looks accepted but is not recorded
+    Task<VoteResultDto> VoteAsync(Guid floodReportId, VoteRequest request, bool shadow = false);
 }
 
 public class VoteOnReportService : IVoteOnReportService
@@ -20,7 +21,7 @@ public class VoteOnReportService : IVoteOnReportService
         _db = db;
     }
 
-    public async Task<VoteResultDto> VoteAsync(Guid floodReportId, VoteRequest request)
+    public async Task<VoteResultDto> VoteAsync(Guid floodReportId, VoteRequest request, bool shadow = false)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync();
 
@@ -34,6 +35,9 @@ public class VoteOnReportService : IVoteOnReportService
 
         if (!report.IsOpen(DateTime.UtcNow))
             throw new ConflictException("This report is no longer active.");
+
+        if (shadow)
+            return new VoteResultDto { FloodReportId = floodReportId, ConfidenceScore = report.ConfidenceScore, Status = report.Status };
 
         var alreadyVoted = await _db.ReportVotes.AnyAsync(v =>
             v.FloodReportId == floodReportId && v.VoterSessionId == request.VoterSessionId);

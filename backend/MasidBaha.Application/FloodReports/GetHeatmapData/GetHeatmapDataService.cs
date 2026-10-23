@@ -29,7 +29,7 @@ public class GetHeatmapDataService : IGetHeatmapDataService
 
         var reports = await _db.FloodReports
             .AsNoTracking()
-            .Where(r => r.ReportedAt >= from && r.ReportedAt <= to)
+            .Where(r => !r.IsHidden && r.ReportedAt >= from && r.ReportedAt <= to)
             .Where(r => query.Region == null || r.Region == query.Region)
             .Where(r => query.Province == null || r.Province == query.Province)
             .Where(r => query.City == null || r.City == query.City)

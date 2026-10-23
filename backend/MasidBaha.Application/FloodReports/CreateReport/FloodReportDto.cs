@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using System.Text.Json.Serialization;
+using FluentValidation;
 using MasidBaha.Application.Common.Enums;
 
 namespace MasidBaha.Application.FloodReports.CreateReport;
@@ -30,6 +31,12 @@ public class CreateFloodReportRequest
     // Set by the server from the signed session cookie. Anything a client
     // sends here is ignored, because a client-chosen id is trivially reset.
     public string ReporterSessionId { get; set; } = string.Empty;
+
+    // Also set by the server, never read from the request body
+    [JsonIgnore] public string? ReporterIpHash { get; set; }
+
+    // True when the reporter is shadow-banned: saved, but never shown
+    [JsonIgnore] public bool IsHidden { get; set; }
 }
 
 public static class PhilippinesBounds

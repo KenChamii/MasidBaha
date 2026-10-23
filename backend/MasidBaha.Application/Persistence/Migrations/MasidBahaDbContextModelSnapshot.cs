@@ -46,6 +46,10 @@ namespace MasidBaha.Application.Persistence.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("now()");
 
+                    b.Property<DateTime?>("DeactivatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deactivated_at");
+
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -72,6 +76,10 @@ namespace MasidBaha.Application.Persistence.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("lockout_end");
+
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("boolean")
+                        .HasColumnName("must_change_password");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -121,6 +129,148 @@ namespace MasidBaha.Application.Persistence.Migrations
                     b.ToTable("admin_users", (string)null);
                 });
 
+            modelBuilder.Entity("MasidBaha.Application.Persistence.AppSetting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("key");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("UpdatedByEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("updated_by_email");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("value");
+
+                    b.HasKey("Key")
+                        .HasName("pk_app_settings");
+
+                    b.ToTable("app_settings", (string)null);
+                });
+
+            modelBuilder.Entity("MasidBaha.Application.Persistence.AuditEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("action");
+
+                    b.Property<string>("ActorEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("actor_email");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_id");
+
+                    b.Property<DateTime>("At")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("details");
+
+                    b.Property<string>("TargetId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("target_id");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("target_type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_admin_audit_log");
+
+                    b.HasIndex("Action")
+                        .HasDatabaseName("ix_admin_audit_log_action");
+
+                    b.HasIndex("At")
+                        .HasDatabaseName("ix_admin_audit_log_at");
+
+                    b.HasIndex("TargetType", "TargetId")
+                        .HasDatabaseName("ix_admin_audit_log_target_type_target_id");
+
+                    b.ToTable("admin_audit_log", (string)null);
+                });
+
+            modelBuilder.Entity("MasidBaha.Application.Persistence.Broadcast", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("body");
+
+                    b.Property<int>("Recipients")
+                        .HasColumnType("integer")
+                        .HasColumnName("recipients");
+
+                    b.Property<DateTime>("SentAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("SentByEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("sent_by_email");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("url");
+
+                    b.HasKey("Id")
+                        .HasName("pk_broadcasts");
+
+                    b.HasIndex("SentAt")
+                        .HasDatabaseName("ix_broadcasts_sent_at");
+
+                    b.ToTable("broadcasts", (string)null);
+                });
+
             modelBuilder.Entity("MasidBaha.Application.Persistence.FloodReport", b =>
                 {
                     b.Property<Guid>("Id")
@@ -141,6 +291,10 @@ namespace MasidBaha.Application.Persistence.Migrations
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_at");
+
+                    b.Property<bool>("IsHidden")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_hidden");
 
                     b.Property<Point>("Location")
                         .IsRequired()
@@ -173,6 +327,11 @@ namespace MasidBaha.Application.Persistence.Migrations
                         .HasColumnName("reported_at")
                         .HasDefaultValueSql("now()");
 
+                    b.Property<string>("ReporterIpHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("reporter_ip_hash");
+
                     b.Property<string>("ReporterSessionId")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -197,6 +356,9 @@ namespace MasidBaha.Application.Persistence.Migrations
 
                     b.HasIndex("ReportedAt")
                         .HasDatabaseName("ix_flood_reports_reported_at");
+
+                    b.HasIndex("ReporterIpHash")
+                        .HasDatabaseName("ix_flood_reports_reporter_ip_hash");
 
                     b.HasIndex("ReporterSessionId")
                         .HasDatabaseName("ix_flood_reports_reporter_session_id");
@@ -253,6 +415,73 @@ namespace MasidBaha.Application.Persistence.Migrations
                     b.ToTable("report_votes", null, t =>
                         {
                             t.HasCheckConstraint("ck_report_votes_vote_type", "vote_type IN (-1, 1)");
+                        });
+                });
+
+            modelBuilder.Entity("MasidBaha.Application.Persistence.ReporterBan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("CreatedByEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("created_by_email");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<short>("Kind")
+                        .HasColumnType("smallint")
+                        .HasColumnName("kind");
+
+                    b.Property<DateTime?>("LiftedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("lifted_at");
+
+                    b.Property<string>("LiftedByEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("lifted_by_email");
+
+                    b.Property<short>("Mode")
+                        .HasColumnType("smallint")
+                        .HasColumnName("mode");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("reason");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("value");
+
+                    b.HasKey("Id")
+                        .HasName("pk_reporter_bans");
+
+                    b.HasIndex("Kind", "Value")
+                        .HasDatabaseName("ix_reporter_bans_kind_value");
+
+                    b.ToTable("reporter_bans", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_reporter_bans_kind", "kind IN (1, 2)");
+
+                            t.HasCheckConstraint("ck_reporter_bans_mode", "mode IN (1, 2)");
                         });
                 });
 

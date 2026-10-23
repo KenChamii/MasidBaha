@@ -7,13 +7,10 @@
 export * from './lib/api/api-config';
 export * from './lib/api/flood-report.service';
 export * from './lib/api/photo.service';
-export * from './lib/api/admin.service';
-export * from './lib/api/admin-auth.service';
 
 // Models
 export * from './lib/models/flood-report.model';
 export * from './lib/models/severity';
-export * from './lib/models/admin.model';
 
 // Core: theme and HTTP interceptors
 export * from './lib/core/theme.service';

@@ -1,152 +1,172 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import {
-  AdminAuthService,
-  AdminFloodReport,
-  AdminReportStatus,
-  AdminService,
-  SessionTrustDto,
-  timeAgo
-} from '@masidbaha/shared';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { Severity, ToastService, timeAgo } from '@masidbaha/shared';
+import { AdminApiService } from '../../core/api/admin-api.service';
+import { AdminAuthService } from '../../core/api/admin-auth.service';
+import { AdminFloodReport, AdminReportQuery, AdminReportStatus, STATUS_LABEL } from '../../core/api/admin.models';
+import { BADGE_BY_STATUS, SEVERITY_COLOR, SEVERITY_NAME, locationOf, problemMessage, saveBlob } from '../../core/util';
+import { ConfirmService } from '../../ui/confirm.service';
+import { PagerComponent } from '../../ui/pager.component';
 
-type StatusFilter = 'all' | AdminReportStatus;
-type TrustState = SessionTrustDto | 'loading' | 'error';
-
-const STATUS_LABEL: Record<AdminReportStatus, string> = {
-  1: 'Active',
-  2: 'Resolved',
-  3: 'Expired'
-};
+type SortField = NonNullable<AdminReportQuery['sortBy']>;
 
 @Component({
   selector: 'app-reports-page',
-  templateUrl: './reports-page.component.html',
-  styleUrl: './reports-page.component.scss'
+  imports: [FormsModule, RouterLink, PagerComponent],
+  templateUrl: './reports-page.component.html'
 })
 export class ReportsPageComponent implements OnInit {
-  private readonly adminService = inject(AdminService);
+  private readonly api = inject(AdminApiService);
+  private readonly toast = inject(ToastService);
+  private readonly confirm = inject(ConfirmService);
   protected readonly auth = inject(AdminAuthService);
 
   protected readonly statusLabel = STATUS_LABEL;
+  protected readonly badgeByStatus = BADGE_BY_STATUS;
+  protected readonly severityName = SEVERITY_NAME;
+  protected readonly severityColor = SEVERITY_COLOR;
+  protected readonly severities: Severity[] = [1, 2, 3, 4];
   protected readonly timeAgo = timeAgo;
+  protected readonly locationOf = locationOf;
 
   protected readonly reports = signal<AdminFloodReport[]>([]);
   protected readonly totalCount = signal(0);
   protected readonly page = signal(1);
   protected readonly pageSize = 25;
-  protected readonly filter = signal<StatusFilter>('all');
   protected readonly isLoading = signal(false);
-  protected readonly actionErrors = signal<Record<string, string>>({});
+  protected readonly isExporting = signal(false);
 
-  // Trust info loads per session, on click, instead of for every row on
-  // page load. Most reports on a page share only a few sessions anyway.
-  protected readonly trust = signal<Record<string, TrustState>>({});
+  // Filters (applied together; empty means "any")
+  protected readonly search = signal('');
+  protected readonly status = signal<AdminReportStatus | ''>('');
+  protected readonly severity = signal<Severity | ''>('');
+  protected readonly city = signal('');
+  protected readonly from = signal('');
+  protected readonly to = signal('');
+  protected readonly hidden = signal<'' | 'true' | 'false'>('');
 
-  protected readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalCount() / this.pageSize)));
+  protected readonly sortBy = signal<SortField>('reportedAt');
+  protected readonly descending = signal(true);
 
   ngOnInit(): void {
-    this.loadReports();
+    this.load();
   }
 
-  protected setFilter(filter: StatusFilter): void {
-    this.filter.set(filter);
+  protected applyFilters(): void {
     this.page.set(1);
-    this.loadReports();
+    this.load();
+  }
+
+  protected clearFilters(): void {
+    this.search.set('');
+    this.status.set('');
+    this.severity.set('');
+    this.city.set('');
+    this.from.set('');
+    this.to.set('');
+    this.hidden.set('');
+    this.applyFilters();
+  }
+
+  protected sort(field: SortField): void {
+    if (this.sortBy() === field) {
+      this.descending.update(value => !value);
+    } else {
+      this.sortBy.set(field);
+      this.descending.set(true);
+    }
+    this.page.set(1);
+    this.load();
+  }
+
+  protected sortMark(field: SortField): string {
+    return this.sortBy() === field ? (this.descending() ? ' ▼' : ' ▲') : '';
   }
 
   protected goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages()) return;
     this.page.set(page);
-    this.loadReports();
+    this.load();
   }
 
-  protected loadReports(): void {
+  protected load(): void {
     this.isLoading.set(true);
-    const status = this.filter() === 'all' ? null : (this.filter() as AdminReportStatus);
-
-    this.adminService.getReports(status, this.page(), this.pageSize).subscribe({
-      next: result => {
-        this.reports.set(result.reports);
-        this.totalCount.set(result.totalCount);
-        this.isLoading.set(false);
-      },
-      // A 401 is handled globally (back to the login page); other failures show a toast
-      error: () => this.isLoading.set(false)
-    });
-  }
-
-  protected verify(report: AdminFloodReport): void {
-    this.setStatus(report, 2);
-  }
-
-  protected markExpired(report: AdminFloodReport): void {
-    this.setStatus(report, 3);
-  }
-
-  protected reactivate(report: AdminFloodReport): void {
-    this.setStatus(report, 1);
-  }
-
-  protected deleteReport(report: AdminFloodReport): void {
-    if (!confirm('Sigurado ka bang tanggalin ito nang tuluyan? Hindi ito maaaring bawiin.')) return;
-
-    this.clearActionError(report.id);
-    this.adminService.delete(report.id).subscribe({
-      next: () => this.loadReports(),
-      error: (err: HttpErrorResponse) => this.setActionError(report.id, err, 'Nabigo ang pagtanggal. Subukan ulit.')
-    });
-  }
-
-  // ---- session trust ----
-
-  protected toggleTrust(sessionId: string): void {
-    // Clicking again on an already loaded session collapses it, so this
-    // button doubles as a show/hide toggle.
-    const current = this.trust()[sessionId];
-    if (current && current !== 'loading') {
-      this.trust.update(map => {
-        const { [sessionId]: _removed, ...rest } = map;
-        return rest;
+    this.api
+      .getReports({
+        ...this.filter(),
+        page: this.page(),
+        pageSize: this.pageSize,
+        sortBy: this.sortBy(),
+        descending: this.descending()
+      })
+      .subscribe({
+        next: result => {
+          this.reports.set(result.reports);
+          this.totalCount.set(result.totalCount);
+          this.isLoading.set(false);
+        },
+        // A 401 is handled globally (back to the login page); other failures show a toast
+        error: () => this.isLoading.set(false)
       });
-      return;
-    }
+  }
 
-    this.setTrust(sessionId, 'loading');
-    this.adminService.getSessionTrust(sessionId).subscribe({
-      next: result => this.setTrust(sessionId, result),
-      error: () => this.setTrust(sessionId, 'error')
+  protected exportCsv(): void {
+    this.isExporting.set(true);
+    this.api.exportReports(this.filter()).subscribe({
+      next: blob => {
+        this.isExporting.set(false);
+        saveBlob(blob, `masidbaha-reports-${new Date().toISOString().slice(0, 10)}.csv`);
+      },
+      error: err => {
+        this.isExporting.set(false);
+        this.toast.error(problemMessage(err, 'The export failed.'));
+      }
     });
   }
 
-  protected isTrustData(state: TrustState | undefined): state is SessionTrustDto {
-    return !!state && state !== 'loading' && state !== 'error';
-  }
-
-  protected locationOf(report: AdminFloodReport): string {
-    return report.city || report.province || report.region || `${report.lat.toFixed(4)}, ${report.lng.toFixed(4)}`;
-  }
-
-  private setStatus(report: AdminFloodReport, status: AdminReportStatus): void {
-    this.clearActionError(report.id);
-    this.adminService.setStatus(report.id, status).subscribe({
-      next: () => this.loadReports(),
-      error: (err: HttpErrorResponse) => this.setActionError(report.id, err, 'Nabigo ang aksyon. Subukan ulit.')
+  protected setStatus(report: AdminFloodReport, status: AdminReportStatus): void {
+    this.api.setStatus(report.id, status).subscribe({
+      next: () => this.load(),
+      error: err => this.toast.error(problemMessage(err))
     });
   }
 
-  private setTrust(sessionId: string, state: TrustState): void {
-    this.trust.update(map => ({ ...map, [sessionId]: state }));
-  }
-
-  private clearActionError(reportId: string): void {
-    this.actionErrors.update(map => {
-      const { [reportId]: _removed, ...rest } = map;
-      return rest;
+  protected toggleHidden(report: AdminFloodReport): void {
+    this.api.setHidden(report.id, !report.isHidden).subscribe({
+      next: () => this.load(),
+      error: err => this.toast.error(problemMessage(err))
     });
   }
 
-  private setActionError(reportId: string, err: HttpErrorResponse, fallback: string): void {
-    const message = err.status === 403 ? 'Your role is not allowed to do this.' : fallback;
-    this.actionErrors.update(map => ({ ...map, [reportId]: message }));
+  protected async remove(report: AdminFloodReport): Promise<void> {
+    const confirmed = await this.confirm.ask({
+      title: 'Delete this report?',
+      message: 'It is removed for good, together with its votes. This cannot be undone.',
+      confirmLabel: 'Delete',
+      danger: true
+    });
+    if (!confirmed) return;
+
+    this.api.deleteReport(report.id).subscribe({
+      next: () => {
+        this.toast.success('Report deleted.');
+        this.load();
+      },
+      error: err => this.toast.error(problemMessage(err))
+    });
+  }
+
+  // The same filters feed the table, the map and the export
+  private filter() {
+    return {
+      search: this.search().trim(),
+      status: this.status() || null,
+      severity: this.severity() || null,
+      city: this.city().trim(),
+      from: this.from() ? new Date(this.from()).toISOString() : '',
+      // The "to" day is inclusive, so run to the end of it
+      to: this.to() ? new Date(this.to() + 'T23:59:59').toISOString() : '',
+      hidden: this.hidden() === '' ? null : this.hidden() === 'true'
+    };
   }
 }

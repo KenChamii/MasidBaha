@@ -1,0 +1,153 @@
+<div class="page">
+  <div class="page__head">
+    <div>
+      <h1>My account</h1>
+      @if (auth.user(); as user) {
+        <p class="page__lead">{{ user.email }} · {{ user.roles.join(', ') }}</p>
+      }
+    </div>
+  </div>
+
+  @if (auth.mustChangePassword()) {
+    <p class="notice notice--warn" role="status">
+      You are using a temporary password. Choose your own below to unlock the rest of the admin panel.
+    </p>
+  }
+
+  <div class="grid grid--2">
+    <section class="card">
+      <h2>Change password</h2>
+      <form class="form" (ngSubmit)="changePassword()">
+        <label class="field">
+          Current password
+          <input
+            type="password"
+            name="current"
+            [ngModel]="currentPassword()"
+            (ngModelChange)="currentPassword.set($event)"
+            autocomplete="current-password"
+            required
+          />
+        </label>
+        <label class="field">
+          New password
+          <input
+            type="password"
+            name="new"
+            [ngModel]="newPassword()"
+            (ngModelChange)="newPassword.set($event)"
+            autocomplete="new-password"
+            required
+          />
+          <small>Longer is stronger: use a passphrase of at least 12 characters.</small>
+        </label>
+        <label class="field">
+          Repeat new password
+          <input
+            type="password"
+            name="confirm"
+            [ngModel]="confirmPassword()"
+            (ngModelChange)="confirmPassword.set($event)"
+            autocomplete="new-password"
+            required
+          />
+        </label>
+
+        @if (passwordError(); as message) {
+          <p class="notice notice--error" role="alert">{{ message }}</p>
+        }
+
+        <div>
+          <button type="submit" class="btn btn--primary btn--sm" [disabled]="savingPassword()">
+            {{ savingPassword() ? 'Saving…' : 'Change password' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    @if (!auth.mustChangePassword()) {
+      <section class="card">
+        <h2>Two-factor sign-in</h2>
+
+        @if (recoveryCodes(); as codes) {
+          <p class="notice notice--warn" role="status">
+            Two-factor sign-in is on. Save these recovery codes somewhere safe: each works once if you lose your phone,
+            and they will not be shown again.
+          </p>
+          <ul class="recovery">
+            @for (code of codes; track code) {
+              <li class="mono">{{ code }}</li>
+            }
+          </ul>
+          <button type="button" class="btn btn--sm" (click)="dismissRecoveryCodes()">I have saved them</button>
+        } @else if (auth.user()?.twoFactorEnabled) {
+          <p><span class="badge badge--ok">On</span> Signing in needs a code from your authenticator app.</p>
+          <form class="form" (ngSubmit)="disable()">
+            <label class="field">
+              Password
+              <input
+                type="password"
+                name="disablePassword"
+                [ngModel]="disablePassword()"
+                (ngModelChange)="disablePassword.set($event)"
+                autocomplete="current-password"
+                required
+              />
+            </label>
+            <label class="field">
+              Current code
+              <input
+                type="text"
+                name="disableCode"
+                inputmode="numeric"
+                [ngModel]="disableCode()"
+                (ngModelChange)="disableCode.set($event)"
+                autocomplete="one-time-code"
+                required
+              />
+            </label>
+            <div>
+              <button type="submit" class="btn btn--danger btn--sm" [disabled]="busy()">Turn off</button>
+            </div>
+          </form>
+        } @else if (setup(); as s) {
+          <p>
+            Add this account to an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password…) by
+            entering the key below, then type the 6-digit code it shows.
+          </p>
+          <p class="mono" data-testid="shared-key">{{ s.sharedKey }}</p>
+          <p class="muted"><a [href]="s.otpAuthUri">Open in an authenticator app on this device</a></p>
+          <form class="form" (ngSubmit)="confirmSetup()">
+            <label class="field">
+              6-digit code
+              <input
+                type="text"
+                name="setupCode"
+                inputmode="numeric"
+                [ngModel]="setupCode()"
+                (ngModelChange)="setupCode.set($event)"
+                autocomplete="one-time-code"
+                required
+              />
+            </label>
+            <div>
+              <button type="submit" class="btn btn--primary btn--sm" [disabled]="busy()">Turn on</button>
+            </div>
+          </form>
+        } @else {
+          <p>
+            <span class="badge badge--muted">Off</span> Add a second step to your sign-in so a stolen password alone is
+            not enough.
+          </p>
+          <button type="button" class="btn btn--primary btn--sm" [disabled]="busy()" (click)="startSetup()">
+            Set up
+          </button>
+        }
+
+        @if (twoFactorError(); as message) {
+          <p class="notice notice--error" role="alert">{{ message }}</p>
+        }
+      </section>
+    }
+  </div>
+</div>

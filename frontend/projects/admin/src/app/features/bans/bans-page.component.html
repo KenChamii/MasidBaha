@@ -1,0 +1,107 @@
+<div class="page">
+  <div class="page__head">
+    <div>
+      <h1>Bans</h1>
+      <p class="page__lead">
+        <strong>Block</strong> refuses a reporter's posts and votes. <strong>Shadow</strong> accepts them but shows them
+        to nobody, so the reporter doesn't learn they were caught.
+      </p>
+    </div>
+    <div class="toolbar" role="group" aria-label="Filter bans">
+      <button type="button" class="btn btn--sm" [class.btn--dark]="filter() === 'active'" (click)="setFilter('active')">
+        Active
+      </button>
+      <button type="button" class="btn btn--sm" [class.btn--dark]="filter() === 'all'" (click)="setFilter('all')">
+        All
+      </button>
+    </div>
+  </div>
+
+  @if (auth.canModerate()) {
+    <form class="toolbar card card--flat" (ngSubmit)="addSessionBan()">
+      <label class="field">
+        Session id
+        <input type="text" name="session" required [ngModel]="newSession()" (ngModelChange)="newSession.set($event)" />
+      </label>
+      <label class="field">
+        Effect
+        <select name="mode" [ngModel]="newMode()" (ngModelChange)="newMode.set($event)">
+          <option [ngValue]="2">Shadow</option>
+          <option [ngValue]="1">Block</option>
+        </select>
+      </label>
+      <label class="field">
+        Reason
+        <input
+          type="text"
+          name="reason"
+          maxlength="200"
+          required
+          [ngModel]="newReason()"
+          (ngModelChange)="newReason.set($event)"
+        />
+      </label>
+      <button type="submit" class="btn btn--danger btn--sm">Ban session</button>
+      @if (formError(); as message) {
+        <p class="notice notice--error" role="alert">{{ message }}</p>
+      }
+    </form>
+  }
+
+  <div class="table-wrap" [attr.aria-busy]="isLoading()">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Target</th>
+          <th>Effect</th>
+          <th>Reason</th>
+          <th>Created</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (ban of bans(); track ban.id) {
+          <tr>
+            <td>
+              <span class="badge badge--muted">{{ ban.kind === 1 ? 'Session' : 'Network' }}</span>
+              <span class="mono">{{ ban.target }}</span>
+            </td>
+            <td>
+              <span class="badge" [class.badge--danger]="ban.mode === 1" [class.badge--warn]="ban.mode === 2">
+                {{ ban.mode === 1 ? 'Block' : 'Shadow' }}
+              </span>
+            </td>
+            <td>{{ ban.reason }}</td>
+            <td>
+              {{ ban.createdAt | date: 'medium' }}<br /><span class="muted">{{ ban.createdByEmail }}</span>
+            </td>
+            <td>
+              @if (ban.liftedAt) {
+                <span class="badge badge--muted">Lifted</span>
+              } @else if (ban.isActive) {
+                <span class="badge badge--ok">Active</span>
+                @if (ban.expiresAt) {
+                  <div class="muted">until {{ ban.expiresAt | date: 'short' }}</div>
+                }
+              } @else {
+                <span class="badge badge--muted">Expired</span>
+              }
+            </td>
+            <td>
+              @if (auth.canModerate() && ban.isActive) {
+                <button type="button" class="btn btn--sm" (click)="lift(ban)">Lift</button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="table__empty">{{ isLoading() ? 'Loading…' : 'No bans.' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pager [page]="page()" [pageSize]="pageSize" [totalCount]="totalCount()" (pageChange)="goToPage($event)" />
+</div>

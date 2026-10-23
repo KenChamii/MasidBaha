@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { AdminAuthService } from '@masidbaha/shared';
+import { AdminAuthService } from './api/admin-auth.service';
 import { catchError, throwError } from 'rxjs';
 
 // If the API says the session is gone (expired, signed out elsewhere, password

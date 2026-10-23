@@ -69,3 +69,21 @@
   text-align: center;
   margin: 0.75rem 0 0;
 }
+
+.login__links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+}
+
+.login__link {
+  all: unset;
+  cursor: pointer;
+  @include m.mono-label;
+  color: var(--mb-water-text);
+  border-bottom: 1px solid currentColor;
+
+  &:focus-visible {
+    outline: 2px solid var(--mb-cyan);
+  }
+}

@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Threading.RateLimiting;
 using Asp.Versioning;
+using MasidBaha.Application.Admin.Audit;
+using MasidBaha.Application.Admin.Settings;
 using MasidBaha.Application.Common.Options;
 using MasidBaha.Application.Persistence;
 using MasidBaha.WebAPI.Controllers;
@@ -30,7 +32,11 @@ public static class WebApiExtensions
 
         services.AddControllers(options => options.Filters.Add<FluentValidationFilter>());
         services.AddSignalR();
+        services.AddHttpContextAccessor();
+        services.AddSingleton<ISigningKey, SigningKey>();
         services.AddSingleton<ISessionIdentity, SessionIdentity>();
+        services.AddSingleton<IIpHasher, IpHasher>();
+        services.AddScoped<ICurrentAdmin, CurrentAdmin>();
 
         // /api/v1/... URLs, with the version also documented in Swagger
         services.AddApiVersioning(options =>
@@ -129,25 +135,36 @@ public static class WebApiExtensions
         });
 
         services.AddOptions<RateLimiterOptions>()
-            .Configure<IOptions<RateLimitOptions>>((limiter, limits) =>
+            .Configure<IOptions<RateLimitOptions>, IRuntimeSettings>((limiter, limits, settings) =>
             {
-                AddPolicy(limiter, "report-writes", limits.Value.ReportWrites);
-                AddPolicy(limiter, "vote-writes", limits.Value.VoteWrites);
+                // Report and vote limits can be changed by staff while the app runs. The settings
+                // version is part of the partition key, so a change applies to everyone at once.
+                AddPolicy(limiter, "report-writes", limits.Value.ReportWrites, () => settings.Current.ReportWritesPerMinute, settings);
+                AddPolicy(limiter, "vote-writes", limits.Value.VoteWrites, () => settings.Current.VoteWritesPerMinute, settings);
                 AddPolicy(limiter, "push-writes", limits.Value.PushWrites);
                 AddPolicy(limiter, "auth-attempts", limits.Value.AuthAttempts);
             });
     }
 
-    private static void AddPolicy(RateLimiterOptions limiter, string name, RateLimitPolicyOptions policy)
+    private static void AddPolicy(
+        RateLimiterOptions limiter,
+        string name,
+        RateLimitPolicyOptions policy,
+        Func<int>? permitLimit = null,
+        IRuntimeSettings? settings = null)
     {
-        limiter.AddPolicy(name, context => RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            factory: _ => new FixedWindowRateLimiterOptions
+        limiter.AddPolicy(name, context =>
+        {
+            var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            var key = settings is null ? ip : $"{ip}:{settings.Current.Version}";
+
+            return RateLimitPartition.GetFixedWindowLimiter(key, _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = policy.PermitLimit,
+                PermitLimit = permitLimit?.Invoke() ?? policy.PermitLimit,
                 Window = TimeSpan.FromSeconds(policy.WindowSeconds),
                 QueueLimit = 0
-            }));
+            });
+        });
     }
 
     // Behind a reverse proxy the socket address is the proxy's, so rate limiting

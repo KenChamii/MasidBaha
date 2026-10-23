@@ -1,0 +1,137 @@
+<div class="page">
+  <div class="page__head">
+    <div>
+      <h1>Staff</h1>
+      <p class="page__lead">Create accounts, change roles and deactivate people who no longer need access.</p>
+    </div>
+  </div>
+
+  @if (credential(); as c) {
+    <div class="notice notice--warn" role="status">
+      <p>
+        <strong>{{ c.user.email }}</strong> signs in with this temporary password. It is shown only now; they must
+        replace it at their first sign-in.
+      </p>
+      <p class="mono" data-testid="temporary-password">{{ c.temporaryPassword }}</p>
+      <button type="button" class="btn btn--sm" (click)="dismissCredential()">I have copied it</button>
+    </div>
+  }
+
+  <form class="toolbar card card--flat" (ngSubmit)="create()">
+    <label class="field">
+      Email
+      <input type="email" name="email" required [ngModel]="email()" (ngModelChange)="email.set($event)" />
+    </label>
+    <label class="field">
+      Name
+      <input
+        type="text"
+        name="name"
+        required
+        maxlength="100"
+        [ngModel]="displayName()"
+        (ngModelChange)="displayName.set($event)"
+      />
+    </label>
+    <label class="field">
+      Role
+      <select name="role" [ngModel]="role()" (ngModelChange)="role.set($event)">
+        @for (r of roles; track r) {
+          <option [value]="r">{{ r }}</option>
+        }
+      </select>
+    </label>
+    <button type="submit" class="btn btn--primary btn--sm">Create account</button>
+    @if (formError(); as message) {
+      <p class="notice notice--error" role="alert">{{ message }}</p>
+    }
+  </form>
+
+  <form class="toolbar" (ngSubmit)="applySearch()">
+    <label class="field">
+      Search
+      <input
+        type="search"
+        name="search"
+        placeholder="Name or email"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+      />
+    </label>
+    <button type="submit" class="btn btn--sm">Search</button>
+  </form>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Person</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Last sign-in</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of users(); track user.id) {
+          <tr>
+            <td>
+              <strong>{{ user.displayName }}</strong>
+              @if (isMe(user)) {
+                <span class="badge badge--info">You</span>
+              }
+              <div class="muted">{{ user.email }}</div>
+            </td>
+            <td>
+              <select
+                [attr.aria-label]="'Role for ' + user.email"
+                [value]="user.role"
+                [disabled]="isMe(user)"
+                (change)="changeRole(user, $any($event.target).value)"
+              >
+                @for (r of roles; track r) {
+                  <option [value]="r" [selected]="r === user.role">{{ r }}</option>
+                }
+              </select>
+            </td>
+            <td>
+              @if (user.isActive) {
+                <span class="badge badge--ok">Active</span>
+              } @else {
+                <span class="badge badge--muted">Deactivated</span>
+              }
+              @if (user.mustChangePassword) {
+                <span class="badge badge--warn">Temporary password</span>
+              }
+              @if (user.twoFactorEnabled) {
+                <span class="badge badge--info">2FA</span>
+              }
+            </td>
+            <td>{{ user.lastLoginAt ? (user.lastLoginAt | date: 'medium') : 'Never' }}</td>
+            <td>
+              @if (!isMe(user)) {
+                <div class="table__actions">
+                  @if (user.isActive) {
+                    <button type="button" class="btn btn--sm" (click)="resetPassword(user)">Reset password</button>
+                    @if (user.twoFactorEnabled) {
+                      <button type="button" class="btn btn--sm" (click)="resetTwoFactor(user)">Reset 2FA</button>
+                    }
+                    <button type="button" class="btn btn--sm btn--danger" (click)="deactivate(user)">Deactivate</button>
+                  } @else {
+                    <button type="button" class="btn btn--sm" (click)="reactivate(user)">Reactivate</button>
+                  }
+                </div>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="table__empty">No staff accounts match.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pager [page]="page()" [pageSize]="pageSize" [totalCount]="totalCount()" (pageChange)="goToPage($event)" />
+</div>

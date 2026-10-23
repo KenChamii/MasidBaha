@@ -4,19 +4,51 @@
   <form class="login__card" (ngSubmit)="signIn()">
     <mb-brand />
     <h1>Admin panel</h1>
-    <p>Sign in with your staff account to review reports.</p>
 
-    <label class="login__field">
-      Email
-      <input type="email" name="email" [(ngModel)]="email" autocomplete="username" required />
-    </label>
+    @if (needsCode()) {
+      <p>
+        @if (useRecoveryCode()) {
+          Enter one of your recovery codes. Each one works only once.
+        } @else {
+          Enter the 6-digit code from your authenticator app.
+        }
+      </p>
 
-    <label class="login__field">
-      Password
-      <input type="password" name="password" [(ngModel)]="password" autocomplete="current-password" required />
-    </label>
+      <label class="login__field">
+        {{ useRecoveryCode() ? 'Recovery code' : 'Authentication code' }}
+        <input
+          type="text"
+          name="code"
+          [(ngModel)]="code"
+          [attr.inputmode]="useRecoveryCode() ? 'text' : 'numeric'"
+          autocomplete="one-time-code"
+          required
+        />
+      </label>
 
-    <button type="submit" [disabled]="isSigningIn()">{{ isSigningIn() ? 'Signing in…' : 'Sign in' }}</button>
+      <button type="submit" [disabled]="isSigningIn()">{{ isSigningIn() ? 'Checking…' : 'Verify' }}</button>
+
+      <div class="login__links">
+        <button type="button" class="login__link" (click)="toggleRecovery()">
+          {{ useRecoveryCode() ? 'Use my authenticator app' : 'Use a recovery code' }}
+        </button>
+        <button type="button" class="login__link" (click)="startOver()">Back</button>
+      </div>
+    } @else {
+      <p>Sign in with your staff account to review reports.</p>
+
+      <label class="login__field">
+        Email
+        <input type="email" name="email" [(ngModel)]="email" autocomplete="username" required />
+      </label>
+
+      <label class="login__field">
+        Password
+        <input type="password" name="password" [(ngModel)]="password" autocomplete="current-password" required />
+      </label>
+
+      <button type="submit" [disabled]="isSigningIn()">{{ isSigningIn() ? 'Signing in…' : 'Sign in' }}</button>
+    }
 
     @if (error(); as message) {
       <p class="login__error" role="alert">{{ message }}</p>

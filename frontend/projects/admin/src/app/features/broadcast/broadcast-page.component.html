@@ -1,0 +1,76 @@
+<div class="page">
+  <div class="page__head">
+    <div>
+      <h1>Broadcast</h1>
+      <p class="page__lead">Send a push announcement to everyone who turned alerts on, such as a typhoon warning.</p>
+    </div>
+  </div>
+
+  <div class="grid grid--2">
+    @if (auth.canModerate()) {
+      <section class="card">
+        <h2>New announcement</h2>
+        <form class="form" (ngSubmit)="send()">
+          <label class="field">
+            Title
+            <input
+              type="text"
+              name="title"
+              maxlength="80"
+              required
+              [ngModel]="title()"
+              (ngModelChange)="title.set($event)"
+            />
+            <small>{{ title().length }}/80</small>
+          </label>
+          <label class="field">
+            Message
+            <textarea
+              name="body"
+              maxlength="300"
+              required
+              [ngModel]="body()"
+              (ngModelChange)="body.set($event)"
+            ></textarea>
+            <small>{{ body().length }}/300</small>
+          </label>
+          <label class="field">
+            Opens
+            <input type="text" name="url" [ngModel]="url()" (ngModelChange)="url.set($event)" />
+            <small>A path inside the app, such as /map.</small>
+          </label>
+
+          @if (error(); as message) {
+            <p class="notice notice--error" role="alert">{{ message }}</p>
+          }
+
+          <div>
+            <button
+              type="submit"
+              class="btn btn--primary btn--sm"
+              [disabled]="sending() || !title().trim() || !body().trim()"
+            >
+              {{ sending() ? 'Sending…' : 'Send announcement' }}
+            </button>
+          </div>
+        </form>
+      </section>
+    }
+
+    <section class="card">
+      <h2>Sent</h2>
+      @for (item of history(); track item.id) {
+        <article class="sent">
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.body }}</p>
+          <p class="muted">
+            {{ item.sentAt | date: 'medium' }} · {{ item.sentByEmail }} · {{ item.recipients }} subscriber(s)
+          </p>
+        </article>
+      } @empty {
+        <p class="muted">Nothing sent yet.</p>
+      }
+      <app-pager [page]="page()" [pageSize]="pageSize" [totalCount]="totalCount()" (pageChange)="goToPage($event)" />
+    </section>
+  </div>
+</div>

@@ -20,24 +20,34 @@ public class GlobalExceptionHandler : IExceptionHandler
 
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
-        var (status, title, detail) = exception switch
+        ProblemDetails problem = exception switch
         {
-            NotFoundException e => (StatusCodes.Status404NotFound, "Not found", e.Message),
-            ConflictException e => (StatusCodes.Status409Conflict, "Conflict", e.Message),
-            _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred",
-                  "Something went wrong. Please try again.")
+            NotFoundException e => new ProblemDetails { Status = StatusCodes.Status404NotFound, Title = "Not found", Detail = e.Message },
+            ConflictException e => new ProblemDetails { Status = StatusCodes.Status409Conflict, Title = "Conflict", Detail = e.Message },
+            ForbiddenException e => new ProblemDetails { Status = StatusCodes.Status403Forbidden, Title = "Forbidden", Detail = e.Message },
+            ValidationFailedException e => new ValidationProblemDetails(e.Errors.ToDictionary(x => x.Key, x => x.Value))
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "One or more validation errors occurred."
+            },
+            _ => new ProblemDetails
+            {
+                Status = StatusCodes.Status500InternalServerError,
+                Title = "An unexpected error occurred",
+                Detail = "Something went wrong. Please try again."
+            }
         };
 
-        if (status >= 500)
+        if (problem.Status >= 500)
             _logger.LogError(exception, "Unhandled exception");
 
-        httpContext.Response.StatusCode = status;
+        httpContext.Response.StatusCode = problem.Status!.Value;
 
         return await _problemDetails.TryWriteAsync(new ProblemDetailsContext
         {
             HttpContext = httpContext,
             Exception = exception,
-            ProblemDetails = new ProblemDetails { Status = status, Title = title, Detail = detail }
+            ProblemDetails = problem
         });
     }
 }

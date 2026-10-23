@@ -31,6 +31,7 @@ public class GetNearbyReportsService : IGetNearbyReportsService
         var reports = await _db.FloodReports
             .AsNoTracking()
             .Where(r => r.Status == ReportStatus.Active
+                        && !r.IsHidden
                         && r.ExpiresAt > now
                         && r.Location.IsWithinDistance(center, query.RadiusMeters))
             .OrderByDescending(r => r.ReportedAt)

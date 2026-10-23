@@ -2,7 +2,8 @@ import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { API_BASE_URL, AdminAuthService } from '@masidbaha/shared';
+import { API_BASE_URL } from '@masidbaha/shared';
+import { AdminAuthService } from './api/admin-auth.service';
 import { unauthorizedInterceptor } from './unauthorized.interceptor';
 
 describe('unauthorizedInterceptor', () => {
@@ -24,7 +25,14 @@ describe('unauthorizedInterceptor', () => {
     backend = TestBed.inject(HttpTestingController);
     auth = TestBed.inject(AdminAuthService);
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    auth.user.set({ id: '1', email: 'a@test.local', displayName: 'A', roles: ['Moderator'] });
+    auth.user.set({
+      id: '1',
+      email: 'a@test.local',
+      displayName: 'A',
+      roles: ['Moderator'],
+      mustChangePassword: false,
+      twoFactorEnabled: false
+    });
   });
 
   function get(url: string, status: number): void {

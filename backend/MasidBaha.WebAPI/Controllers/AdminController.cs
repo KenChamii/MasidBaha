@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using Asp.Versioning;
 using MasidBaha.Application.Admin;
 using MasidBaha.Application.Common.Enums;
@@ -54,6 +56,70 @@ public class AdminController : ControllerBase
     public async Task<ActionResult<AdminGetReportsResult>> GetReports([FromQuery] AdminGetReportsQuery query)
     {
         return Ok(await _adminReportsService.GetReportsAsync(query));
+    }
+
+    /// <summary>Everything staff need to judge one report: votes, reporter trust, flags, bans and history.</summary>
+    [HttpGet("reports/{id:guid}")]
+    [ProducesResponseType<AdminReportDetailDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<AdminReportDetailDto>> GetDetail(Guid id, CancellationToken cancellationToken)
+    {
+        return Ok(await _adminReportsService.GetDetailAsync(id, cancellationToken));
+    }
+
+    /// <summary>Lightweight points for the admin map, using the same filters as the table.</summary>
+    [HttpGet("reports/map")]
+    [ProducesResponseType<List<AdminMapPointDto>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<AdminMapPointDto>>> GetMap([FromQuery] AdminReportFilter filter, CancellationToken cancellationToken)
+    {
+        return Ok(await _adminReportsService.GetMapPointsAsync(filter, cancellationToken));
+    }
+
+    /// <summary>Downloads the filtered reports as CSV (the export is recorded in the audit log).</summary>
+    [HttpGet("reports/export")]
+    [Produces("text/csv")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task Export([FromQuery] AdminReportFilter filter, CancellationToken cancellationToken)
+    {
+        var rows = await _adminReportsService.ExportAsync(filter, cancellationToken);
+
+        Response.ContentType = "text/csv; charset=utf-8";
+        Response.Headers.ContentDisposition = $"attachment; filename=\"masidbaha-reports-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv\"";
+
+        await using var writer = new StreamWriter(Response.Body, new UTF8Encoding(true), leaveOpen: true);
+        await writer.WriteLineAsync("id,reported_at,expires_at,status,severity,confidence,lat,lng,region,province,city,hidden,notes,reporter_session,reporter_ip_fingerprint");
+        await foreach (var r in rows.WithCancellation(cancellationToken))
+        {
+            await writer.WriteLineAsync(string.Join(',',
+                r.Id, r.ReportedAt.ToString("o"), r.ExpiresAt.ToString("o"), r.Status, r.Severity, r.ConfidenceScore,
+                r.Lat.ToString(CultureInfo.InvariantCulture), r.Lng.ToString(CultureInfo.InvariantCulture),
+                Csv(r.Region), Csv(r.Province), Csv(r.City), r.IsHidden, Csv(r.Notes), Csv(r.ReporterSessionId), Csv(r.ReporterIpFingerprint)));
+        }
+    }
+
+    // Quotes a field and defuses cells a spreadsheet would run as a formula (notes are user-written)
+    private static string Csv(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return "";
+        var text = value.Replace("\r", " ").Replace("\n", " ");
+        if (text[0] is '=' or '+' or '-' or '@' or '\t') text = "'" + text;
+        return "\"" + text.Replace("\"", "\"\"") + "\"";
+    }
+
+    /// <summary>Pulls a report off the public map (or puts it back) without deleting it.</summary>
+    [HttpPatch("reports/{id:guid}/hidden")]
+    [Authorize(Policy = AdminPolicies.CanModerate)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> SetHidden(Guid id, AdminSetHiddenRequest request, CancellationToken cancellationToken)
+    {
+        if (!await _adminReportsService.SetHiddenAsync(id, request.Hidden, cancellationToken))
+            return Problem(detail: "Report not found.", statusCode: StatusCodes.Status404NotFound);
+
+        await _cache.EvictByTagAsync(FloodReportsController.CacheTag, cancellationToken);
+        if (request.Hidden)
+            await _hubContext.Clients.All.SendAsync("RemoveReport", id, cancellationToken);
+        return NoContent();
     }
 
     // "Verify" = force status to Resolved/Active/Expired directly, bypassing

@@ -1,0 +1,199 @@
+<div class="page">
+  <p><a routerLink="/reports">← All reports</a></p>
+
+  @if (notFound()) {
+    <p class="notice notice--error" role="alert">That report no longer exists.</p>
+  } @else if (detail(); as d) {
+    @let r = d.report;
+
+    <div class="page__head">
+      <div>
+        <h1>{{ locationOf(r) }}</h1>
+        <p class="page__lead">
+          <span class="dot" [style.background]="severityColor[r.severity]"></span>{{ severityName[r.severity] }} ·
+          reported {{ timeAgo(r.reportedAt) }} ·
+          <span [class]="'badge ' + badgeByStatus[r.status]">{{ statusLabel[r.status] }}</span>
+          @if (r.isHidden) {
+            <span class="badge badge--warn">Hidden</span>
+          }
+        </p>
+      </div>
+
+      @if (auth.canModerate()) {
+        <div class="table__actions">
+          @if (r.status !== 2) {
+            <button type="button" class="btn btn--sm" (click)="setStatus(2)">Resolve</button>
+          }
+          @if (r.status !== 3) {
+            <button type="button" class="btn btn--sm" (click)="setStatus(3)">Expire</button>
+          }
+          @if (r.status !== 1) {
+            <button type="button" class="btn btn--sm" (click)="setStatus(1)">Reactivate</button>
+          }
+          <button type="button" class="btn btn--sm" (click)="toggleHidden(r.isHidden)">
+            {{ r.isHidden ? 'Unhide' : 'Hide' }}
+          </button>
+          <button type="button" class="btn btn--sm btn--danger" (click)="remove()">Delete</button>
+        </div>
+      }
+    </div>
+
+    @if (d.flags.length) {
+      <p class="notice notice--warn" role="status">
+        <strong>Flagged:</strong>
+        @for (flag of d.flags; track flag) {
+          <span class="badge badge--warn">{{ flagLabel[flag] ?? flag }}</span>
+        }
+      </p>
+    }
+
+    <div class="grid grid--2">
+      <section class="card">
+        <h2>Report</h2>
+        <dl class="facts">
+          <dt>Notes</dt>
+          <dd>{{ r.notes || '—' }}</dd>
+          <dt>Confidence</dt>
+          <dd>{{ r.confidenceScore }}</dd>
+          <dt>Coordinates</dt>
+          <dd class="mono">{{ r.lat.toFixed(5) }}, {{ r.lng.toFixed(5) }}</dd>
+          <dt>Region</dt>
+          <dd>{{ fullPlace(r) }}</dd>
+          <dt>Reported</dt>
+          <dd>{{ r.reportedAt | date: 'medium' }}</dd>
+          <dt>Expires</dt>
+          <dd>{{ r.expiresAt | date: 'medium' }}</dd>
+        </dl>
+        @if (r.photoUrl) {
+          <img class="photo" [src]="r.photoUrl" alt="Photo attached to the report" loading="lazy" />
+        }
+      </section>
+
+      <section class="card">
+        <h2>Reporter</h2>
+        <dl class="facts">
+          <dt>Session</dt>
+          <dd class="mono">{{ r.reporterSessionId }}</dd>
+          <dt>Network</dt>
+          <dd class="mono">{{ r.reporterIpFingerprint || 'not recorded' }}</dd>
+          <dt>Trust</dt>
+          <dd>
+            @if (d.reporterTrust.trustScore === null) {
+              No rating yet
+            } @else {
+              {{ d.reporterTrust.trustScore }}% ({{ d.reporterTrust.resolvedReports }} of
+              {{ d.reporterTrust.totalReports }} reports confirmed)
+            }
+          </dd>
+          <dt>Active reports</dt>
+          <dd>{{ d.reporterTrust.activeReports }}</dd>
+        </dl>
+
+        <h2>Bans</h2>
+        @for (ban of d.activeBans; track ban.id) {
+          <p>
+            <span class="badge" [class.badge--danger]="ban.mode === 1" [class.badge--warn]="ban.mode === 2">
+              {{ ban.mode === 1 ? 'Block' : 'Shadow' }}
+            </span>
+            {{ ban.kind === 1 ? 'Session' : 'Network' }} — {{ ban.reason }}
+            @if (auth.canModerate()) {
+              <button type="button" class="btn btn--sm" (click)="liftBan(ban.id)">Lift</button>
+            }
+          </p>
+        } @empty {
+          <p class="muted">Not banned.</p>
+        }
+
+        @if (auth.canModerate() && !banOpen()) {
+          <button type="button" class="btn btn--sm btn--danger" (click)="banOpen.set(true)">Ban this reporter…</button>
+        }
+
+        @if (banOpen()) {
+          <form class="form" (ngSubmit)="submitBan()">
+            <label class="field">
+              Ban
+              <select name="kind" [ngModel]="banKind()" (ngModelChange)="banKind.set($event)">
+                <option [ngValue]="1">This session</option>
+                @if (r.reporterIpFingerprint) {
+                  <option [ngValue]="2">This network (IP)</option>
+                }
+              </select>
+            </label>
+            <label class="field">
+              Effect
+              <select name="mode" [ngModel]="banMode()" (ngModelChange)="banMode.set($event)">
+                <option [ngValue]="2">Shadow — looks accepted, nobody else sees it</option>
+                <option [ngValue]="1">Block — reports and votes are refused</option>
+              </select>
+            </label>
+            <label class="field">
+              Reason
+              <input
+                type="text"
+                name="reason"
+                maxlength="200"
+                required
+                [ngModel]="banReason()"
+                (ngModelChange)="banReason.set($event)"
+              />
+            </label>
+            <label class="field">
+              Expires after (hours, empty = never)
+              <input
+                type="number"
+                name="hours"
+                min="1"
+                max="8760"
+                [ngModel]="banHours()"
+                (ngModelChange)="banHours.set($event)"
+              />
+            </label>
+            <label class="check">
+              <input type="checkbox" name="hide" [ngModel]="banHide()" (ngModelChange)="banHide.set($event)" />
+              Also hide their existing reports
+            </label>
+
+            @if (banError(); as message) {
+              <p class="notice notice--error" role="alert">{{ message }}</p>
+            }
+
+            <div class="table__actions">
+              <button type="submit" class="btn btn--danger btn--sm" [disabled]="banBusy()">Ban</button>
+              <button type="button" class="btn btn--ghost btn--sm" (click)="banOpen.set(false)">Cancel</button>
+            </div>
+          </form>
+        }
+      </section>
+
+      <section class="card">
+        <h2>Votes ({{ d.votes.length }})</h2>
+        @for (vote of d.votes; track vote.voterSessionId) {
+          <p>
+            <span class="badge" [class.badge--ok]="vote.voteType === 1" [class.badge--danger]="vote.voteType === -1">
+              {{ vote.voteType === 1 ? 'Still flooded' : 'Cleared' }}
+            </span>
+            <span class="mono">{{ vote.voterSessionId }}</span> · {{ timeAgo(vote.votedAt) }}
+          </p>
+        } @empty {
+          <p class="muted">No votes yet.</p>
+        }
+      </section>
+
+      <section class="card">
+        <h2>History</h2>
+        @for (entry of d.history; track entry.id) {
+          <p>
+            <strong>{{ entry.action }}</strong> by {{ entry.actorEmail }} · {{ entry.at | date: 'medium' }}
+            @if (entry.details) {
+              <span class="mono">{{ entry.details | json }}</span>
+            }
+          </p>
+        } @empty {
+          <p class="muted">No staff actions on this report.</p>
+        }
+      </section>
+    </div>
+  } @else {
+    <p class="muted">Loading…</p>
+  }
+</div>

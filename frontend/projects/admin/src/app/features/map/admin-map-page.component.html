@@ -1,0 +1,48 @@
+<div class="page">
+  <div class="page__head">
+    <div>
+      <h1>Map</h1>
+      <p class="page__lead">Where reports are coming from. Click a marker to open the report.</p>
+    </div>
+  </div>
+
+  <form class="toolbar">
+    <label class="field">
+      Status
+      <select name="status" [ngModel]="status()" (ngModelChange)="status.set($event); load()">
+        <option value="">Any</option>
+        <option [ngValue]="1">Active</option>
+        <option [ngValue]="2">Resolved</option>
+        <option [ngValue]="3">Expired</option>
+      </select>
+    </label>
+    <label class="field">
+      Severity
+      <select name="severity" [ngModel]="severity()" (ngModelChange)="severity.set($event); load()">
+        <option value="">Any</option>
+        @for (s of severities; track s) {
+          <option [ngValue]="s">{{ severityName[s] }}</option>
+        }
+      </select>
+    </label>
+    <label class="check">
+      <input
+        type="checkbox"
+        name="hidden"
+        [ngModel]="includeHidden()"
+        (ngModelChange)="includeHidden.set($event); load()"
+      />
+      Include hidden
+    </label>
+    <span class="muted" aria-live="polite">{{ isLoading() ? 'Loading…' : count() + ' on the map' }}</span>
+  </form>
+
+  <div #map class="map" role="application" aria-label="Map of flood reports"></div>
+
+  <div class="legend">
+    @for (s of severities; track s) {
+      <span><span class="dot" [style.background]="severityColor[s]"></span>{{ severityName[s] }}</span>
+    }
+    <span class="muted">Faded = not active · dashed outline = hidden from the public</span>
+  </div>
+</div>
