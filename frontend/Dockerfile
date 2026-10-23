@@ -2,7 +2,7 @@
 #   docker build --build-arg PROJECT=web   -t masidbaha-web   frontend
 #   docker build --build-arg PROJECT=admin -t masidbaha-admin frontend
 
-FROM node:22-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /app
 
 # Install first, on the manifests alone, so this layer is cached until a dependency changes.
