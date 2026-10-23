@@ -8,7 +8,7 @@ namespace MasidBaha.Application.PushNotifications;
 
 public interface IPushNotificationService
 {
-    // Sends to every stored subscription. Should never throw, since a push
+    // Sends to the subscriptions that should hear about it (see PushPayload). Should never throw, since a push
     // failure shouldn't stop a report from being created.
     Task BroadcastAsync(PushPayload payload, CancellationToken cancellationToken = default);
 }
@@ -42,7 +42,7 @@ public class PushNotificationService : IPushNotificationService
             return;
         }
 
-        var subscriptions = await _subscriptionService.GetAllAsync();
+        var subscriptions = await _subscriptionService.GetRecipientsAsync(payload.Lat, payload.Lng, payload.RadiusMeters, cancellationToken);
         if (subscriptions.Count == 0) return;
 
         var vapidDetails = new VapidDetails(_vapid.Subject, _vapid.PublicKey, _vapid.PrivateKey);

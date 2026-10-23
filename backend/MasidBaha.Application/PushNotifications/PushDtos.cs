@@ -28,6 +28,14 @@ public class PushPayload
     public string Body { get; set; } = string.Empty;
     // Where to navigate when the notification is tapped (e.g. "/map").
     public string Url { get; set; } = "/map";
+
+    // Where it happened. Without a location the notification goes to every subscriber.
+    public double? Lat { get; set; }
+    public double? Lng { get; set; }
+
+    // Set for an announcement about a whole area: only people watching somewhere that overlaps the
+    // circle get it. Left empty for a single event (a new report), which reaches whoever watches that spot.
+    public int? RadiusMeters { get; set; }
 }
 
 public class PushSubscriptionDtoValidator : AbstractValidator<PushSubscriptionDto>

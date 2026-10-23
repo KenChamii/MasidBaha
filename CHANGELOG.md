@@ -6,6 +6,11 @@ commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### Added
+- **Watch areas.** Visitors choose up to five places (home, work, school) and are alerted only about new
+  reports near them. Nobody signs up: the places belong to the anonymous session. Matching runs in
+  PostGIS (`ST_DWithin` on a GiST index). People who never choose a place keep getting every alert.
+- **Area-limited announcements.** Staff can send a broadcast only to people who watch a place inside a
+  chosen circle (for example, a typhoon warning for Metro Manila).
 - Docker images for the API and for each Angular app (nginx), and a `docker compose --profile app up`
   that runs the whole stack with one command.
 - GitHub Actions: CI (backend tests, frontend lint, tests and build, Docker builds), CodeQL, Dependabot
@@ -14,6 +19,11 @@ commit messages follow [Conventional Commits](https://www.conventionalcommits.or
   proxies the API so cookies stay first-party. See `docs/deploy.md`.
 - `Security:TrustedProxySecret`: lets the Cloudflare proxy pass the visitor's real IP to the API for rate
   limits and bans, only when it presents the shared secret.
+
+### Fixed
+- Uploaded photos could not be attached to a report on Linux servers (a path starting with `/` was
+  mistaken for an absolute URL).
+- The OpenStreetMap map tiles were blocked on the deployed sites by an overly strict referrer policy.
 
 ## 0.4.0 - Admin portal
 

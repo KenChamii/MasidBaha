@@ -42,7 +42,7 @@ public class PostgisFixture : IAsyncLifetime
     {
         await using var db = CreateDbContext();
         await db.Database.ExecuteSqlRawAsync(
-            "TRUNCATE report_votes, flood_reports, push_subscriptions, reporter_bans, admin_audit_log, broadcasts, app_settings RESTART IDENTITY CASCADE");
+            "TRUNCATE report_votes, flood_reports, push_subscriptions, watch_areas, reporter_bans, admin_audit_log, broadcasts, app_settings RESTART IDENTITY CASCADE");
     }
 }
 

@@ -57,6 +57,11 @@ public class Broadcast
     public DateTime SentAt { get; set; }
     public string SentByEmail { get; set; } = string.Empty;
     public int Recipients { get; set; }
+
+    // Set when the announcement went only to people watching somewhere within this circle
+    public double? AreaLat { get; set; }
+    public double? AreaLng { get; set; }
+    public int? AreaRadiusMeters { get; set; }
 }
 
 // A runtime override of a configured default (see RuntimeSettings)

@@ -65,4 +65,27 @@ describe('AdminApiService', () => {
 
     backend.expectOne('https://api.test/api/v1/admin/sessions/a%2Fb%20c/trust').flush({});
   });
+
+  it('sends an announcement to everyone when no area is chosen', () => {
+    api.sendBroadcast('Typhoon', 'Stay safe', '/map').subscribe();
+
+    const req = backend.expectOne('https://api.test/api/v1/admin/broadcasts');
+    expect(req.request.body).toEqual({
+      title: 'Typhoon',
+      body: 'Stay safe',
+      url: '/map',
+      areaLat: null,
+      areaLng: null,
+      areaRadiusMeters: null
+    });
+    req.flush({});
+  });
+
+  it('limits an announcement to a circle when an area is chosen', () => {
+    api.sendBroadcast('Typhoon', 'Metro Manila only', '/map', { lat: 14.6, lng: 121, radiusMeters: 30000 }).subscribe();
+
+    const req = backend.expectOne('https://api.test/api/v1/admin/broadcasts');
+    expect(req.request.body).toMatchObject({ areaLat: 14.6, areaLng: 121, areaRadiusMeters: 30000 });
+    req.flush({});
+  });
 });

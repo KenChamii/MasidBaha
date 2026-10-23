@@ -19,6 +19,7 @@ public class MasidBahaDbContext : IdentityDbContext<AdminUser, IdentityRole<Guid
     public DbSet<ReporterBan> ReporterBans => Set<ReporterBan>();
     public DbSet<AuditEntry> AuditLog => Set<AuditEntry>();
     public DbSet<Broadcast> Broadcasts => Set<Broadcast>();
+    public DbSet<WatchArea> WatchAreas => Set<WatchArea>();
     public DbSet<AppSetting> AppSettings => Set<AppSetting>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -112,6 +113,19 @@ public class MasidBahaDbContext : IdentityDbContext<AdminUser, IdentityRole<Guid
             e.Property(x => x.Auth).HasMaxLength(500).IsRequired();
             e.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
             e.HasIndex(x => x.Endpoint).IsUnique();
+        });
+
+        modelBuilder.Entity<WatchArea>(e =>
+        {
+            e.ToTable("watch_areas");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.SessionId).HasMaxLength(100).IsRequired();
+            e.Property(x => x.Name).HasMaxLength(40).IsRequired();
+            e.Property(x => x.Location).HasColumnType("geography (point, 4326)");
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
+            e.HasIndex(x => x.SessionId);
+            // GiST so "which areas are near this report?" uses the index
+            e.HasIndex(x => x.Location).HasMethod("gist");
         });
 
         modelBuilder.Entity<ReporterBan>(e =>

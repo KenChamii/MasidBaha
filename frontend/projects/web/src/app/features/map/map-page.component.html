@@ -10,6 +10,7 @@
   <div class="map-page__toolbar">
     <mb-theme-toggle />
     <app-push-toggle />
+    <app-watch-areas [center]="mapCenter()" />
     <button type="button" class="map-page__list-toggle" (click)="toggleList()">
       {{ showList() ? 'Itago ang listahan' : 'Ipakita ang listahan (' + store.topReports().length + ')' }}
     </button>

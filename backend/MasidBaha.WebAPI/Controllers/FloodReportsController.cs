@@ -121,7 +121,10 @@ public class FloodReportsController : ControllerBase
             {
                 Title = "Bagong ulat ng baha",
                 Body = $"{report.Severity} sa {locationLabel}",
-                Url = "/map"
+                Url = "/map",
+                // Only people watching this spot (or who never chose places) are alerted
+                Lat = report.Lat,
+                Lng = report.Lng
             });
         }
 
