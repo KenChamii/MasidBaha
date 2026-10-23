@@ -1,0 +1,51 @@
+# Render blueprint for the API. Postgres lives on Neon and the two sites on Cloudflare Pages
+# (photos can move to Cloudflare R2 later). See docs/deploy.md for the whole walkthrough.
+#
+# Values marked `sync: false` are asked for once, in the Render dashboard, when the
+# blueprint is first applied. They are secrets, so none of them are in this file.
+services:
+  - type: web
+    name: masidbaha-api
+    runtime: docker
+    plan: free
+    region: singapore # closest to the Philippines; keep it in the same region as the Neon project
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    # Deploys when CI passes on master, not on every push
+    autoDeployTrigger: checksPass
+    # The cheap liveness check: it does not touch the database, so it never wakes Neon
+    healthCheckPath: /health
+    envVars:
+      # Render sends traffic to the port in $PORT (10000 by default)
+      - key: ASPNETCORE_HTTP_PORTS
+        value: "10000"
+
+      - key: ConnectionStrings__MasidBahaDb
+        sync: false # Neon connection string, see docs/deploy.md
+      - key: Database__SeedDemoData
+        value: "false"
+
+      # The signing key for visitor sessions and IP hashes. Generated once; changing it signs everyone out.
+      - key: Security__SessionSigningKey
+        generateValue: true
+      # Render terminates HTTPS, so trust its forwarded scheme
+      - key: Security__TrustForwardedHeaders
+        value: "true"
+      # Must equal PROXY_SECRET in the Cloudflare Pages projects (32+ random characters)
+      - key: Security__TrustedProxySecret
+        sync: false
+
+      # Creates the first SuperAdmin on the first start. Afterwards, change the password in the admin panel.
+      - key: AdminAuth__InitialAdmin__Email
+        sync: false
+      - key: AdminAuth__InitialAdmin__Password
+        sync: false
+
+      # Photos are kept on the container's disk, which Render wipes on every deploy. That is fine
+      # for a demo; for real use switch to Cloudflare R2 (S3-compatible): set Storage__Provider to S3
+      # and add Storage__S3__ServiceUrl, Bucket, AccessKey, SecretKey, PublicBaseUrl (docs/deploy.md).
+      - key: Storage__Provider
+        value: Local
+
+      # Web push is off until you add Vapid__PublicKey, Vapid__PrivateKey and Vapid__Subject
+      # (mailto:you@example.com) in the Render dashboard. Generate the keys with: npx web-push generate-vapid-keys

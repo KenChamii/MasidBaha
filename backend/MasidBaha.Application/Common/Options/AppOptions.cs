@@ -133,6 +133,10 @@ public class SecurityOptions
     // proxy that terminates TLS it needs TrustForwardedHeaders as well.
     public bool RequireHttps { get; set; }
 
+    // Shared secret of the Cloudflare Pages proxy (functions/[[path]].js). When set, a request that
+    // presents it in X-Proxy-Secret may state the visitor's address in X-Client-IP.
+    [MinLength(24)] public string? TrustedProxySecret { get; set; }
+
     [Required] public string SessionCookieName { get; set; } = "mb_session";
 
     // Secret used to sign the anonymous session cookie (at least 32 characters).
