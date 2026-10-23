@@ -7,8 +7,10 @@
 //   API_ORIGIN    https://<your-service>.onrender.com   (no trailing slash needed)
 //   PROXY_SECRET  the same value as Security__TrustedProxySecret on the API
 export async function onRequest({ request, env }) {
-  if (!env.API_ORIGIN || !env.PROXY_SECRET) {
-    return new Response('The API proxy is not configured (API_ORIGIN / PROXY_SECRET).', { status: 500 });
+  // Says which setting is missing (names only, never values), so the fix is obvious
+  const missing = ['API_ORIGIN', 'PROXY_SECRET'].filter(name => !env[name]);
+  if (missing.length > 0) {
+    return new Response(`The API proxy is not configured: missing ${missing.join(' and ')}.`, { status: 500 });
   }
 
   const incoming = new URL(request.url);
