@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, computed, inject, signal, viewChild } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { FloodReportService, HeatmapPoint, TranslatePipe } from '@masidbaha/shared';
 import * as L from 'leaflet';
 import 'leaflet.heat';
@@ -31,7 +32,7 @@ type HeatLayerFactory = (points: [number, number, number][], options: Record<str
 
 @Component({
   selector: 'app-analytics-page',
-  imports: [TranslatePipe],
+  imports: [RouterLink, TranslatePipe],
   templateUrl: './analytics-page.component.html',
   styleUrls: ['./analytics-page.component.scss']
 })
@@ -44,6 +45,8 @@ export class AnalyticsPageComponent implements AfterViewInit, OnDestroy {
 
   protected readonly range = signal<RangeOption>('6m');
   protected readonly isLoading = signal(false);
+  // on a phone the filters start closed, so the map gets the screen
+  protected readonly filtersOpen = signal(window.innerWidth > 800);
   protected readonly points = signal<HeatmapPoint[]>([]);
 
   protected readonly selectedRegion = signal<string | null>(null);

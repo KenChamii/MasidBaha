@@ -1,64 +1,82 @@
 <div class="analytics-page" role="main">
   <div class="analytics-page__panel">
+    <div class="analytics-page__bar">
+      <a class="analytics-page__back" routerLink="/map">&larr; {{ 'analytics.back' | t }}</a>
+      <button
+        type="button"
+        class="analytics-page__toggle"
+        [attr.aria-expanded]="filtersOpen()"
+        (click)="filtersOpen.set(!filtersOpen())"
+      >
+        @if (filtersOpen()) {
+          {{ 'analytics.hideFilters' | t }}
+        } @else {
+          {{ 'analytics.showFilters' | t }}
+        }
+      </button>
+    </div>
+
     <h2>{{ 'analytics.title' | t }}</h2>
     <p class="analytics-page__subtitle">
       {{ 'analytics.sub' | t }}
     </p>
 
-    <div class="analytics-page__field">
-      <span class="analytics-page__label" id="range-label">{{ 'analytics.range' | t }}</span>
-      <div class="analytics-page__range-buttons" role="group" aria-labelledby="range-label">
-        <button type="button" [class.active]="range() === '1m'" (click)="setRange('1m')">
-          {{ 'analytics.range.1m' | t }}
-        </button>
-        <button type="button" [class.active]="range() === '3m'" (click)="setRange('3m')">
-          {{ 'analytics.range.3m' | t }}
-        </button>
-        <button type="button" [class.active]="range() === '6m'" (click)="setRange('6m')">
-          {{ 'analytics.range.6m' | t }}
-        </button>
-        <button type="button" [class.active]="range() === '1y'" (click)="setRange('1y')">
-          {{ 'analytics.range.1y' | t }}
-        </button>
-        <button type="button" [class.active]="range() === 'all'" (click)="setRange('all')">
-          {{ 'analytics.range.all' | t }}
-        </button>
-      </div>
-    </div>
-
-    <div class="analytics-page__field">
-      <label for="region-select">{{ 'analytics.region' | t }}</label>
-      <select id="region-select" (change)="onRegionChange($event)">
-        <option value="">{{ 'analytics.allRegions' | t }}</option>
-        @for (r of availableRegions(); track r) {
-          <option [value]="r" [selected]="r === selectedRegion()">{{ r }}</option>
-        }
-      </select>
-    </div>
-
-    @if (selectedRegion()) {
+    <div class="analytics-page__filters" [class.analytics-page__filters--closed]="!filtersOpen()">
       <div class="analytics-page__field">
-        <label for="province-select">{{ 'analytics.province' | t }}</label>
-        <select id="province-select" (change)="onProvinceChange($event)">
-          <option value="">{{ 'analytics.allProvinces' | t }}</option>
-          @for (p of availableProvinces(); track p) {
-            <option [value]="p" [selected]="p === selectedProvince()">{{ p }}</option>
+        <span class="analytics-page__label" id="range-label">{{ 'analytics.range' | t }}</span>
+        <div class="analytics-page__range-buttons" role="group" aria-labelledby="range-label">
+          <button type="button" [class.active]="range() === '1m'" (click)="setRange('1m')">
+            {{ 'analytics.range.1m' | t }}
+          </button>
+          <button type="button" [class.active]="range() === '3m'" (click)="setRange('3m')">
+            {{ 'analytics.range.3m' | t }}
+          </button>
+          <button type="button" [class.active]="range() === '6m'" (click)="setRange('6m')">
+            {{ 'analytics.range.6m' | t }}
+          </button>
+          <button type="button" [class.active]="range() === '1y'" (click)="setRange('1y')">
+            {{ 'analytics.range.1y' | t }}
+          </button>
+          <button type="button" [class.active]="range() === 'all'" (click)="setRange('all')">
+            {{ 'analytics.range.all' | t }}
+          </button>
+        </div>
+      </div>
+
+      <div class="analytics-page__field">
+        <label for="region-select">{{ 'analytics.region' | t }}</label>
+        <select id="region-select" (change)="onRegionChange($event)">
+          <option value="">{{ 'analytics.allRegions' | t }}</option>
+          @for (r of availableRegions(); track r) {
+            <option [value]="r" [selected]="r === selectedRegion()">{{ r }}</option>
           }
         </select>
       </div>
-    }
 
-    @if (selectedProvince()) {
-      <div class="analytics-page__field">
-        <label for="city-select">{{ 'analytics.city' | t }}</label>
-        <select id="city-select" (change)="onCityChange($event)">
-          <option value="">{{ 'analytics.allCities' | t }}</option>
-          @for (c of availableCities(); track c) {
-            <option [value]="c" [selected]="c === selectedCity()">{{ c }}</option>
-          }
-        </select>
-      </div>
-    }
+      @if (selectedRegion()) {
+        <div class="analytics-page__field">
+          <label for="province-select">{{ 'analytics.province' | t }}</label>
+          <select id="province-select" (change)="onProvinceChange($event)">
+            <option value="">{{ 'analytics.allProvinces' | t }}</option>
+            @for (p of availableProvinces(); track p) {
+              <option [value]="p" [selected]="p === selectedProvince()">{{ p }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      @if (selectedProvince()) {
+        <div class="analytics-page__field">
+          <label for="city-select">{{ 'analytics.city' | t }}</label>
+          <select id="city-select" (change)="onCityChange($event)">
+            <option value="">{{ 'analytics.allCities' | t }}</option>
+            @for (c of availableCities(); track c) {
+              <option [value]="c" [selected]="c === selectedCity()">{{ c }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
 
     @if (isLoading()) {
       <p class="analytics-page__count" aria-busy="true">

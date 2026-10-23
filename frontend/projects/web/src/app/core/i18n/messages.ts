@@ -338,6 +338,9 @@ export const WEB_MESSAGES: Dictionaries = {
     'analytics.allProvinces': 'All provinces',
     'analytics.city': 'City or town',
     'analytics.allCities': 'All cities and towns',
+    'analytics.back': 'Back to the map',
+    'analytics.showFilters': 'Filters',
+    'analytics.hideFilters': 'Hide filters',
     'analytics.loading': 'Loading…',
     'analytics.count': '{n} historical reports'
   },
@@ -681,6 +684,9 @@ export const WEB_MESSAGES: Dictionaries = {
     'analytics.allProvinces': 'Lahat ng probinsya',
     'analytics.city': 'Lungsod o bayan',
     'analytics.allCities': 'Lahat ng lungsod at bayan',
+    'analytics.back': 'Bumalik sa mapa',
+    'analytics.showFilters': 'Mga filter',
+    'analytics.hideFilters': 'Itago ang mga filter',
     'analytics.loading': 'Naglo-load…',
     'analytics.count': '{n} makasaysayang ulat'
   }

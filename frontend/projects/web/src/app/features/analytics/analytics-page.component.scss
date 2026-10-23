@@ -36,6 +36,10 @@
   @media (max-width: 800px) {
     flex-direction: column;
 
+    &__filters--closed {
+      display: none;
+    }
+
     &__panel {
       width: 100%;
       flex: 0 0 auto;
@@ -60,6 +64,39 @@
 
     &__map {
       min-height: 180px;
+    }
+  }
+
+  &__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 0.9rem;
+  }
+
+  &__back {
+    @include m.mono-label;
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    color: var(--mb-water-text);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+
+    &:hover {
+      border-bottom-color: var(--mb-water);
+    }
+  }
+
+  // only needed where the filters can be closed (the stacked layout)
+  &__toggle {
+    @include m.press-button;
+    padding: 6px 14px;
+    font-size: 0.72rem;
+
+    @media (min-width: 801px) {
+      display: none;
     }
   }
 
