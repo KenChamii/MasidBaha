@@ -4,35 +4,35 @@
     <div class="hero__text">
       <span class="eyebrow">
         <app-pulse-pin tone="water" size="sm"></app-pulse-pin>
-        {{ 'landing.eyebrow' | t }}
+        {{ 'home.eyebrow' | t }}
       </span>
 
-      <h1 class="hero__heading">
-        {{ 'landing.heading1' | t }}<br />
-        {{ 'landing.heading2' | t }}
-      </h1>
+      <h1 class="hero__heading">{{ 'home.title' | t }}</h1>
 
-      <p class="hero__sub">
-        {{ 'landing.sub' | t }}
-      </p>
+      <p class="hero__sub">{{ 'home.lede' | t }}</p>
 
       <div class="hero__actions">
-        <button class="btn btn--primary" (click)="goToMap()">{{ 'landing.openMap' | t }}</button>
-        <a class="btn btn--ghost" routerLink="/" fragment="how-it-works"> {{ 'landing.how' | t }} </a>
+        <button class="btn btn--primary" (click)="goToMap()">{{ 'home.openMap' | t }}</button>
+        <a class="btn btn--ghost" routerLink="/" fragment="how">{{ 'home.how' | t }}</a>
       </div>
+      <p class="hero__note">{{ 'home.demoNote' | t }}</p>
 
-      <dl class="hero__stats">
-        <div class="stat">
-          <dt>{{ 'landing.stat1.value' | t }}</dt>
-          <dd>{{ 'landing.stat1.label' | t }}</dd>
+      <dl class="facts">
+        <div>
+          <dt>{{ 'home.fact1.label' | t }}</dt>
+          <dd>{{ 'home.fact1.value' | t }}</dd>
         </div>
-        <div class="stat">
-          <dt>{{ 'landing.stat2.value' | t }}</dt>
-          <dd>{{ 'landing.stat2.label' | t }}</dd>
+        <div>
+          <dt>{{ 'home.fact2.label' | t }}</dt>
+          <dd>{{ 'home.fact2.value' | t }}</dd>
         </div>
-        <div class="stat">
-          <dt>{{ 'landing.stat3.value' | t }}</dt>
-          <dd>{{ 'landing.stat3.label' | t }}</dd>
+        <div>
+          <dt>{{ 'home.fact3.label' | t }}</dt>
+          <dd>{{ 'home.fact3.value' | t }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'home.fact4.label' | t }}</dt>
+          <dd>{{ 'home.fact4.value' | t }}</dd>
         </div>
       </dl>
     </div>
@@ -42,113 +42,283 @@
     </div>
   </section>
 
-  <!-- ============ FEATURE GRID ============ -->
-  <section class="features" id="how-it-works">
-    <div class="features__header">
-      <span class="eyebrow eyebrow--muted">{{ 'landing.why' | t }}</span>
-      <h2>{{ 'landing.featuresTitle' | t }}</h2>
-    </div>
+  <!-- ============ HOW A REPORT WORKS ============ -->
+  <section class="block" id="how">
+    <div class="wrap">
+      <header class="block__head">
+        <div>
+          <span class="eyebrow eyebrow--muted">{{ 'home.how.eyebrow' | t }}</span>
+          <h2>{{ 'home.how.title' | t }}</h2>
+        </div>
+        <p class="block__body">{{ 'home.how.body' | t }}</p>
+      </header>
 
-    <div class="features__grid">
-      @for (feature of features; track feature) {
-        <article class="feature-card">
-          <span class="feature-card__icon" [class]="'feature-card__icon--' + feature.tone">
-            @if (feature.icon === 'pin') {
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                <path
-                  d="M12 21s7-6.2 7-11.5S16.4 3 12 3 5 4.7 5 9.5 12 21 12 21Z"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                />
-                <circle cx="12" cy="9.5" r="2.3" stroke="currentColor" stroke-width="1.8" />
-              </svg>
-            }
-            @if (feature.icon === 'check') {
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                <path
-                  d="M5 12.5 10 17l9-10"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            }
-            @if (feature.icon === 'clock') {
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8" />
-                <path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-              </svg>
-            }
-            @if (feature.icon === 'shield') {
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                <path
-                  d="M12 3l7 3v5.5c0 4.6-3 7.9-7 9.5-4-1.6-7-4.9-7-9.5V6l7-3Z"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            }
-          </span>
-          <h3>{{ feature.title | t }}</h3>
-          <p>{{ feature.description | t }}</p>
-        </article>
-      }
-    </div>
-  </section>
+      <div class="mock">
+        <div class="mock__form" aria-hidden="true">
+          <p class="mock__eyebrow">{{ 'home.mock.eyebrow' | t }}</p>
 
-  <!-- ============ SPLIT / AUDIENCE SECTION ============ -->
-  <section class="split" id="communities">
-    <div class="split__cards">
-      <article class="audience-card audience-card--light">
-        <span class="audience-card__eyebrow">{{ 'audience.residents.eyebrow' | t }}</span>
-        <h3>{{ 'audience.residents.title' | t }}</h3>
-        <p>{{ 'audience.residents.desc' | t }}</p>
-        <button class="btn btn--dark btn--sm" (click)="goToMap()">{{ 'audience.viewMap' | t }}</button>
-      </article>
+          <div class="mock__field">
+            <span class="mock__label">{{ 'home.mock.depth' | t }}</span>
+            <div class="mock__depths">
+              @for (depth of depths; track depth.severity) {
+                <span class="mock__depth" [class.mock__depth--chosen]="depth.chosen">
+                  <i [style.background]="depth.color"></i>{{ 'severity.' + depth.severity | t }}
+                </span>
+              }
+            </div>
+          </div>
 
-      <article class="audience-card audience-card--dark">
-        <span class="audience-card__eyebrow">{{ 'audience.lgu.eyebrow' | t }}</span>
-        <h3>{{ 'audience.lgu.title' | t }}</h3>
-        <p>{{ 'audience.lgu.desc' | t }}</p>
-        <button class="btn btn--primary btn--sm" (click)="goToMap()">{{ 'audience.viewMap' | t }}</button>
-      </article>
-    </div>
+          <div class="mock__field">
+            <span class="mock__label">{{ 'home.mock.note' | t }}</span>
+            <div class="mock__control">{{ 'home.mock.noteValue' | t }}</div>
+          </div>
 
-    <div class="split__thumbs">
-      <div class="thumb thumb--map" aria-hidden="true">
-        <span class="thumb__label">{{ 'thumb.map' | t }}</span>
+          <div class="mock__field">
+            <span class="mock__label">{{ 'home.mock.photo' | t }}</span>
+            <div class="mock__control mock__control--file">📷 {{ 'home.mock.photoValue' | t }}</div>
+          </div>
+
+          <span class="mock__submit">{{ 'home.mock.submit' | t }}</span>
+        </div>
+
+        <div class="mock__result">
+          <p class="mock__eyebrow">{{ 'home.mock.reads' | t }}</p>
+          <p class="mock__sentence">{{ 'home.mock.sentence' | t }}</p>
+          <p class="mock__meta">{{ 'home.mock.meta' | t }}</p>
+          <p class="mock__example">{{ 'home.mock.example' | t }}</p>
+        </div>
       </div>
-      <div class="thumb thumb--form" aria-hidden="true">
-        <span class="thumb__label">{{ 'thumb.form' | t }}</span>
+
+      <h3 class="block__sub">{{ 'home.flow.title' | t }}</h3>
+      <ol class="flow">
+        @for (step of flow; track step.index) {
+          <li class="flow__step">
+            <span class="flow__index">{{ step.index }}</span>
+            <h4>{{ step.title | t }}</h4>
+            <p>{{ step.text | t }}</p>
+          </li>
+        }
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ TRUST ============ -->
+  <section class="block block--tint" id="trust">
+    <div class="wrap">
+      <header class="block__head">
+        <div>
+          <span class="eyebrow eyebrow--muted">{{ 'home.trust.eyebrow' | t }}</span>
+          <h2>{{ 'home.trust.title' | t }}</h2>
+        </div>
+        <p class="block__body">{{ 'home.trust.body' | t }}</p>
+      </header>
+
+      <div class="trust">
+        <div class="tablewrap">
+          <table>
+            <caption>
+              {{
+                'home.trust.caption' | t
+              }}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">{{ 'home.trust.time' | t }}</th>
+                <th scope="col">{{ 'home.trust.event' | t }}</th>
+                <th scope="col" class="num">{{ 'home.trust.change' | t }}</th>
+                <th scope="col" class="num">{{ 'home.trust.score' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of trust; track row.time) {
+                <tr [class.is-resolved]="row.resolved">
+                  <td class="mono">{{ row.time }}</td>
+                  <td>
+                    {{ row.event | t }}
+                    @if (row.resolved) {
+                      <span class="badge">{{ 'home.trust.resolved' | t }}</span>
+                    }
+                  </td>
+                  <td class="num" [class.neg]="row.change.startsWith('-')">{{ row.change }}</td>
+                  <td class="num">{{ row.score }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <ul class="rules">
+          @for (rule of trustRules; track rule) {
+            <li>{{ rule | t }}</li>
+          }
+        </ul>
       </div>
     </div>
   </section>
 
-  <!-- ============ GALLERY ============ -->
-  <section class="gallery" id="examples">
-    <div class="gallery__header">
-      <span class="eyebrow eyebrow--muted">{{ 'gallery.eyebrow' | t }}</span>
-      <h2>{{ 'gallery.title' | t }}</h2>
-    </div>
+  <!-- ============ FEATURES ============ -->
+  <section class="block" id="features">
+    <div class="wrap">
+      <header class="block__head block__head--single">
+        <div>
+          <span class="eyebrow eyebrow--muted">{{ 'home.features.eyebrow' | t }}</span>
+          <h2>{{ 'home.features.title' | t }}</h2>
+        </div>
+      </header>
 
-    <div class="gallery__grid">
-      @for (card of galleryCards; track card) {
-        <article class="gallery-card" [class.gallery-card--light]="card.variant === 'light'">
-          <div class="gallery-card__media" aria-hidden="true"></div>
-          <span class="gallery-card__eyebrow">{{ card.eyebrow }}</span>
-          <h3>{{ card.title | t }}</h3>
-          <p>{{ card.description | t }}</p>
-        </article>
-      }
+      <div class="cards">
+        @for (card of cards; track card.title) {
+          <article class="card">
+            <span class="card__icon" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                @switch (card.icon) {
+                  @case ('pin') {
+                    <path d="M12 21s7-6.2 7-11.5S16.4 3 12 3 5 4.7 5 9.5 12 21 12 21Z" />
+                    <circle cx="12" cy="9.5" r="2.3" />
+                  }
+                  @case ('cloud') {
+                    <path d="M7 18a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17 8.5a4.75 4.75 0 0 1 .5 9.5H7Z" />
+                    <path d="M9 21l1-2M13 21l1-2" />
+                  }
+                  @case ('layers') {
+                    <path d="M12 3 3 8l9 5 9-5-9-5Z" />
+                    <path d="m3 13 9 5 9-5" />
+                  }
+                  @case ('wifi') {
+                    <path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0" />
+                    <circle cx="12" cy="19" r="1" />
+                    <path d="M3 3l18 18" />
+                  }
+                  @case ('link') {
+                    <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+                    <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+                  }
+                  @case ('globe') {
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18" />
+                  }
+                  @case ('phone') {
+                    <rect x="7" y="2.5" width="10" height="19" rx="2" />
+                    <path d="M11 18.5h2" />
+                  }
+                  @case ('shield') {
+                    <path d="M12 3l7 3v5.5c0 4.6-3 7.9-7 9.5-4-1.6-7-4.9-7-9.5V6l7-3Z" />
+                    <path d="m9 12 2.2 2.2L15 10" />
+                  }
+                }
+              </svg>
+            </span>
+            <h3>{{ card.title | t }}</h3>
+            <p>{{ card.text | t }}</p>
+          </article>
+        }
+      </div>
     </div>
   </section>
 
-  <!-- ============ FOOTER CTA ============ -->
+  <!-- ============ UNDER THE HOOD ============ -->
+  <section class="block block--tint" id="stack">
+    <div class="wrap">
+      <header class="block__head">
+        <div>
+          <span class="eyebrow eyebrow--muted">{{ 'home.stack.eyebrow' | t }}</span>
+          <h2>{{ 'home.stack.title' | t }}</h2>
+        </div>
+        <p class="block__body">{{ 'home.stack.body' | t }}</p>
+      </header>
+
+      <div class="route" aria-hidden="true">
+        @for (step of route; track step; let last = $last) {
+          <span class="route__box">{{ step | t }}</span>
+          @if (!last) {
+            <span class="route__arrow">&rarr;</span>
+          }
+        }
+      </div>
+      <p class="route__note">{{ 'home.stack.routeNote' | t }} {{ 'home.stack.side' | t }}</p>
+
+      <div class="stack">
+        <div class="layers">
+          @for (layer of layers; track layer.name) {
+            <div class="layer">
+              <span class="layer__name">{{ layer.name | t }}</span>
+              <span class="layer__text">{{ layer.text | t }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="spec">
+          <h3>{{ 'home.spec.title' | t }}</h3>
+          <dl>
+            @for (row of spec; track row.label) {
+              <div>
+                <dt>{{ row.label | t }}</dt>
+                <dd>{{ row.value | t }}</dd>
+              </div>
+            }
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRIVACY ============ -->
+  <section class="block" id="privacy">
+    <div class="wrap">
+      <header class="block__head block__head--single">
+        <div>
+          <span class="eyebrow eyebrow--muted">{{ 'home.privacy.eyebrow' | t }}</span>
+          <h2>{{ 'home.privacy.title' | t }}</h2>
+        </div>
+      </header>
+
+      <div class="cards cards--four">
+        @for (item of privacy; track item.title) {
+          <article class="card">
+            <h3>{{ item.title | t }}</h3>
+            <p>{{ item.text | t }}</p>
+          </article>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LIMITS ============ -->
+  <section class="block" id="limits">
+    <div class="wrap">
+      <div class="limits">
+        <div>
+          <span class="eyebrow">{{ 'home.limits.eyebrow' | t }}</span>
+          <h2>{{ 'home.limits.title' | t }}</h2>
+          <p>{{ 'home.limits.body' | t }}</p>
+        </div>
+        <ul>
+          @for (item of limits; track item) {
+            <li>{{ item | t }}</li>
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CTA ============ -->
   <section class="cta">
-    <h2>{{ 'cta.title' | t }}</h2>
-    <p>{{ 'cta.sub' | t }}</p>
-    <button class="btn btn--primary btn--lg" (click)="goToMap()">{{ 'landing.openMap' | t }}</button>
+    <h2>{{ 'home.cta.title' | t }}</h2>
+    <p>{{ 'home.cta.sub' | t }}</p>
+    <div class="cta__actions">
+      <button class="btn btn--primary btn--lg" (click)="goToMap()">{{ 'home.openMap' | t }}</button>
+      <a class="btn btn--ghost btn--lg" [href]="sourceUrl" target="_blank" rel="noopener noreferrer">{{
+        'home.cta.source' | t
+      }}</a>
+    </div>
   </section>
 </div>

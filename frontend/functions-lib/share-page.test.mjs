@@ -57,7 +57,10 @@ describe('describeReport', () => {
   });
 
   it("prefers the reporter's photo, else the branded card", () => {
-    assert.equal(describeReport({ ...report, photoUrl: 'https://x.example/p.jpg' }, ORIGIN).image, 'https://x.example/p.jpg');
+    assert.equal(
+      describeReport({ ...report, photoUrl: 'https://x.example/p.jpg' }, ORIGIN).image,
+      'https://x.example/p.jpg'
+    );
     assert.equal(describeReport(report, ORIGIN).image, `${ORIGIN}/og-default.png`);
   });
 
@@ -94,7 +97,7 @@ describe('buildSharePage', () => {
   it('falls back to the standard card, and the plain map, when there is no report', () => {
     const html = buildSharePage({ origin: ORIGIN, id: ID, report: null });
 
-    assert.match(html, /og:title" content="MasidBaha: real-time flood map/);
+    assert.match(html, /og:title" content="MasidBaha Flood Monitoring App/);
     assert.match(html, /url=\/map"/);
     assert.equal(html.includes('report='), false);
   });
