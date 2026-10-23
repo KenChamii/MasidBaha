@@ -1,7 +1,5 @@
-using System.Data;
-using MasidBaha.Application.Common.Data;
-using MasidBaha.Application.Common.Enums;
-using Microsoft.Data.SqlClient;
+using MasidBaha.Application.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace MasidBaha.Application.FloodReports.GetHeatmapData;
 
@@ -12,46 +10,42 @@ public interface IGetHeatmapDataService
 
 public class GetHeatmapDataService : IGetHeatmapDataService
 {
-    private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly MasidBahaDbContext _db;
 
-    public GetHeatmapDataService(ISqlConnectionFactory connectionFactory)
+    public GetHeatmapDataService(MasidBahaDbContext db)
     {
-        _connectionFactory = connectionFactory;
+        _db = db;
     }
 
     public async Task<List<HeatmapPointDto>> GetHeatmapAsync(HeatmapQuery query)
     {
-        var results = new List<HeatmapPointDto>();
+        // Historical view: intentionally does NOT filter by status, since the
+        // whole point is to include Expired/Resolved reports too (that's the
+        // "pattern over time" the heatmap is meant to reveal). Defaults to the
+        // last 6 months if no range is given, to keep the payload bounded.
+        var now = DateTime.UtcNow;
+        var from = query.FromDate?.ToUtc() ?? now.AddMonths(-6);
+        var to = query.ToDate?.ToUtc() ?? now;
 
-        using var connection = _connectionFactory.CreateConnection();
-        using var command = new SqlCommand("sp_GetHeatmapData", connection)
+        var reports = await _db.FloodReports
+            .AsNoTracking()
+            .Where(r => r.ReportedAt >= from && r.ReportedAt <= to)
+            .Where(r => query.Region == null || r.Region == query.Region)
+            .Where(r => query.Province == null || r.Province == query.Province)
+            .Where(r => query.City == null || r.City == query.City)
+            .OrderByDescending(r => r.ReportedAt)
+            .ToListAsync();
+
+        return reports.Select(r => new HeatmapPointDto
         {
-            CommandType = CommandType.StoredProcedure
-        };
-
-        command.Parameters.AddWithValue("@FromDate", (object?)query.FromDate ?? DBNull.Value);
-        command.Parameters.AddWithValue("@ToDate", (object?)query.ToDate ?? DBNull.Value);
-        command.Parameters.AddWithValue("@Region", (object?)query.Region ?? DBNull.Value);
-        command.Parameters.AddWithValue("@Province", (object?)query.Province ?? DBNull.Value);
-        command.Parameters.AddWithValue("@City", (object?)query.City ?? DBNull.Value);
-
-        await connection.OpenAsync();
-        using var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            results.Add(new HeatmapPointDto
-            {
-                Lat = reader.GetDouble(reader.GetOrdinal("Lat")),
-                Lng = reader.GetDouble(reader.GetOrdinal("Lng")),
-                Severity = (Severity)reader.GetByte(reader.GetOrdinal("Severity")),
-                Status = (ReportStatus)reader.GetByte(reader.GetOrdinal("Status")),
-                ReportedAt = reader.GetUtcDateTime(reader.GetOrdinal("ReportedAt")),
-                Region = reader.IsDBNull(reader.GetOrdinal("Region")) ? null : reader.GetString(reader.GetOrdinal("Region")),
-                Province = reader.IsDBNull(reader.GetOrdinal("Province")) ? null : reader.GetString(reader.GetOrdinal("Province")),
-                City = reader.IsDBNull(reader.GetOrdinal("City")) ? null : reader.GetString(reader.GetOrdinal("City"))
-            });
-        }
-
-        return results;
+            Lat = r.Location.Y,
+            Lng = r.Location.X,
+            Severity = r.Severity,
+            Status = r.Status,
+            ReportedAt = r.ReportedAt,
+            Region = r.Region,
+            Province = r.Province,
+            City = r.City
+        }).ToList();
     }
 }

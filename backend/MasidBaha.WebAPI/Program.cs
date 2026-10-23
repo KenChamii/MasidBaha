@@ -1,5 +1,5 @@
 using System.Threading.RateLimiting;
-using MasidBaha.Application.Common.Data;
+using MasidBaha.Application.Persistence;
 using MasidBaha.Application.Common.Geocoding;
 using MasidBaha.Application.Common.Storage;
 using MasidBaha.Application.Photos.UploadPhoto;
@@ -16,6 +16,7 @@ using MasidBaha.WebAPI.Hubs;
 using MasidBaha.WebAPI.BackgroundServices;
 using MasidBaha.WebAPI.Middleware;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +25,16 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 
-builder.Services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
+var connectionString = builder.Configuration.GetConnectionString("MasidBahaDb");
+if (string.IsNullOrWhiteSpace(connectionString))
+    throw new InvalidOperationException(
+        "ConnectionStrings:MasidBahaDb is not set. Run scripts/init-dev-secrets.ps1 or see appsettings.Example.json.");
+
+// PostgreSQL + PostGIS. Table and column names are snake_case by convention.
+builder.Services.AddDbContext<MasidBahaDbContext>(options => options
+    .UseNpgsql(connectionString, npgsql => npgsql.UseNetTopologySuite())
+    .UseSnakeCaseNamingConvention());
+
 builder.Services.AddScoped<ICreateFloodReportService, CreateFloodReportService>();
 builder.Services.AddScoped<IGetNearbyReportsService, GetNearbyReportsService>();
 builder.Services.AddScoped<IGetTopReportsService, GetTopReportsService>();
@@ -109,6 +119,19 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Apply pending EF migrations at startup (on by default), and optionally load
+// demo reports. Both are config flags so production can opt out.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<MasidBahaDbContext>();
+
+    if (app.Configuration.GetValue("Database:MigrateOnStartup", true))
+        await db.Database.MigrateAsync();
+
+    if (app.Configuration.GetValue("Database:SeedDemoData", false))
+        await DemoDataSeeder.SeedAsync(db);
+}
 
 if (app.Environment.IsDevelopment())
 {

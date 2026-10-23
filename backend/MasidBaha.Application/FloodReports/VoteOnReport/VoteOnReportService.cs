@@ -1,8 +1,8 @@
-using System.Data;
-using MasidBaha.Application.Common.Data;
 using MasidBaha.Application.Common.Enums;
 using MasidBaha.Application.Common.Exceptions;
-using Microsoft.Data.SqlClient;
+using MasidBaha.Application.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace MasidBaha.Application.FloodReports.VoteOnReport;
 
@@ -13,58 +13,62 @@ public interface IVoteOnReportService
 
 public class VoteOnReportService : IVoteOnReportService
 {
-    // Custom error numbers raised by sp_VoteOnReport via THROW
-    private const int ReportNotFound = 50404;
-    private const int AlreadyVoted = 50409;
-    private const int ReportClosed = 50410;
-    // SQL Server unique-constraint violation codes, kept as a backstop for races
-    private const int UniqueConstraint = 2627;
-    private const int UniqueIndex = 2601;
+    private readonly MasidBahaDbContext _db;
 
-    private readonly ISqlConnectionFactory _connectionFactory;
-
-    public VoteOnReportService(ISqlConnectionFactory connectionFactory)
+    public VoteOnReportService(MasidBahaDbContext db)
     {
-        _connectionFactory = connectionFactory;
+        _db = db;
     }
 
     public async Task<VoteResultDto> VoteAsync(Guid floodReportId, VoteRequest request)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        using var command = new SqlCommand("sp_VoteOnReport", connection)
-        {
-            CommandType = CommandType.StoredProcedure
-        };
+        await using var transaction = await _db.Database.BeginTransactionAsync();
 
-        command.Parameters.AddWithValue("@FloodReportId", floodReportId);
-        command.Parameters.AddWithValue("@VoterSessionId", request.VoterSessionId);
-        command.Parameters.Add("@VoteType", SqlDbType.SmallInt).Value = request.VoteType.ToDelta();
+        // FOR UPDATE locks the report row so concurrent votes on it are serialized
+        var report = await _db.FloodReports
+            .FromSqlInterpolated($"SELECT * FROM flood_reports WHERE id = {floodReportId} FOR UPDATE")
+            .SingleOrDefaultAsync();
+
+        if (report is null)
+            throw new NotFoundException("Report not found.");
+
+        if (report.Status != ReportStatus.Active || report.ExpiresAt <= DateTime.UtcNow)
+            throw new ConflictException("This report is no longer active.");
+
+        var alreadyVoted = await _db.ReportVotes.AnyAsync(v =>
+            v.FloodReportId == floodReportId && v.VoterSessionId == request.VoterSessionId);
+        if (alreadyVoted)
+            throw new ConflictException("You have already voted on this report.");
+
+        _db.ReportVotes.Add(new ReportVote
+        {
+            Id = Guid.CreateVersion7(),
+            FloodReportId = floodReportId,
+            VoterSessionId = request.VoterSessionId,
+            VoteType = request.VoteType,
+            VotedAt = DateTime.UtcNow
+        });
+
+        report.ConfidenceScore += request.VoteType.ToDelta();
+        if (report.ConfidenceScore <= 0)
+            report.Status = ReportStatus.Resolved;
 
         try
         {
-            await connection.OpenAsync();
-            using var reader = await command.ExecuteReaderAsync();
-            if (!await reader.ReadAsync())
-                throw new InvalidOperationException("Vote did not return expected result");
-
-            return new VoteResultDto
-            {
-                FloodReportId = floodReportId,
-                ConfidenceScore = reader.GetInt32(reader.GetOrdinal("ConfidenceScore")),
-                Status = (ReportStatus)reader.GetByte(reader.GetOrdinal("Status"))
-            };
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
         }
-        catch (SqlException ex) when (ex.Number == ReportNotFound)
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
         {
-            throw new NotFoundException("Report not found.");
-        }
-        catch (SqlException ex) when (ex.Number == ReportClosed)
-        {
-            throw new ConflictException("This report is no longer active.");
-        }
-        catch (SqlException ex) when (ex.Number is AlreadyVoted or UniqueConstraint or UniqueIndex)
-        {
+            // Backstop for a race the row lock didn't cover
             throw new ConflictException("You have already voted on this report.");
         }
+
+        return new VoteResultDto
+        {
+            FloodReportId = floodReportId,
+            ConfidenceScore = report.ConfidenceScore,
+            Status = report.Status
+        };
     }
 }

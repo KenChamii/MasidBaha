@@ -1,8 +1,7 @@
-﻿using System.Data;
-using MasidBaha.Application.Common.Data;
-using MasidBaha.Application.Common.Enums;
+﻿using MasidBaha.Application.Common.Enums;
 using MasidBaha.Application.FloodReports.CreateReport;
-using Microsoft.Data.SqlClient;
+using MasidBaha.Application.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace MasidBaha.Application.FloodReports.GetNearbyReports;
 
@@ -13,47 +12,30 @@ public interface IGetNearbyReportsService
 
 public class GetNearbyReportsService : IGetNearbyReportsService
 {
-    private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly MasidBahaDbContext _db;
 
-    public GetNearbyReportsService(ISqlConnectionFactory connectionFactory)
+    public GetNearbyReportsService(MasidBahaDbContext db)
     {
-        _connectionFactory = connectionFactory;
+        _db = db;
     }
 
     public async Task<List<FloodReportDto>> GetNearbyAsync(NearbyReportsQuery query)
     {
-        var results = new List<FloodReportDto>();
+        var center = FloodReportMappings.ToPoint(query.Lat, query.Lng);
+        var now = DateTime.UtcNow;
 
-        using var connection = _connectionFactory.CreateConnection();
-        using var command = new SqlCommand("sp_GetNearbyReports", connection)
-        {
-            CommandType = CommandType.StoredProcedure
-        };
-        command.Parameters.AddWithValue("@Lat", query.Lat);
-        command.Parameters.AddWithValue("@Lng", query.Lng);
-        command.Parameters.AddWithValue("@RadiusMeters", query.RadiusMeters);
+        // IsWithinDistance becomes ST_DWithin on a geography column (metres),
+        // which is what lets the GiST index do the radius filtering.
+        // Expiry is checked here too, so correctness doesn't depend on the
+        // background sweeper having run.
+        var reports = await _db.FloodReports
+            .AsNoTracking()
+            .Where(r => r.Status == ReportStatus.Active
+                        && r.ExpiresAt > now
+                        && r.Location.IsWithinDistance(center, query.RadiusMeters))
+            .OrderByDescending(r => r.ReportedAt)
+            .ToListAsync();
 
-        await connection.OpenAsync();
-        using var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            results.Add(new FloodReportDto
-            {
-                Id = reader.GetGuid(reader.GetOrdinal("Id")),
-                Lat = reader.GetDouble(reader.GetOrdinal("Lat")),
-                Lng = reader.GetDouble(reader.GetOrdinal("Lng")),
-                Severity = (Severity)reader.GetByte(reader.GetOrdinal("Severity")),
-                Notes = reader.IsDBNull(reader.GetOrdinal("Notes")) ? null : reader.GetString(reader.GetOrdinal("Notes")),
-                PhotoUrl = reader.IsDBNull(reader.GetOrdinal("PhotoUrl")) ? null : reader.GetString(reader.GetOrdinal("PhotoUrl")),
-                ReportedAt = reader.GetUtcDateTime(reader.GetOrdinal("ReportedAt")),
-                ConfidenceScore = reader.GetInt32(reader.GetOrdinal("ConfidenceScore")),
-                Status = (ReportStatus)reader.GetByte(reader.GetOrdinal("Status")),
-                Region = reader.IsDBNull(reader.GetOrdinal("Region")) ? null : reader.GetString(reader.GetOrdinal("Region")),
-                Province = reader.IsDBNull(reader.GetOrdinal("Province")) ? null : reader.GetString(reader.GetOrdinal("Province")),
-                City = reader.IsDBNull(reader.GetOrdinal("City")) ? null : reader.GetString(reader.GetOrdinal("City"))
-            });
-        }
-
-        return results;
+        return reports.Select(r => r.ToDto()).ToList();
     }
 }

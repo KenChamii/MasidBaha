@@ -1,7 +1,7 @@
-using System.Data;
-using MasidBaha.Application.Common.Data;
 using MasidBaha.Application.Common.Enums;
-using Microsoft.Data.SqlClient;
+using MasidBaha.Application.Common.Exceptions;
+using MasidBaha.Application.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace MasidBaha.Application.Admin;
 
@@ -14,106 +14,59 @@ public interface IAdminReportsService
 
 public class AdminReportsService : IAdminReportsService
 {
-    private readonly ISqlConnectionFactory _connectionFactory;
+    private const int MaxPageSize = 100;
 
-    public AdminReportsService(ISqlConnectionFactory connectionFactory)
+    private readonly MasidBahaDbContext _db;
+
+    public AdminReportsService(MasidBahaDbContext db)
     {
-        _connectionFactory = connectionFactory;
+        _db = db;
     }
 
     public async Task<AdminGetReportsResult> GetReportsAsync(AdminGetReportsQuery query)
     {
-        var reports = new List<AdminFloodReportDto>();
-        var totalCount = 0;
+        var page = Math.Max(query.Page, 1);
+        var pageSize = Math.Clamp(query.PageSize, 1, MaxPageSize);
 
-        using var connection = _connectionFactory.CreateConnection();
-        using var command = new SqlCommand("sp_AdminGetReports", connection)
-        {
-            CommandType = CommandType.StoredProcedure
-        };
+        var reports = _db.FloodReports.AsNoTracking()
+            .Where(r => query.Status == null || r.Status == query.Status);
 
-        command.Parameters.AddWithValue("@Status", query.Status.HasValue ? (byte)query.Status.Value : DBNull.Value);
-        command.Parameters.AddWithValue("@Page", query.Page);
-        command.Parameters.AddWithValue("@PageSize", query.PageSize);
+        var totalCount = await reports.CountAsync();
 
-        await connection.OpenAsync();
-        using var reader = await command.ExecuteReaderAsync();
-
-        // First result set: the page of reports.
-        while (await reader.ReadAsync())
-        {
-            reports.Add(new AdminFloodReportDto
-            {
-                Id = reader.GetGuid(reader.GetOrdinal("Id")),
-                Lat = reader.GetDouble(reader.GetOrdinal("Lat")),
-                Lng = reader.GetDouble(reader.GetOrdinal("Lng")),
-                Severity = (Severity)reader.GetByte(reader.GetOrdinal("Severity")),
-                Notes = reader.IsDBNull(reader.GetOrdinal("Notes")) ? null : reader.GetString(reader.GetOrdinal("Notes")),
-                PhotoUrl = reader.IsDBNull(reader.GetOrdinal("PhotoUrl")) ? null : reader.GetString(reader.GetOrdinal("PhotoUrl")),
-                ReportedAt = reader.GetUtcDateTime(reader.GetOrdinal("ReportedAt")),
-                ExpiresAt = reader.GetUtcDateTime(reader.GetOrdinal("ExpiresAt")),
-                ConfidenceScore = reader.GetInt32(reader.GetOrdinal("ConfidenceScore")),
-                Status = (ReportStatus)reader.GetByte(reader.GetOrdinal("Status")),
-                ReporterSessionId = reader.GetString(reader.GetOrdinal("ReporterSessionId")),
-                Region = reader.IsDBNull(reader.GetOrdinal("Region")) ? null : reader.GetString(reader.GetOrdinal("Region")),
-                Province = reader.IsDBNull(reader.GetOrdinal("Province")) ? null : reader.GetString(reader.GetOrdinal("Province")),
-                City = reader.IsDBNull(reader.GetOrdinal("City")) ? null : reader.GetString(reader.GetOrdinal("City"))
-            });
-        }
-
-        // Second result set: total count, for pagination controls on the admin UI.
-        if (await reader.NextResultAsync() && await reader.ReadAsync())
-        {
-            totalCount = reader.GetInt32(reader.GetOrdinal("TotalCount"));
-        }
+        var items = await reports
+            .OrderByDescending(r => r.ReportedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
 
         return new AdminGetReportsResult
         {
-            Reports = reports,
+            Reports = items.Select(r => r.ToAdminDto()).ToList(),
             TotalCount = totalCount,
-            Page = query.Page,
-            PageSize = query.PageSize
+            Page = page,
+            PageSize = pageSize
         };
     }
 
     public async Task<AdminStatusResult> SetStatusAsync(Guid floodReportId, ReportStatus status)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        using var command = new SqlCommand("sp_AdminSetReportStatus", connection)
-        {
-            CommandType = CommandType.StoredProcedure
-        };
+        var report = await _db.FloodReports.FirstOrDefaultAsync(r => r.Id == floodReportId)
+            ?? throw new NotFoundException("Report not found.");
 
-        command.Parameters.AddWithValue("@FloodReportId", floodReportId);
-        command.Parameters.AddWithValue("@Status", (byte)status);
-
-        await connection.OpenAsync();
-        using var reader = await command.ExecuteReaderAsync();
-        if (!await reader.ReadAsync())
-            throw new InvalidOperationException("Report not found.");
+        report.Status = status;
+        await _db.SaveChangesAsync();
 
         return new AdminStatusResult
         {
-            Status = (ReportStatus)reader.GetByte(reader.GetOrdinal("Status")),
-            ConfidenceScore = reader.GetInt32(reader.GetOrdinal("ConfidenceScore"))
+            Status = report.Status,
+            ConfidenceScore = report.ConfidenceScore
         };
     }
 
+    // Votes go with the report through the FK's ON DELETE CASCADE
     public async Task<bool> DeleteAsync(Guid floodReportId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        using var command = new SqlCommand("sp_AdminDeleteReport", connection)
-        {
-            CommandType = CommandType.StoredProcedure
-        };
-
-        command.Parameters.AddWithValue("@FloodReportId", floodReportId);
-
-        await connection.OpenAsync();
-        using var reader = await command.ExecuteReaderAsync();
-        if (!await reader.ReadAsync())
-            return false;
-
-        return reader.GetInt32(reader.GetOrdinal("DeletedCount")) > 0;
+        var deleted = await _db.FloodReports.Where(r => r.Id == floodReportId).ExecuteDeleteAsync();
+        return deleted > 0;
     }
 }
