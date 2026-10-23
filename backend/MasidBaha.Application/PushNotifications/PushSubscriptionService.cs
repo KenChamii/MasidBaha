@@ -1,6 +1,5 @@
-using System.Data;
-using MasidBaha.Application.Common.Data;
-using Microsoft.Data.SqlClient;
+using MasidBaha.Application.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace MasidBaha.Application.PushNotifications;
 
@@ -18,72 +17,37 @@ public class StoredPushSubscription
     public string Endpoint { get; set; } = string.Empty;
     public string P256dh { get; set; } = string.Empty;
     public string Auth { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
 }
 
 public class PushSubscriptionService : IPushSubscriptionService
 {
-    private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly MasidBahaDbContext _db;
 
-    public PushSubscriptionService(ISqlConnectionFactory connectionFactory)
+    public PushSubscriptionService(MasidBahaDbContext db)
     {
-        _connectionFactory = connectionFactory;
+        _db = db;
     }
 
+    // Upserts by endpoint so re-subscribing just updates the existing row
+    // instead of creating a duplicate. ON CONFLICT keeps it atomic.
     public async Task SubscribeAsync(PushSubscriptionDto subscription)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        using var command = new SqlCommand("sp_UpsertPushSubscription", connection)
-        {
-            CommandType = CommandType.StoredProcedure
-        };
-
-        command.Parameters.AddWithValue("@SessionId", subscription.SessionId);
-        command.Parameters.AddWithValue("@Endpoint", subscription.Endpoint);
-        command.Parameters.AddWithValue("@P256dh", subscription.Keys.P256dh);
-        command.Parameters.AddWithValue("@Auth", subscription.Keys.Auth);
-
-        await connection.OpenAsync();
-        await command.ExecuteNonQueryAsync();
+        await _db.Database.ExecuteSqlInterpolatedAsync($@"
+            INSERT INTO push_subscriptions (id, session_id, endpoint, p256dh, auth, created_at)
+            VALUES ({Guid.CreateVersion7()}, {subscription.SessionId}, {subscription.Endpoint},
+                    {subscription.Keys.P256dh}, {subscription.Keys.Auth}, now())
+            ON CONFLICT (endpoint) DO UPDATE
+            SET session_id = EXCLUDED.session_id, p256dh = EXCLUDED.p256dh, auth = EXCLUDED.auth");
     }
 
     public async Task UnsubscribeAsync(string endpoint)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        using var command = new SqlCommand("sp_DeletePushSubscription", connection)
-        {
-            CommandType = CommandType.StoredProcedure
-        };
-
-        command.Parameters.AddWithValue("@Endpoint", endpoint);
-
-        await connection.OpenAsync();
-        await command.ExecuteNonQueryAsync();
+        await _db.PushSubscriptions.Where(s => s.Endpoint == endpoint).ExecuteDeleteAsync();
     }
 
     public async Task<List<StoredPushSubscription>> GetAllAsync()
     {
-        var results = new List<StoredPushSubscription>();
-
-        using var connection = _connectionFactory.CreateConnection();
-        using var command = new SqlCommand("sp_GetAllPushSubscriptions", connection)
-        {
-            CommandType = CommandType.StoredProcedure
-        };
-
-        await connection.OpenAsync();
-        using var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            results.Add(new StoredPushSubscription
-            {
-                Id = reader.GetGuid(reader.GetOrdinal("Id")),
-                SessionId = reader.GetString(reader.GetOrdinal("SessionId")),
-                Endpoint = reader.GetString(reader.GetOrdinal("Endpoint")),
-                P256dh = reader.GetString(reader.GetOrdinal("P256dh")),
-                Auth = reader.GetString(reader.GetOrdinal("Auth"))
-            });
-        }
-
-        return results;
+        return await _db.PushSubscriptions.AsNoTracking().ToListAsync();
     }
 }

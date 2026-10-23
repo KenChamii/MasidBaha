@@ -1,6 +1,5 @@
-﻿using System.Data;
-using MasidBaha.Application.Common.Data;
-using Microsoft.Data.SqlClient;
+﻿using MasidBaha.Application.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace MasidBaha.Application.FloodReports.ExpireReports;
 
@@ -9,30 +8,22 @@ public interface IExpireReportsService
     Task<List<Guid>> ExpireStaleReportsAsync();
 }
 
+// Reads already hide expired reports (see the ExpiresAt filters), so this sweep
+// only flips the stored status and lets connected clients know.
 public class ExpireReportsService : IExpireReportsService
 {
-    private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly MasidBahaDbContext _db;
 
-    public ExpireReportsService(ISqlConnectionFactory connectionFactory)
+    public ExpireReportsService(MasidBahaDbContext db)
     {
-        _connectionFactory = connectionFactory;
+        _db = db;
     }
 
     public async Task<List<Guid>> ExpireStaleReportsAsync()
     {
-        var expiredIds = new List<Guid>();
-
-        using var connection = _connectionFactory.CreateConnection();
-        using var command = new SqlCommand("sp_ExpireStaleReports", connection)
-        {
-            CommandType = CommandType.StoredProcedure
-        };
-
-        await connection.OpenAsync();
-        using var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-            expiredIds.Add(reader.GetGuid(reader.GetOrdinal("Id")));
-
-        return expiredIds;
+        // One statement: update and return the affected ids atomically
+        return await _db.Database
+            .SqlQuery<Guid>($"UPDATE flood_reports SET status = 3 WHERE status = 1 AND expires_at <= now() RETURNING id AS \"Value\"")
+            .ToListAsync();
     }
 }

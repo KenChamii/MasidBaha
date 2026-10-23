@@ -3,7 +3,7 @@
   Stores MasidBaha's local secrets in the .NET user-secrets store (outside the repo).
 
 .DESCRIPTION
-  - Prompts for the SQL Server connection string.
+  - Prompts for the PostgreSQL connection string (Enter = the docker-compose database).
   - Generates a fresh admin API key and a fresh VAPID key pair (web push).
   Run from the repo root:  pwsh ./scripts/init-dev-secrets.ps1
   Requires the .NET SDK and Node.js (for `npx web-push`).
@@ -15,7 +15,9 @@ function Set-Secret([string]$key, [string]$value) {
     dotnet user-secrets set $key $value --project $project | Out-Null
 }
 
-$connection = Read-Host 'SQL Server connection string (ConnectionStrings:MasidBahaDb)'
+$localDocker = 'Host=localhost;Port=5433;Database=masidbaha;Username=masidbaha;Password=masidbaha_dev'
+$connection = Read-Host "PostgreSQL connection string (press Enter for the local docker-compose database)"
+if ([string]::IsNullOrWhiteSpace($connection)) { $connection = $localDocker }
 Set-Secret 'ConnectionStrings:MasidBahaDb' $connection
 
 $bytes = New-Object byte[] 32

@@ -1,0 +1,27 @@
+# Local development database: PostgreSQL with the PostGIS extension.
+#   docker compose up -d db
+# Connection string for scripts/init-dev-secrets.ps1:
+#   Host=localhost;Port=5433;Database=masidbaha;Username=masidbaha;Password=masidbaha_dev
+# The password below is a throwaway for this local container only (bound to
+# 127.0.0.1); override it with MASIDBAHA_DB_PASSWORD. Never reuse it elsewhere.
+services:
+  db:
+    image: postgis/postgis:17-3.5
+    container_name: masidbaha-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: masidbaha
+      POSTGRES_USER: masidbaha
+      POSTGRES_PASSWORD: ${MASIDBAHA_DB_PASSWORD:-masidbaha_dev}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - masidbaha-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U masidbaha -d masidbaha"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  masidbaha-db-data:

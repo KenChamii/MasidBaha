@@ -1,6 +1,6 @@
-using System.Data;
-using MasidBaha.Application.Common.Data;
-using Microsoft.Data.SqlClient;
+using MasidBaha.Application.Common.Enums;
+using MasidBaha.Application.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace MasidBaha.Application.Trust;
 
@@ -30,37 +30,43 @@ public interface ISessionTrustService
 
 public class SessionTrustService : ISessionTrustService
 {
-    private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly MasidBahaDbContext _db;
 
-    public SessionTrustService(ISqlConnectionFactory connectionFactory)
+    public SessionTrustService(MasidBahaDbContext db)
     {
-        _connectionFactory = connectionFactory;
+        _db = db;
     }
 
+    // Only looks at reports made by this session, not votes it cast on others.
     public async Task<SessionTrustDto> GetTrustScoreAsync(string sessionId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        using var command = new SqlCommand("sp_GetSessionTrustScore", connection)
-        {
-            CommandType = CommandType.StoredProcedure
-        };
+        var stats = await _db.FloodReports
+            .AsNoTracking()
+            .Where(r => r.ReporterSessionId == sessionId)
+            .GroupBy(r => r.ReporterSessionId)
+            .Select(g => new
+            {
+                Total = g.Count(),
+                Resolved = g.Count(r => r.Status == ReportStatus.Resolved),
+                Active = g.Count(r => r.Status == ReportStatus.Active),
+                AvgConfidence = g.Average(r => (double)r.ConfidenceScore),
+                First = g.Min(r => r.ReportedAt),
+                Last = g.Max(r => r.ReportedAt)
+            })
+            .FirstOrDefaultAsync();
 
-        command.Parameters.AddWithValue("@SessionId", sessionId);
-
-        await connection.OpenAsync();
-        using var reader = await command.ExecuteReaderAsync();
-        if (!await reader.ReadAsync())
+        if (stats is null)
             return new SessionTrustDto { SessionId = sessionId };
 
         return new SessionTrustDto
         {
             SessionId = sessionId,
-            TotalReports = reader.GetInt32(reader.GetOrdinal("TotalReports")),
-            ResolvedReports = reader.GetInt32(reader.GetOrdinal("ResolvedReports")),
-            ActiveReports = reader.GetInt32(reader.GetOrdinal("ActiveReports")),
-            AvgConfidenceScore = reader.GetDouble(reader.GetOrdinal("AvgConfidenceScore")),
-            FirstReportAt = reader.GetUtcDateTimeOrNull(reader.GetOrdinal("FirstReportAt")),
-            LastReportAt = reader.GetUtcDateTimeOrNull(reader.GetOrdinal("LastReportAt"))
+            TotalReports = stats.Total,
+            ResolvedReports = stats.Resolved,
+            ActiveReports = stats.Active,
+            AvgConfidenceScore = stats.AvgConfidence,
+            FirstReportAt = stats.First,
+            LastReportAt = stats.Last
         };
     }
 }
