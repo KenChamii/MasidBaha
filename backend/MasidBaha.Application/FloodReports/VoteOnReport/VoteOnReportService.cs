@@ -32,7 +32,7 @@ public class VoteOnReportService : IVoteOnReportService
         if (report is null)
             throw new NotFoundException("Report not found.");
 
-        if (report.Status != ReportStatus.Active || report.ExpiresAt <= DateTime.UtcNow)
+        if (!report.IsOpen(DateTime.UtcNow))
             throw new ConflictException("This report is no longer active.");
 
         var alreadyVoted = await _db.ReportVotes.AnyAsync(v =>
@@ -49,9 +49,7 @@ public class VoteOnReportService : IVoteOnReportService
             VotedAt = DateTime.UtcNow
         });
 
-        report.ConfidenceScore += request.VoteType.ToDelta();
-        if (report.ConfidenceScore <= 0)
-            report.Status = ReportStatus.Resolved;
+        report.ApplyVote(request.VoteType);
 
         try
         {

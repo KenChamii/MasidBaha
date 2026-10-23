@@ -1,5 +1,4 @@
 using MasidBaha.Application.Common.Enums;
-using MasidBaha.Application.FloodReports;
 using Microsoft.EntityFrameworkCore;
 
 namespace MasidBaha.Application.Persistence;
@@ -40,7 +39,7 @@ public static class DemoDataSeeder
         null!, null!
     };
 
-    public static async Task SeedAsync(MasidBahaDbContext db, CancellationToken cancellationToken = default)
+    public static async Task SeedAsync(MasidBahaDbContext db, TimeSpan reportLifetime, CancellationToken cancellationToken = default)
     {
         await db.FloodReports
             .Where(r => r.ReporterSessionId == DemoSessionId)
@@ -55,7 +54,7 @@ public static class DemoDataSeeder
         {
             var spot = Spots[i];
             var reportedAt = now - TimeSpan.FromMinutes(random.Next(5, 300));
-            reports.Add(Build(spot, reportedAt, reportedAt + ReportDefaults.Lifetime,
+            reports.Add(Build(spot, reportedAt, reportedAt + reportLifetime,
                 (Severity)random.Next(1, 5), ReportStatus.Active, random.Next(1, 40), Notes[i % Notes.Length]));
         }
 
@@ -64,7 +63,7 @@ public static class DemoDataSeeder
         {
             var spot = Spots[random.Next(Spots.Length)];
             var reportedAt = now - TimeSpan.FromDays(random.Next(1, 170)) - TimeSpan.FromMinutes(random.Next(0, 1440));
-            reports.Add(Build(spot, reportedAt, reportedAt + ReportDefaults.Lifetime,
+            reports.Add(Build(spot, reportedAt, reportedAt + reportLifetime,
                 (Severity)random.Next(1, 5), random.Next(2) == 0 ? ReportStatus.Resolved : ReportStatus.Expired,
                 random.Next(1, 30), null));
         }

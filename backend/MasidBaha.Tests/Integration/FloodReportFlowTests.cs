@@ -2,6 +2,7 @@ using MasidBaha.Application.Admin;
 using MasidBaha.Application.Common.Enums;
 using MasidBaha.Application.Common.Exceptions;
 using MasidBaha.Application.Common.Geocoding;
+using MasidBaha.Application.Common.Options;
 using MasidBaha.Application.FloodReports.CreateReport;
 using MasidBaha.Application.FloodReports.ExpireReports;
 using MasidBaha.Application.FloodReports.GetHeatmapData;
@@ -12,6 +13,7 @@ using MasidBaha.Application.Persistence;
 using MasidBaha.Application.PushNotifications;
 using MasidBaha.Application.Trust;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace MasidBaha.Tests.Integration;
 
@@ -38,7 +40,7 @@ public class FloodReportFlowTests : IAsyncLifetime
     private async Task<FloodReportDto> CreateAsync(double lat, double lng, Severity severity = Severity.KneeLevel, string session = "reporter-1")
     {
         await using var db = _postgis.CreateDbContext();
-        return await new CreateFloodReportService(db, new FakeGeocoder()).CreateAsync(new CreateFloodReportRequest
+        return await new CreateFloodReportService(db, new FakeGeocoder(), Options.Create(new ReportOptions())).CreateAsync(new CreateFloodReportRequest
         {
             Lat = lat, Lng = lng, Severity = severity, ReporterSessionId = session
         });
@@ -132,7 +134,7 @@ public class FloodReportFlowTests : IAsyncLifetime
         await SetExpiryAsync(expired.Id, DateTime.UtcNow.AddMinutes(-1));
 
         await using var db = _postgis.CreateDbContext();
-        var top = await new GetTopReportsService(db).GetTopAsync(new TopReportsQuery { Limit = 10 });
+        var top = await new GetTopReportsService(db, Options.Create(new ReportOptions())).GetTopAsync(new TopReportsQuery { Limit = 10 });
 
         Assert.Equal(new[] { high.Id, low.Id }, top.Select(r => r.Id));
         Assert.Equal(3, top[0].ConfidenceScore);
@@ -144,7 +146,7 @@ public class FloodReportFlowTests : IAsyncLifetime
         await CreateAsync(MarikinaLat, MarikinaLng);
 
         await using var db = _postgis.CreateDbContext();
-        var service = new GetTopReportsService(db);
+        var service = new GetTopReportsService(db, Options.Create(new ReportOptions()));
 
         Assert.Single(await service.GetTopAsync(new TopReportsQuery { City = "Marikina" }));
         Assert.Empty(await service.GetTopAsync(new TopReportsQuery { City = "Cebu City" }));
@@ -397,9 +399,9 @@ public class FloodReportFlowTests : IAsyncLifetime
         await CreateAsync(MarikinaLat, MarikinaLng, session: "real-user");
 
         await using var db = _postgis.CreateDbContext();
-        await DemoDataSeeder.SeedAsync(db);
+        await DemoDataSeeder.SeedAsync(db, TimeSpan.FromHours(6));
         var firstCount = await db.FloodReports.CountAsync(r => r.ReporterSessionId == DemoDataSeeder.DemoSessionId);
-        await DemoDataSeeder.SeedAsync(db);
+        await DemoDataSeeder.SeedAsync(db, TimeSpan.FromHours(6));
 
         Assert.True(firstCount > 0);
         Assert.Equal(firstCount, await db.FloodReports.CountAsync(r => r.ReporterSessionId == DemoDataSeeder.DemoSessionId));

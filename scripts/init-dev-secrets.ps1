@@ -4,7 +4,7 @@
 
 .DESCRIPTION
   - Prompts for the PostgreSQL connection string (Enter = the docker-compose database).
-  - Generates a fresh admin API key and a fresh VAPID key pair (web push).
+  - Generates a fresh admin API key, a session-cookie signing key and a fresh VAPID key pair (web push).
   Run from the repo root:  pwsh ./scripts/init-dev-secrets.ps1
   Requires the .NET SDK and Node.js (for `npx web-push`).
 #>
@@ -24,6 +24,11 @@ $bytes = New-Object byte[] 32
 [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
 $adminKey = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
 Set-Secret 'Admin:ApiKey' $adminKey
+
+# Signs the anonymous session cookie, so a visitor can't forge another visitor's id
+$signingBytes = New-Object byte[] 48
+[System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($signingBytes)
+Set-Secret 'Security:SessionSigningKey' ([Convert]::ToBase64String($signingBytes))
 
 $vapid = npx --yes web-push generate-vapid-keys --json | ConvertFrom-Json
 Set-Secret 'Vapid:PublicKey' $vapid.publicKey

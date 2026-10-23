@@ -9,7 +9,7 @@ export interface PhotoUploadResult {
 
 @Injectable({ providedIn: 'root' })
 export class PhotoService {
-  private readonly baseUrl = `${environment.apiUrl}/api/photos`;
+  private readonly baseUrl = `${environment.apiUrl}/api/v1/photos`;
 
   constructor(private http: HttpClient) {}
 

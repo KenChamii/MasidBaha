@@ -1,5 +1,7 @@
+using Microsoft.Extensions.Options;
 ﻿using MasidBaha.Application.Common.Enums;
 using MasidBaha.Application.Common.Geocoding;
+using MasidBaha.Application.Common.Options;
 using MasidBaha.Application.Persistence;
 
 namespace MasidBaha.Application.FloodReports.CreateReport;
@@ -13,11 +15,13 @@ public class CreateFloodReportService : ICreateFloodReportService
 {
     private readonly MasidBahaDbContext _db;
     private readonly IGeocodingService _geocodingService;
+    private readonly ReportOptions _options;
 
-    public CreateFloodReportService(MasidBahaDbContext db, IGeocodingService geocodingService)
+    public CreateFloodReportService(MasidBahaDbContext db, IGeocodingService geocodingService, IOptions<ReportOptions> options)
     {
         _db = db;
         _geocodingService = geocodingService;
+        _options = options.Value;
     }
 
     public async Task<FloodReportDto> CreateAsync(CreateFloodReportRequest request)
@@ -35,7 +39,7 @@ public class CreateFloodReportService : ICreateFloodReportService
             Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
             PhotoUrl = request.PhotoUrl,
             ReportedAt = now,
-            ExpiresAt = now + ReportDefaults.Lifetime,
+            ExpiresAt = now + _options.Lifetime,
             ConfidenceScore = 1,
             Status = ReportStatus.Active,
             ReporterSessionId = request.ReporterSessionId,

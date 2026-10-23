@@ -1,3 +1,4 @@
+using FluentValidation;
 using MasidBaha.Application.Common.Enums;
 
 namespace MasidBaha.Application.Admin;
@@ -48,4 +49,22 @@ public class AdminStatusResult
 {
     public ReportStatus Status { get; set; }
     public int ConfidenceScore { get; set; }
+}
+
+public class AdminGetReportsQueryValidator : AbstractValidator<AdminGetReportsQuery>
+{
+    public AdminGetReportsQueryValidator()
+    {
+        RuleFor(x => x.Page).GreaterThanOrEqualTo(1);
+        RuleFor(x => x.PageSize).InclusiveBetween(1, 100);
+        RuleFor(x => x.Status).IsInEnum().When(x => x.Status.HasValue);
+    }
+}
+
+public class AdminSetStatusRequestValidator : AbstractValidator<AdminSetStatusRequest>
+{
+    public AdminSetStatusRequestValidator()
+    {
+        RuleFor(x => x.Status).IsInEnum();
+    }
 }

@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Options;
 ﻿using MasidBaha.Application.Common.Enums;
+using MasidBaha.Application.Common.Options;
 using MasidBaha.Application.FloodReports.CreateReport;
 using MasidBaha.Application.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -13,16 +15,18 @@ public interface IGetTopReportsService
 public class GetTopReportsService : IGetTopReportsService
 {
     private readonly MasidBahaDbContext _db;
+    private readonly ReportOptions _options;
 
-    public GetTopReportsService(MasidBahaDbContext db)
+    public GetTopReportsService(MasidBahaDbContext db, IOptions<ReportOptions> options)
     {
         _db = db;
+        _options = options.Value;
     }
 
     public async Task<List<FloodReportDto>> GetTopAsync(TopReportsQuery query)
     {
         var now = DateTime.UtcNow;
-        var limit = Math.Clamp(query.Limit, 1, ReportDefaults.MaxTopReports);
+        var limit = Math.Clamp(query.Limit, 1, _options.MaxTopReports);
 
         var reports = await _db.FloodReports
             .AsNoTracking()

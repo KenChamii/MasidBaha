@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { FloodReportService } from '../../services/flood-report.service';
 import { PhotoService } from '../../../../core/services/photo.service';
-import { SessionService } from '../../../../core/services/session.service';
 import { Severity } from '../../../../shared/models/flood-report.model';
 import { SEVERITY_OPTIONS } from '../../../../shared/models/severity';
 
@@ -21,7 +20,6 @@ const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 export class ReportFormComponent implements OnDestroy {
   private readonly floodReportService = inject(FloodReportService);
   private readonly photoService = inject(PhotoService);
-  private readonly sessionService = inject(SessionService);
 
   readonly pin = input.required<{ lat: number; lng: number }>();
   readonly submitted = output<void>();
@@ -107,8 +105,7 @@ export class ReportFormComponent implements OnDestroy {
       lng: this.pin().lng,
       severity: this.severity,
       notes: this.notes || undefined,
-      photoUrl,
-      reporterSessionId: this.sessionService.sessionId
+      photoUrl
     }).subscribe({
       // The new marker arrives through SignalR, so there's nothing to add by hand here
       next: () => {

@@ -1,4 +1,6 @@
-﻿using MasidBaha.Application.Common.Storage;
+using MasidBaha.Application.Common.Options;
+using Microsoft.Extensions.Options;
+using MasidBaha.Application.Common.Storage;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
@@ -17,11 +19,6 @@ public interface IUploadPhotoService
 
 public class UploadPhotoService : IUploadPhotoService
 {
-    // Anything bigger is rejected outright before we even try to decode it —
-    // no point spending CPU decompressing a 200MB "photo".
-    private const long MaxUploadBytes = 8 * 1024 * 1024; // 8 MB
-    private const int MaxLongestSidePixels = 1600;
-    private const int JpegQuality = 78;
 
     private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -31,10 +28,12 @@ public class UploadPhotoService : IUploadPhotoService
     };
 
     private readonly IPhotoStorageService _storageService;
+    private readonly PhotoOptions _options;
 
-    public UploadPhotoService(IPhotoStorageService storageService)
+    public UploadPhotoService(IPhotoStorageService storageService, IOptions<PhotoOptions> options)
     {
         _storageService = storageService;
+        _options = options.Value;
     }
 
     public async Task<string> UploadAsync(Stream content, string contentType, long lengthBytes, CancellationToken cancellationToken = default)
@@ -42,8 +41,8 @@ public class UploadPhotoService : IUploadPhotoService
         if (lengthBytes <= 0)
             throw new ArgumentException("Walang laman ang na-upload na file.");
 
-        if (lengthBytes > MaxUploadBytes)
-            throw new ArgumentException($"Ang photo ay dapat hindi lalagpas sa {MaxUploadBytes / (1024 * 1024)}MB.");
+        if (lengthBytes > _options.MaxUploadBytes)
+            throw new ArgumentException($"Ang photo ay dapat hindi lalagpas sa {_options.MaxUploadBytes / (1024 * 1024)}MB.");
 
         if (!AllowedContentTypes.Contains(contentType))
             throw new ArgumentException("Tanging JPEG, PNG, o WebP na larawan lang ang tinatanggap.");
@@ -64,12 +63,12 @@ public class UploadPhotoService : IUploadPhotoService
         using (image)
         {
             // Downscale only — never upscale a smaller photo.
-            if (image.Width > MaxLongestSidePixels || image.Height > MaxLongestSidePixels)
+            if (image.Width > _options.MaxLongestSidePixels || image.Height > _options.MaxLongestSidePixels)
             {
                 image.Mutate(x => x.Resize(new ResizeOptions
                 {
                     Mode = ResizeMode.Max,
-                    Size = new Size(MaxLongestSidePixels, MaxLongestSidePixels)
+                    Size = new Size(_options.MaxLongestSidePixels, _options.MaxLongestSidePixels)
                 }));
             }
 
@@ -82,7 +81,7 @@ public class UploadPhotoService : IUploadPhotoService
             image.Metadata.XmpProfile = null;
 
             using var outputStream = new MemoryStream();
-            await image.SaveAsync(outputStream, new JpegEncoder { Quality = JpegQuality }, cancellationToken);
+            await image.SaveAsync(outputStream, new JpegEncoder { Quality = _options.JpegQuality }, cancellationToken);
 
             var fileName = $"{Guid.NewGuid():N}.jpg";
             return await _storageService.SaveAsync(outputStream.ToArray(), fileName, "image/jpeg", cancellationToken);

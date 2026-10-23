@@ -6,7 +6,7 @@ import { environment } from '../../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class FloodReportService {
-  private readonly baseUrl = `${environment.apiUrl}/api/flood-reports`;
+  private readonly baseUrl = `${environment.apiUrl}/api/v1/flood-reports`;
 
   constructor(private http: HttpClient) {}
 
@@ -29,8 +29,9 @@ export class FloodReportService {
     return this.http.post<FloodReport>(this.baseUrl, request);
   }
 
-  vote(reportId: string, voteType: 1 | -1, voterSessionId: string): Observable<unknown> {
-    return this.http.post(`${this.baseUrl}/${reportId}/vote`, { voterSessionId, voteType });
+  // The voter is identified by the server's session cookie, not by anything sent here
+  vote(reportId: string, voteType: 1 | -1): Observable<unknown> {
+    return this.http.post(`${this.baseUrl}/${reportId}/vote`, { voteType });
   }
 
   getHeatmap(query: HeatmapQuery = {}): Observable<HeatmapPoint[]> {

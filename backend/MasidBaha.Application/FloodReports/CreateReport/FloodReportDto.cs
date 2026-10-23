@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using FluentValidation;
 using MasidBaha.Application.Common.Enums;
 
 namespace MasidBaha.Application.FloodReports.CreateReport;
@@ -21,23 +21,41 @@ public class FloodReportDto
 
 public class CreateFloodReportRequest
 {
-    [Range(-90, 90, ErrorMessage = "Lat must be between -90 and 90.")]
     public double Lat { get; set; }
-
-    [Range(-180, 180, ErrorMessage = "Lng must be between -180 and 180.")]
     public double Lng { get; set; }
-
-    [EnumDataType(typeof(Severity), ErrorMessage = "Invalid severity value.")]
     public Severity Severity { get; set; }
-
-    [MaxLength(500, ErrorMessage = "Notes cannot exceed 500 characters.")]
     public string? Notes { get; set; }
-
-    [MaxLength(500)]
-    [Url(ErrorMessage = "PhotoUrl must be a valid URL.")]
     public string? PhotoUrl { get; set; }
 
-    [Required(ErrorMessage = "ReporterSessionId is required.")]
-    [MaxLength(100)]
+    // Set by the server from the signed session cookie. Anything a client
+    // sends here is ignored, because a client-chosen id is trivially reset.
     public string ReporterSessionId { get; set; } = string.Empty;
+}
+
+public static class PhilippinesBounds
+{
+    // Generous box around the whole archipelago (includes the Batanes and Tawi-Tawi extremes)
+    public const double MinLat = 4.0, MaxLat = 21.5;
+    public const double MinLng = 116.0, MaxLng = 127.0;
+}
+
+public class CreateFloodReportRequestValidator : AbstractValidator<CreateFloodReportRequest>
+{
+    public CreateFloodReportRequestValidator()
+    {
+        // Geofence: reports are only meaningful (and only geocodable) inside the Philippines
+        RuleFor(x => x.Lat)
+            .InclusiveBetween(PhilippinesBounds.MinLat, PhilippinesBounds.MaxLat)
+            .WithMessage("Reports must be located within the Philippines.");
+
+        RuleFor(x => x.Lng)
+            .InclusiveBetween(PhilippinesBounds.MinLng, PhilippinesBounds.MaxLng)
+            .WithMessage("Reports must be located within the Philippines.");
+
+        RuleFor(x => x.Severity).IsInEnum().WithMessage("Invalid severity value.");
+
+        RuleFor(x => x.Notes).MaximumLength(500).WithMessage("Notes cannot exceed 500 characters.");
+
+        RuleFor(x => x.PhotoUrl).MaximumLength(500);
+    }
 }

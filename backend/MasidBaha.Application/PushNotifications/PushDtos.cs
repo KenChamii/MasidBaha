@@ -1,3 +1,5 @@
+using FluentValidation;
+
 namespace MasidBaha.Application.PushNotifications;
 
 // Mirrors the shape of the browser PushSubscription object (subscription.toJSON())
@@ -26,4 +28,28 @@ public class PushPayload
     public string Body { get; set; } = string.Empty;
     // Where to navigate when the notification is tapped (e.g. "/map").
     public string Url { get; set; } = "/map";
+}
+
+public class PushSubscriptionDtoValidator : AbstractValidator<PushSubscriptionDto>
+{
+    public PushSubscriptionDtoValidator()
+    {
+        // A push endpoint is always an https URL issued by the browser vendor's push service
+        RuleFor(x => x.Endpoint)
+            .NotEmpty()
+            .MaximumLength(500)
+            .Must(e => Uri.TryCreate(e, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps)
+            .WithMessage("Endpoint must be an https URL.");
+
+        RuleFor(x => x.Keys.P256dh).NotEmpty().MaximumLength(500);
+        RuleFor(x => x.Keys.Auth).NotEmpty().MaximumLength(500);
+    }
+}
+
+public class UnsubscribeRequestValidator : AbstractValidator<UnsubscribeRequest>
+{
+    public UnsubscribeRequestValidator()
+    {
+        RuleFor(x => x.Endpoint).NotEmpty().MaximumLength(500);
+    }
 }

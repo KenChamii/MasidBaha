@@ -7,7 +7,7 @@ import { AdminGetReportsResult, AdminReportStatus, SessionTrustDto } from '../ad
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
-  private readonly baseUrl = `${environment.apiUrl}/api/admin`;
+  private readonly baseUrl = `${environment.apiUrl}/api/v1/admin`;
 
   constructor(private http: HttpClient, private adminAuth: AdminAuthService) {}
 

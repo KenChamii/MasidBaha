@@ -1,16 +1,22 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using FluentValidation;
 using MasidBaha.Application.Common.Enums;
 
 namespace MasidBaha.Application.FloodReports.VoteOnReport;
 
 public class VoteRequest
 {
-    [Required(ErrorMessage = "VoterSessionId is required.")]
-    [MaxLength(100)]
+    // Set by the server from the signed session cookie; a client-sent value is ignored
     public string VoterSessionId { get; set; } = string.Empty;
 
-    [EnumDataType(typeof(VoteType), ErrorMessage = "Invalid vote type.")]
     public VoteType VoteType { get; set; }
+}
+
+public class VoteRequestValidator : AbstractValidator<VoteRequest>
+{
+    public VoteRequestValidator()
+    {
+        RuleFor(x => x.VoteType).IsInEnum().WithMessage("Invalid vote type.");
+    }
 }
 
 public class VoteResultDto
