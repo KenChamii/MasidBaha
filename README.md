@@ -18,6 +18,16 @@ The demo runs on free hosting that sleeps when idle, so the first request after 
 |---|---|
 | ![Moderation queue in the admin panel](docs/screenshots/admin-moderation-light-desktop.png) | ![Audit log in the admin panel](docs/screenshots/admin-audit-light-desktop.png) |
 
+## Demo
+
+**The public site:** the landing page, confirming a report, posting a new one, the rain radar, satellite rainfall and typhoon track overlays, dark mode and the Filipino translation.
+
+![Walkthrough of the public site](docs/demo-web.gif)
+
+**The admin panel:** signing in, the dashboard, the moderation queue, hiding a report, the map, announcements and the audit log that records the change.
+
+![Walkthrough of the admin panel](docs/demo-admin.gif)
+
 ## What it does
 
 | Area | What you get |
