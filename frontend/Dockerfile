@@ -14,7 +14,7 @@ COPY . .
 ARG PROJECT=web
 RUN npx ng build ${PROJECT} --configuration production
 
-FROM nginxinc/nginx-unprivileged:1.27-alpine AS runtime
+FROM nginxinc/nginx-unprivileged:1.31-alpine AS runtime
 ARG PROJECT=web
 
 # The nginx template reads $API_UPSTREAM at start-up (the stock image fills in ${VAR} placeholders)
