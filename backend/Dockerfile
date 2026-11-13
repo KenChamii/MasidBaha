@@ -1,7 +1,7 @@
 # API image. Build context is the backend/ folder:
 #   docker build -t masidbaha-api backend
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 WORKDIR /src
 
 # Restore first, on the project files alone, so this layer is cached until a dependency changes
