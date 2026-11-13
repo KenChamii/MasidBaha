@@ -14,7 +14,7 @@ COPY MasidBaha.Application MasidBaha.Application
 COPY MasidBaha.WebAPI MasidBaha.WebAPI
 RUN dotnet publish MasidBaha.WebAPI/MasidBaha.WebAPI.csproj -c Release -o /app --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:11.0 AS runtime
 WORKDIR /app
 
 # Local photo storage writes here; mount a volume on it to keep photos across restarts
